@@ -1,0 +1,303 @@
+<!--meta {"title": "Phase 1 — 規約整備", "desc": "ルール配置と初版コミット。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-phase1">Phase 1 — 規約整備</h1>
+      <p class="lead">ルール配置と初版コミット。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>最小3本から</li>
+<li>小さな PR で先にマージ</li>
+<li><a href="flow-rules-samples.html">設定サンプル</a> からコピー</li>
+</ul>
+<p class="page-brief__tasks">Rules をコピー — 完了: Rules と todo.md がある</p>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-prompt.html">← プロンプト設計</a></p>
+</aside>
+<h3 id="phase-1"><a class="toclink" href="#phase-1">Phase 1 — 規約整備</a></h3>
+<h4 id="410-three-lines"><a class="toclink" href="#410-three-lines">規約整備の3ツール（Cursor / Claude Code / Codex）</a></h4>
+<p>Cursor・Claude Code・Codex ではルールの置き場所と読み込み方が異なります。メインは1本に絞り、禁止事項など事故りやすい条項だけ複数ツールに揃えます。</p>
+<p><strong>3ツール比較表・各ツール setup 手順の正本</strong> → <a href="guide-rules-tools-intro.html#17-three-tools">ルール/プラン — 3ツール早見</a> · 初版テンプレ → 本章 <a href="#42">ルールファイル本体</a>。</p>
+<p>PRD の承認は <a href="guide-workflow.html#0-5-requirements">要件すり合わせ</a>。<a href="memo-dev-method.html#21-prd">PRD メモ</a>参照。</p>
+<h4 id="410-minimum"><a class="toclink" href="#410-minimum">メインで使うツール別・最小構成の早見表</a></h4>
+<h3 id="41"><a class="toclink" href="#41">配置ファイル</a></h3>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-agents-2">
+<h4 class="info-panel__title" id="scenario-agents-2">AGENTS.md と関連ファイルの対応</h4>
+<div class="info-panel__body"><p><code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> / <code><a href="flow-rules-samples.html#sample-10-domain-rules-mdc">.cursor/rules/10-domain-rules.mdc</a></code> / <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> / <code>.claude/skills/phase4-domain-tdd/SKILL.md</code> / <code>.agents/skills/phase4-domain-tdd/SKILL.md</code></p></div>
+</aside>
+<p>Cursor の配置ファイル</p>
+<pre><code class="language-text">project/
+├── AGENTS.md                          # 入口・必読 rules 索引（Codex 本体にもなる）
+├── .cursorignore                      # エージェントから除外するパス
+└── .cursor/
+    ├── rules/                         # 静的ルール（.mdc + frontmatter）
+    │   ├── 00-project.mdc           # alwaysApply: true
+    │   ├── 10-domain-rules.mdc
+    │   ├── 20-coding-style.mdc      # globs で言語別
+    │   └── 60-ai-workflow.mdc
+    ├── skills/                        # Agent Skills（SKILL.md、必要時ロード）
+    │   └── my-workflow/SKILL.md
+    ├── commands/                      # /review 等の再利用コマンド
+    ├── plans/                         # Plan モード「Save to workspace」
+    └── hooks.json                     # 任意 / 停止時・ツール前後の強制処理
+</code></pre>
+<p><code>.mdc</code> の frontmatter：<code>alwaysApply</code>（常に読む）、<code>globs</code>（対象パス）、<code>description</code>（関連時に読む）。<code>alwaysApply</code>（常に読む）は最小限にし、長文は Skills へ。</p>
+<p>Claude Code の配置ファイル</p>
+<pre><code class="language-text">project/
+├── AGENTS.md                    # Cursor / Codex 共有の入口
+├── CLAUDE.md                    # リポ全体の薄い方針 (+ 必要なら User scope)
+├── packages/foo/CLAUDE.md       # 大規模モノレポ向け: サブツリー固有の規約（公式推奨）
+├── .agents/skills/              # Codex: リポ共有 Skill
+├── .codex/config.toml           # Codex: 任意のプロジェクト設定
+└── .claude/
+    ├── skills/                  # 必要時に明示利用 / 反復する手順・長い運用を Skill に分離する置き場所
+    ├── agents/                  # 任意 / 複雑調査や役割分担が必要な時 / 専用サブエージェントの振る舞いを定型化
+    └── settings.json            # 任意 / 対象イベント時 / Hooks で整形・保護ファイル・危険コマンド検査などを強制
+</code></pre>
+<blockquote>
+<p>個人のグローバルルール (<code>/Users/&lt;user&gt;/.cursor/rules/</code>) に既に書いてあるものは重複させない。</p>
+<p>Claude Code の個人グローバル指示 (<code><a href="flow-rules-samples.html#sample-claude-user-md">~/.claude/CLAUDE.md</a></code>) に既に書いてあるものも重複させない。</p>
+<p>Codex の個人グローバル指示 (<code><a href="flow-rules-samples.html#sample-codex-agents-global">~/.codex/AGENTS.md</a></code>) に既に書いてあるものも重複させない。</p>
+</blockquote>
+<p>Codex の配置ファイル</p>
+<pre><code class="language-text">project/
+├── AGENTS.md                    # リポ全体の短い方針（Cursor と共有可）
+├── packages/foo/AGENTS.md       # サブツリー固有の規約（作業ディレクトリに近いほど優先）
+├── .agents/
+│   └── skills/                  # リポ共有の Skill（SKILL.md + 任意 scripts/）
+│       └── phase4-domain-tdd/
+│           └── SKILL.md
+└── .codex/
+    └── config.toml              # 任意 / プロジェクト上書き（trusted プロジェクトのみ読込）
+</code></pre>
+<p>個人グローバル：<code><a href="flow-rules-samples.html#sample-codex-agents-global">~/.codex/AGENTS.md</a></code>（文体の好みなど）、<code>$HOME/.agents/skills/</code>（全リポ共通 Skill）。一次情報：<a href="https://developers.openai.com/codex/concepts/customization">Codex Customization</a>。詳細は <a href="guide-repo-directory.html#11-1-directory">リポジトリ構成</a>。</p>
+<h3 id="42"><a class="toclink" href="#42">ルールファイル本体 (テンプレート)</a></h3>
+<table>
+<thead><tr><th>コピー先</th><th>用途</th><th>詳細</th></tr></thead>
+<tbody>
+<tr><td><code>.cursor/rules/*.mdc</code></td><td>Cursor 常時/条件付きルール</td><td><a href="flow-rules-samples.html#rules-samples-index">ルールサンプル</a></td></tr>
+<tr><td><code>CLAUDE.md</code> / <code>.claude/rules/</code></td><td>Claude Code リポ設定</td><td><a href="guide-rules-claude.html#17-claude">Claude Code 章</a></td></tr>
+<tr><td><code>AGENTS.md</code> / <code>.agents/skills/</code></td><td>Codex / Skills 入口</td><td><a href="guide-rules-codex.html#17-codex">Codex 章</a></td></tr>
+<tr><td><code>tasks/todo.md</code> · <code>tasks/lessons.md</code></td><td>Plan · 振り返り</td><td><a href="guide-repo-docs-1.html#11-6-tasks">11.6 tasks/</a></td></tr>
+</tbody>
+</table>
+
+<h4 id="42-cursor"><a class="toclink" href="#42-cursor">ルールファイル本体 (テンプレート) / Cursor</a></h4>
+<p><code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code>＝入口、<code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/*.mdc</a></code>＝方針、<code>.cursor/skills/</code>＝手順。旧 <code>.cursorrules</code> は <code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> へ移す。</p>
+<p class="scenario-intro"><strong>コピー用全文:</strong> <a href="flow-rules-samples.html#rules-samples-index">ルールサンプル</a> — 下記テンプレの一覧ページ。</p>
+<h5 id="agentsmd"><a class="toclink" href="#agentsmd">AGENTS.md</a></h5>
+<p>長くしない。Codex は作業フォルダに近い <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> を優先。Claude 併用時は <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> から import して重複を避ける。役割は「何を読むべきか」「どこに書くべきか」の短い索引に絞り、ステークホルダー・必読ルール一覧・出力先（docs/ と z_docs/ の使い分け）・既存パターン参照・禁止事項を記載する。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-agents-md">AGENTS.md サンプル</a></p>
+<h5 id="cursorrules10-domain-rulesmdc"><a class="toclink" href="#cursorrules10-domain-rulesmdc">.cursor/rules/10-domain-rules.mdc (最重要・プロジェクト固有)</a></h5>
+<p>プロジェクト固有の事実だけを書く（一般論や長い手順は他ファイルへ）。数値計算の丸めポリシー、業務不変条件、業務ルール、例外設計（業務例外と技術例外の分離）、用語の日英マッピングをカバーする。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-10-domain-rules-mdc">10-domain-rules.mdc サンプル</a></p>
+<h5 id="cursorrules20-coding-stylemdc"><a class="toclink" href="#cursorrules20-coding-stylemdc">.cursor/rules/20-coding-style.mdc</a></h5>
+<pre><code class="language-text">---
+description: コーディング規約 (プロジェクト言語に合わせる)
+globs: ["**/*.&lt;project-ext&gt;"]  # 例: **/*.ts, **/*.tsx, **/*.py
+---
+
+# Coding Style
+
+## このファイルの役割
+- formatter / linter / type checker で表現できることはそちらを正本にする
+- ここにはプロジェクト固有の設計・命名・コメント方針だけを書く
+
+## 型と関数
+- 型情報は言語標準の方法で明示する
+- 公開APIのドキュメントはプロジェクト標準の形式に従う (Docstring / TSDoc / Godoc 等)
+- パブリックAPIは pure function を優先、副作用は infrastructure層に閉じる
+
+## コメント
+- コメントは「なぜ」のみ。「何をしているか」のコメント禁止
+- 許可するアノテーション: TODO / FIXME / HACK / NOTE / WARNING / REVIEW / OPTIMIZE / CHANGED / XXX
+- 上記以外の独自接頭辞禁止
+
+## 設計
+- レイヤ: interface / application / domain / infrastructure
+- domain層は他レイヤに依存しない (依存逆転)
+- ORM model と domain entity を混在させない
+
+## 命名
+- クラス: PascalCase
+- 関数/変数: 言語標準 (`snake_case` / `camelCase`)
+- 定数: 言語標準 (`UPPER_SNAKE` 等)
+- 私有メンバ: 言語 / FW 標準に従う
+
+## 既存コード優先
+新規ファイル作成や大きな変更の前に類似既存ファイルを必ず参照し、命名・構成・エラー処理を揃える。
+</code></pre>
+<h5 id="cursorrules30-testingmdc"><a class="toclink" href="#cursorrules30-testingmdc">.cursor/rules/30-testing.mdc</a></h5>
+<p>変更箇所に最も近いテストから検証し、必要なときだけ外側へ広げる。層別（domain は Inside-out TDD 厳守、application はユースケース単位、infrastructure/interface は結合・E2E 中心）の厳格度、Red-Green-Refactor サイクル、カバレッジ方針、テスト命名、必須カバー観点（正常系・境界値・異常系・並行性）、アンチパターンを定義する。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-30-testing-mdc">30-testing.mdc サンプル</a></p>
+<h5 id="cursorrules40-loggingmdc"><a class="toclink" href="#cursorrules40-loggingmdc">.cursor/rules/40-logging.mdc</a></h5>
+<p>構造化ログ（JSON）・必須フィールド・レベル別運用（DEBUG〜CRITICAL）・機微情報のマスキング方針（個人情報・認証トークンはログ出力禁止）・出力先（標準出力 + 基盤側で集約）を定める。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-40-logging-mdc">40-logging.mdc サンプル</a></p>
+<h5 id="cursorrules50-documentationmdc"><a class="toclink" href="#cursorrules50-documentationmdc">.cursor/rules/50-documentation.mdc</a></h5>
+<p><code>docs/</code>（チーム公式、レビュー必須）と <code>z_docs/</code>（任意の個人作業メモ）の役割分担、配置先の判定基準、書式・トーンの違いを定義する。z_docs は docs と二重管理せず、正式に残す内容は docs を正本とする。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-50-documentation-mdc">50-documentation.mdc サンプル</a></p>
+<h5 id="cursorrules60-ai-workflowmdc"><a class="toclink" href="#cursorrules60-ai-workflowmdc">.cursor/rules/60-ai-workflow.mdc</a></h5>
+<p>常時守る進め方（1チャット=1タスク、編集前に既存コード・テスト・ドキュメントを読む、推測で埋めない）、検証（最小の有効な確認を実施し未実施は明記）、履歴整備（z_docs/history への作業ログ、docs/adr への正式判断記録）を定める。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-60-ai-workflow-mdc">60-ai-workflow.mdc サンプル</a></p>
+<h5 id="cursorrules61-tdd-loopmdc"><a class="toclink" href="#cursorrules61-tdd-loopmdc">.cursor/rules/61-tdd-loop.mdc</a></h5>
+<p>ユーザーが TDD を明示したときなど厳格な test-first が必要な場面でのみ使う運用規約。RED-GREEN-REFACTOR の厳守事項とサイクル粒度（1サイクル=1つの振る舞い）を定める。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-61-tdd-loop-mdc">61-tdd-loop.mdc サンプル</a></p>
+<h4 id="42-claude-code"><a class="toclink" href="#42-claude-code">ルールファイル本体 (テンプレート) / Claude Code</a></h4>
+<p>長くなったら <code>.claude/rules/</code> や <code><a href="flow-rules-samples.html#sample-claude-local-md">CLAUDE.local.md</a></code> へ。Cursor と同じ内容の重複は避ける。</p>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-claude">
+<h4 class="info-panel__title" id="scenario-claude">CLAUDE.md の階層構成</h4>
+<div class="info-panel__body"><p><code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code>（薄い方針）+ <code>packages/api/CLAUDE.md</code>（パッケージ固有）+ <code>.claude/skills/phase3-design-doc/SKILL.md</code></p></div>
+</aside>
+<div class="ref-banner">
+<h5 id="claude-setup-12"><a class="toclink" href="#claude-setup-12">セットアップ 12 項（コミュニティ要約 / AI 開発環境として整える）</a></h5>
+<p>出典：<a href="https://x.com/NainsiDwiv50980/status/2056021997659017452">@NainsiDwiv50980 / X</a>（要約。<a href="https://docs.anthropic.com/">Anthropic 公式</a> を優先）。</p>
+<p>前提：賢いチャットではなく、AI 開発環境として周辺を先にそろえる。</p>
+<ol class="steps">
+<li><code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> で永続メモリ — アーキテクチャ判断・コーディング規約・デバッグメモ・エッジケース・プロダクト文脈・繰り返しミスをチャット履歴ではなくファイルに残す。チーム判断は <code>z_docs/history/</code> 等にも二重化可（<a href="guide-repo-docs-1.html#11-6-docs-z-docs">リポジトリ — tasks/</a>）。</li>
+<li>新規コードベースでは <code>/init</code> を最初に — 構造・依存・規約・ワークフローをマップしてから「Build / Fix」を依頼する。</li>
+<li>Git worktree で並列 AI — 認証・UI・バグ修正などを main を汚さず別 worktree で同時進行（本リポの Cursor 向けは <a href="guide-ops-harness.html#18-2-subagents">エージェント運用 — 調査の任せ方</a>・Background Agent も一緒に使う可）。</li>
+<li>探索 CLI を入れる — <code>ripgrep</code>・<code>fd</code>・<code>jq</code> 等で探索・パースを速くし、エージェントの検索品質を上げる。サービス CLI（<code>gh</code> / <code>vercel</code> / <code>aws</code> 等）は <a href="guide-repo-docker-1.html#11-3-host-clis">11.3 ホスト CLI</a> を Day1 で認証済みに。</li>
+<li>MCP を戦略的に — ライブドキュメント・ブラウザ・DB・Notion・API など。推測ではなく外部コンテキストで動かす（<a href="guide-setup.html#2-ai-selection">2. Claude Code</a>・<a href="memo-ai-tools.html#21-claudecode">MCP 連携例</a>）。</li>
+<li>ターミナルだけに閉じない — Cursor / VS Code と一緒に使うするとインライン編集・可視性・ナビが良く、摩擦が減る。</li>
+<li>Plugins で専門役割 — フロント・リファクタ・アーキテクチャレビュー・ドキュメント生成など、汎用 1 体ではなく役割分担（<a href="memo-ai-tools.html#21-claudecode">Claude Code 補足</a> の engineering スキル表参照）。</li>
+<li>再利用スラッシュコマンド — <code>/security-audit</code>・<code>/generate-tests</code> などを Skill やカスタムコマンドで定型化（<a href="#claudeskills">18.2 Skills</a>）。</li>
+<li>別の AI 担当でコンテキスト保護 — 調査・UX・依存追跡は隔離し、有用な結果だけメインに戻す（<a href="guide-ops-harness.html#18-2-subagents">調査の任せ方</a>）。</li>
+<li>トークン使用量を追跡 — コンテキスト肥大・高コストセッション・不要なツール呼び出しを把握する（リソース管理も AI エンジニアリングの一部）。</li>
+<li>大規模作業は高コンテキスト枠のプラン — 大規模リファクタ・巨大リポ・多ファイル推論ではコンテキスト上限がボトルネックになりやすい。</li>
+<li>CI/CD に組み込む — PR レビュー・標準準拠・マージ前の指摘をパイプラインに載せ、開発ライフサイクルに AI を埋め込む（<a href="guide-ship.html#phase-7-pr">Phase 7 PR</a>・<a href="guide-repo-cicd-1.html#11-5-cicd">11.5 CI/CD</a>）。</li>
+</ol>
+</div>
+<div class="ref-banner">
+<h5 id="claude-large-codebase"><a class="toclink" href="#claude-large-codebase">大規模コードベース向け（公式 2026-05 / Claude Code at scale）</a></h5>
+<p>一次情報：<a href="https://claude.com/blog/how-claude-code-works-in-large-codebases-best-practices-and-where-to-start">How Claude Code works in large codebases</a>（2026-05-14）。要約：<a href="https://x.com/commte/status/2055485189401567472">@commte / X</a>。</p>
+<ul>
+<li>ルートの <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> は薄く（全体像とクリティカルな gotcha のみ）。チーム・パッケージ固有の規約はサブディレクトリの <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> に寄せる（移動時に加算的に読み込まれる）。</li>
+<li>セッションの開始ディレクトリはリポジトリルートではなく、作業対象のサブディレクトリから入る（コンテキストを絞る。親階層の <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> は自動で拾われる）。</li>
+<li>ハーネス（拡張の積み上げ）の目安: <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> → Hooks → Skills → Plugins → MCP。LSP（シンボル検索）と別の AI 担当はこの上に載せる。</li>
+<li>Stop フックでセッションの学びを <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> 更新案として残す運用を検討する（公式は「自己改善」用途を推奨）。</li>
+<li>サブディレクトリの <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> に、その配下だけの test / lint コマンド を書く（全件テストはタイムアウトと無関係な出力でコンテキストを浪費しやすい）。</li>
+<li><code>.claude/settings.json</code> の <code>permissions.deny</code> や ignore で生成物・ビルド成果物を除外し、ノイズを減らす（チームでバージョン管理）。</li>
+<li>ディレクトリ構造だけでは辿りにくいリポでは、ルートにコードベースマップ（トップレベルフォルダの一行説明）を置く。</li>
+<li><code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> は3〜6ヶ月ごとに棚卸しする（モデル進化で不要・有害になった指示が残りやすい）。</li>
+<li>組織導入では設定の DRI（プラグイン市場・権限・<code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> 階層の標準）を決め、良い設定が部族知識のまま散らばらないようにする。</li>
+</ul>
+</div>
+<h5 id="claudemd"><a class="toclink" href="#claudemd">CLAUDE.md (User / Project スコープ)</a></h5>
+<p><code><a href="flow-rules-samples.html#sample-claude-user-md">~/.claude/CLAUDE.md</a></code>＝個人共通、リポ直下＝全体方針。モノレポは <code>packages/foo/CLAUDE.md</code> でフォルダ固有の規約を足す。User scope（応答言語・要確認コマンド）と Project scope（Claude Code 固有の補足、Cursor ルールとの対応、よく使うコマンド、禁止事項）を分けて書き、`AGENTS.md` とは重複させない。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md サンプル</a></p>
+<h5 id="claudeskills"><a class="toclink" href="#claudeskills">.claude/skills/</a></h5>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-claude-skills-phase4-domain-tdd-skill">
+<h4 class="info-panel__title" id="scenario-claude-skills-phase4-domain-tdd-skill">Claude 向け TDD スキル定義</h4>
+<div class="info-panel__body"><p><code>.claude/skills/phase4-domain-tdd/SKILL.md</code> — RED-GREEN-REFACTOR を1サイクルずつ進める手順</p></div>
+</aside>
+<p>各 Skill の frontmatter に <code>description</code> を書く。手動起動だけにしたい手順は <code>disable-model-invocation: true</code> を検討。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-claude-skills">.claude/skills/ サンプル</a></p>
+<h5 id="claudehooks"><a class="toclink" href="#claudehooks">Hooks (任意)</a></h5>
+<p>大規模リポでは Stop フックで学びを <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> の更新案として残す運用も有効。結果が一定で、遅くない処理だけ定義する（例: <code>PreToolUse</code> で危険コマンドを検査）。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-claude-hooks">Hooks 設定サンプル</a></p>
+<h4 id="42-codex"><a class="toclink" href="#42-codex">ルールファイル本体 (テンプレート) / Codex</a></h4>
+<p>設定は <code><a href="flow-rules-samples.html#sample-codex-config-toml">.codex/config.toml</a></code>、外部連携は MCP。禁止事項は Cursor / Claude と短く対応づけ、長文は Skill へ。</p>
+<div class="ref-banner" id="codex-customization">
+<h5 id="codex-hierarchy"><a class="toclink" href="#codex-hierarchy">公式のカスタマイズ階層（OpenAI Codex）</a></h5>
+<p>一次情報：<a href="https://developers.openai.com/codex/concepts/customization">Customization</a> / <a href="https://developers.openai.com/codex/learn/best-practices">Best practices</a>。</p>
+<ul>
+<li>AGENTS.md — ビルド・テストコマンド、レビュー期待、リポ規約。直した内容は <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> に書いて残す（<code>/init</code> や PR で <code>@codex</code> への依頼も可）。</li>
+<li>Memories — 過去セッションの有用な文脈（補助）。</li>
+<li>Skills — 繰り返す手順（リポは <code>.agents/skills/</code>、個人は <code>$HOME/.agents/skills</code>）。</li>
+<li>MCP — Linear / GitHub / 社内 docs などの外部ツール。</li>
+<li>Subagents — 調査と編集を分け、専門タスクは別の AI 担当に任せる。</li>
+<li>大規模リポでは ルート <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> は薄く、<code>packages/foo/AGENTS.md</code> のようにサブディレクトリへ規約を寄せる（作業ディレクトリに近いファイルが優先）。</li>
+<li>ルールは pre-commit / lint / 型チェック で機械的に裏付ける（プロンプトだけに頼らない）。</li>
+</ul>
+</div>
+<h5 id="codex-agentsmd"><a class="toclink" href="#codex-agentsmd">AGENTS.md（Codex / 共有）</a></h5>
+<p>リポ直下・サブフォルダの <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> をセッション前に読む。グローバルは <code><a href="flow-rules-samples.html#sample-codex-agents-global">~/.codex/AGENTS.md</a></code>。Cursor 併用時は <a href="#agentsmd">Cursor の AGENTS.md</a> を正とする。毎回守る方針・ビルド/テストコマンド・レビュー期待・禁止事項・ルーティング（docs/ と z_docs/ の使い分け）を短くまとめる。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-agents-md-codex">AGENTS.md（Codex 補足例）サンプル</a></p>
+<h5 id="codex-skills"><a class="toclink" href="#codex-skills">.agents/skills/</a></h5>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-agents-skills-phase4-domain-tdd-skill">
+<h4 class="info-panel__title" id="scenario-agents-skills-phase4-domain-tdd-skill">Codex 向け TDD スキル定義</h4>
+<div class="info-panel__body"><p><code>.agents/skills/phase4-domain-tdd/SKILL.md</code> + 任意で <code>scripts/run-red-cycle.sh</code></p></div>
+</aside>
+<p>各 Skill に <code><a href="flow-rules-samples.html#sample-claude-skills">SKILL.md</a></code>（frontmatter の <code>name</code> / <code>description</code>）と、必要なら <code>scripts/</code> を置く。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-codex-skills">.agents/skills/ サンプル</a></p>
+<h5 id="codex-config"><a class="toclink" href="#codex-config">.codex/config.toml（任意）</a></h5>
+<p>ユーザー設定は <code>~/.codex/config.toml</code>。リポ上書きは <code><a href="flow-rules-samples.html#sample-codex-config-toml">.codex/config.toml</a></code>。Hooks は結果が一定な処理（lint、危険コマンド検査）向け。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-codex-config-toml">.codex/config.toml サンプル</a></p>
+<h3 id="43-0"><a class="toclink" href="#43-0">Phase 1 初手</a></h3>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-agents-3">
+<h4 class="info-panel__title" id="scenario-agents-3">AGENTS.md と運用ファイルの対応</h4>
+<div class="info-panel__body"><p><code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> / <code><a href="flow-rules-samples.html#sample-10-domain-rules-mdc">.cursor/rules/10-domain-rules.mdc</a></code> / <code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code> / <code><a href="flow-rules-samples.html#sample-tasks-lessons-md">tasks/lessons.md</a></code> / <code>.claude/skills/phase1-rules-sync/SKILL.md</code></p></div>
+</aside>
+<pre><code class="language-text">新規プロジェクトのリポジトリ規約を整備します。
+
+【プロジェクト】
+[名称]
+[目的・主要ユーザ・主要機能の3行サマリ]
+
+【技術スタック (既知の範囲)】
+- 言語: ...
+- FW: ...
+- DB: ...
+
+【作業】
+リポジトリ直下に AGENTS.md を作成し、利用するラインに応じて以下を整備してください。
+- Cursor ライン: .cursor/rules/*.mdc
+- Claude Code ライン: CLAUDE.md と .claude/skills/ (必要なら .claude/agents/ / Hooks)
+- Codex ライン: .agents/skills/ と必要なら .codex/config.toml
+内容は本ドキュメント 7.2 のテンプレートに従い、上記プロジェクト前提で具体化してください。
+特に 10-domain-rules.mdc は、私が後で埋めるべき項目をプレースホルダで残してください。
+tasks/todo.md と tasks/lessons.md が無ければ、リポジトリ同梱のテンプレをコピーして配置してください。
+
+追記方針:
+- 毎回守る禁止事項・確認フロー・責務分離は rules / AGENTS.md / CLAUDE.md / Skills に書く
+- 機能固有の要件・設計・ADR は docs/ に書く
+- 再利用する依頼文テンプレートは docs/prompts/ に分ける
+
+Cursor ルールファイルは frontmatter (description, alwaysApply/globs) を必ず含めてください。
+Claude Code 側は CLAUDE.md を短く保ち、長い手順は .claude/skills/ に逃がしてください。
+Codex 側は AGENTS.md を短く保ち、長い手順は .agents/skills/ に逃がしてください。
+作成後、整備したラインの要点を10行以内で要約してください。
+</code></pre>
+<h3 id="44"><a class="toclink" href="#44">既存プロジェクトへの導入</a></h3>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-src-domain">
+<h4 class="info-panel__title" id="scenario-src-domain">既存コードからコーディング規約を起草</h4>
+<div class="info-panel__body"><p>既存 <code>src/domain/</code> をサンプリング → <code><a href="flow-rules-samples.html#sample-20-coding-style-mdc">.cursor/rules/20-coding-style.mdc</a></code> 初版 → 「現状」と「提案」を併記</p></div>
+</aside>
+<pre><code class="language-text">既存リポジトリに本フローを導入します。
+
+【現状】
+- 言語/FW: ...
+- 規模: 約 XX ファイル, YY KLoC
+- 既存規約ファイル: [.editorconfig / pre-commit / 等の有無]
+
+【作業】
+1. 既存コードをサンプリングして規約パターンを抽出
+2. 抽出結果をもとに AGENTS.md、Cursor 用 .cursor/rules/*.mdc、Claude Code 用 CLAUDE.md / .claude/skills/、Codex 用 .agents/skills/ の初版を提案 (本ドキュメント Phase 1 — 配置ファイルのファイル群)
+3. 既存と衝突する箇所は「現状」と「提案」を併記
+
+注意:
+- 既存規約を上書きせず追補する形で
+- alwaysApply: true は最小限に (現状コードと矛盾しない範囲のみ)
+- Claude Code / Codex 側も同じ制約を短く対応付け、長い手順は各 Skill ディレクトリに寄せる
+- 恒久ルールに書くことと、docs / prompts / task markdown に分けるべきことを混同しない
+</code></pre>
+<hr />
+
+
+
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+  <li><a href="flow-rules-samples.html">ルールサンプル</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-prompt.html">← プロンプト設計</a><span class="muted flow-pager__next">章内末尾 →</span></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

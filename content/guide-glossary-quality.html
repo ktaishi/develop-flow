@@ -1,0 +1,31 @@
+<!--meta {"title": "品質・運用", "desc": "CI・レビュー。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-glossary-quality">品質・運用</h1>
+      <p class="lead">CI・レビュー。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>冪等性を前提にリトライ設計を決める</li>
+<li>楽観 / 悲観ロックと N+1 問題を実装前に確認する</li>
+<li>認証（AuthN）と認可（AuthZ）を混同せず切り分ける</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-glossary.html">↑ 章トップ</a> <a href="guide-glossary-design.html">← 設計概念</a> <a href="guide-glossary-infra.html">テスト・インフラ →</a></p>
+</aside>
+<h3 id="quality-ops"><a class="toclink" href="#quality-ops">品質・運用</a></h3>
+<h4 id="idempotency"><a class="toclink" href="#idempotency">冪等性 (Idempotency)</a></h4>
+<p>同じ操作を何度実行しても結果が変わらない性質。リトライ対策に必須。</p>
+<h4 id="optimistic-pessimistic-lock"><a class="toclink" href="#optimistic-pessimistic-lock">楽観ロック / 悲観ロック</a></h4>
+<p>並行更新の制御。楽観はバージョン番号、悲観は行ロック。</p>
+<h4 id="n1"><a class="toclink" href="#n1">N+1問題</a></h4>
+<p>一覧取得後に N 回クエリが走る ORM の性能問題。<code>joinedload</code> 等で対策。</p>
+<h4 id="authn-authz"><a class="toclink" href="#authn-authz">認証 (AuthN) / 認可 (AuthZ)</a></h4>
+<p>AuthN = 「誰か」。AuthZ = 「やっていいか」。混同はセキュリティ事故の原因。</p>
+<hr />
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-glossary-design.html">← 設計概念</a><a class="flow-pager__next" href="guide-glossary-infra.html">テスト・インフラ →</a></nav>" aria-label="前後の章"><a href="guide-design.html">← 設計</a><a class="flow-pager__next" href="guide-implement.html">実装 →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><span class="muted flow-pager__next">末尾 →</span></nav>
+  </article>
+</div>

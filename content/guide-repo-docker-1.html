@@ -1,0 +1,198 @@
+<!--meta {"title": "Docker（1/2）", "desc": "compose・起動・日常コマンド。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-docker-1">Docker（1/2）</h1>
+      <p class="lead">compose・起動・日常コマンド。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>実行は <code>docker compose exec</code> 経由を正本と決める</li>
+<li><code>git clone</code> → <code>make up</code> で動く状態を整える</li>
+<li>起動手順は README の3行ルールに固定する</li>
+</ul>
+<p class="page-brief__tasks">compose up — 完了: ローカル起動確認</p>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-gitignore.html">← .gitignore</a> <a href="guide-repo-docker-2.html">Docker（2/2） →</a></p>
+</aside>
+<h3 id="11-3-docker"><a class="toclink" href="#11-3-docker">ローカル開発環境 (Docker前提)</a></h3>
+<h4 id="docker-purpose"><a class="toclink" href="#docker-purpose">主旨</a></h4>
+<ul>
+<li>全開発者で環境を揃える: 「自分のPCでは動く」を排除</li>
+<li>ホストOSを汚さない: 言語ランタイム・DBをホストにインストールしない</li>
+<li>オンボーディング高速化: <code>git clone</code> → <code>make up</code> → 動く、を目標に</li>
+<li>AIエージェントへの指示統一: 実行コマンドは常に <code>docker compose exec</code> 経由で提示させる</li>
+</ul>
+<h4 id="docker-file-roles"><a class="toclink" href="#docker-file-roles">ファイル構成と役割</a></h4>
+<table>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>役割</th>
+<th>コミット</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docker/app/Dockerfile</code></td>
+<td>本番用イメージ (マルチステージ、最小化)</td>
+<td>する</td>
+</tr>
+<tr>
+<td><code>docker/app/Dockerfile.dev</code></td>
+<td>開発用イメージ (hot-reload、デバッガ、ツール込み)</td>
+<td>する</td>
+</tr>
+<tr>
+<td><code>docker-compose.yml</code></td>
+<td>開発環境のサービス構成 (app + db + redis 等)</td>
+<td>する</td>
+</tr>
+<tr>
+<td><code>docker-compose.override.yml.example</code></td>
+<td>個人カスタマイズの雛形</td>
+<td>する</td>
+</tr>
+<tr>
+<td><code>docker-compose.override.yml</code></td>
+<td>個人カスタマイズ実体 (ポート変更等)</td>
+<td>しない</td>
+</tr>
+<tr>
+<td><code>Makefile</code></td>
+<td>コマンド集約 (up/down/test/lint/migrate)</td>
+<td>する</td>
+</tr>
+<tr>
+<td><code>.env.example</code></td>
+<td>環境変数テンプレート</td>
+<td>する</td>
+</tr>
+<tr>
+<td><code>.env</code></td>
+<td>環境変数実体</td>
+<td>しない</td>
+</tr>
+</tbody>
+</table>
+<h4 id="docker-composeyml-pythonfastapi"><a class="toclink" href="#docker-composeyml-pythonfastapi"><code>docker-compose.yml</code> 雛形 (Python/FastAPI例)</a></h4>
+<pre><code class="language-yaml">services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile.dev
+    volumes:
+      - .:/workspace:cached
+      - python-cache:/root/.cache
+    working_dir: /workspace
+    env_file: .env
+    ports:
+      - &quot;8000:8000&quot;
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn src.interface.main:app --reload --host 0.0.0.0
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: app_dev
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - &quot;5432:5432&quot;
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;pg_isready&quot;, &quot;-U&quot;, &quot;app&quot;]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - &quot;6379:6379&quot;
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;redis-cli&quot;, &quot;ping&quot;]
+      interval: 5s
+
+volumes:
+  postgres-data:
+  python-cache:
+</code></pre>
+<h4 id="makefile"><a class="toclink" href="#makefile"><code>Makefile</code> 雛形</a></h4>
+<pre><code class="language-makefile">.PHONY: help up down restart logs sh test lint fmt migrate migrate-rollback shell-db clean
+
+help:
+    @grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS=&quot;:.*?## &quot;}; {printf &quot;  %-20s %s
+&quot;, $$1, $$2}'
+
+up:           ## 開発環境起動
+    docker compose up -d
+
+down:         ## 開発環境停止
+    docker compose down
+
+restart:      ## 再起動
+    docker compose restart app
+
+logs:         ## アプリログ追尾
+    docker compose logs -f app
+
+sh:           ## アプリコンテナに入る
+    docker compose exec app bash
+
+test:         ## テスト実行
+    docker compose exec app pytest -v --cov=src
+
+lint:         ## Lint
+    docker compose exec app ruff check . &amp;&amp; docker compose exec app mypy src
+
+fmt:          ## Format
+    docker compose exec app ruff format .
+
+migrate:      ## DBマイグレーション (forward)
+    docker compose exec app alembic upgrade head
+
+migrate-rollback: ## DBマイグレーション (rollback 1段)
+    docker compose exec app alembic downgrade -1
+
+shell-db:     ## DBに接続
+    docker compose exec db psql -U app -d app_dev
+
+clean:        ## ボリュームごと削除 (注意)
+    docker compose down -v
+</code></pre>
+<blockquote>
+<p>言語が Go なら <code>make test</code> を <code>docker compose exec app go test ./...</code> に、Next.js なら <code>docker compose exec app pnpm test</code> に置換する。</p>
+</blockquote>
+<h3 id="docker-rules-readme"><a class="toclink" href="#docker-rules-readme">rules・README への落とし込み</a></h3>
+<h4 id="cursorrules70-local-envmdc-docker"><a class="toclink" href="#cursorrules70-local-envmdc-docker"><code><a href="flow-rules-samples.html#sample-70-local-env-mdc">.cursor/rules/70-local-env.mdc</a></code> (Docker前提を強制)</a></h4>
+<p>ホストOSに言語ランタイム・DB・キャッシュを直接インストールせず、全コマンドをコンテナ内で実行する原則を定める。AIエージェントへの指示（コマンド提示は必ず <code>docker compose exec</code> 経由）、新規依存追加時のフロー、環境変数（<code>.env.example</code> の同時更新）、IDE統合（Dev Containers 推奨、テスト/ビルド/マイグレーションはコンテナ内必須）をカバーする。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-70-local-env-mdc">70-local-env.mdc サンプル</a></p>
+<h4 id="readmemd-3"><a class="toclink" href="#readmemd-3">README.md に書くべき起動手順 (3行ルール)</a></h4>
+<pre><code class="language-markdown">## 起動方法
+
+```bash
+cp .env.example .env       # 必要なら値を編集
+make up                     # アプリ + DB + Redis を起動
+make migrate                # 初回のみ
+```
+</code></pre>
+<p>API: http://localhost:8000  (健康確認: <code>/healthz</code>)</p>
+<p>詳細は <code>make help</code> を参照。</p>
+<blockquote>
+<p>NOTE: 「3行で動く」を維持するため、初期化処理 (シードデータ等) は <code>make up</code> 後に1コマンドで完結させる。複雑になるなら <code>make seed</code> を別途用意する。</p>
+</blockquote>
+
+<!-- host-clis-v1 -->
+<h4 id="11-3-host-clis"><a class="toclink" href="#11-3-host-clis">ホスト CLI — エージェントと自分の時短定番</a></h4>
+<p>エージェントはシェル経由で PR 作成・デプロイ・ログ確認を試みる。<strong>CLI 未インストール / 未ログイン</strong>だと認証プロンプトで止まり、人間の手戻りが増える。利用中のクラウドサービス CLI はホストに入れ、認証済みの状態を Day1 目標にする。</p>
+<p class="wiki-lead">ホスト vs コンテナ: ホストで <code>gh</code>・<code>vercel</code>・<code>aws</code>・<code>docker compose</code>・<code>supabase</code>。アプリ実行・テストは <a href="#11-3-docker">11.3 Docker</a> どおり <code>docker compose exec</code> 経由（例: MinIO の <code>mc</code> はコンテナ内）。</p>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-gitignore.html">← .gitignore</a><a class="flow-pager__next" href="guide-repo-docker-2.html">Docker（2/2） →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

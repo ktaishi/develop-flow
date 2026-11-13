@@ -1,0 +1,570 @@
+<!--meta {"title": "メモ — 開発スタック", "desc": "付録的な技術スタック例。既存プロジェクトでは選定し直さない。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<header class="memo-page-head">
+    <h1>スタック選定</h1>
+    <p>Python / Go / Next.js など言語・FW の<strong>選定観点</strong>と具体例。</p>
+  </header>
+  <div class="memo-content">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>言語・FW は「選定観点」で先に評価軸を決める</li>
+<li>具体例（Python / Go / Next.js）を自分の構成に当てて読む</li>
+<li>フロント・バック共通の留意点を最後に確認する</li>
+</ul>
+<p class="page-brief__nav"><a href="memo-ai-tools.html">↑ メモ目次</a> <a href="memo-ai-tools.html">← AIツール</a> <a href="memo-cloud.html">クラウド →</a></p>
+</aside>
+<h3 id="21-stack"><a class="toclink" href="#21-stack">開発スタック（例）</a></h3>
+<p class="wiki-lead">付録的な技術スタック例。既存プロジェクトでは選定し直さない。</p>
+
+<h3 id="21-stack-criteria"><a class="toclink" href="#21-stack-criteria">技術スタック選定の観点</a></h3>
+<p>スタックは「流行」ではなく、<strong>制約・チーム・運用・AI 開発のしやすさ</strong>から逆算して決める。新規プロジェクトでは Phase 1 の前後で確定し、機能単位の理由は <code>docs/&lt;feature&gt;/04_tech_decisions.md</code>、組織横断の大きな判断は <a href="guide-repo-docs-1.html#11-7-adr">ADR</a> に残す。</p>
+
+<h4 id="21-stack-principles"><a class="toclink" href="#21-stack-principles">選定の原則</a></h4>
+<ul>
+<li><strong>既存プロジェクトでは選定し直さない</strong> — 既存スタック・lint・CI・rules に合わせる。逸脱は ADR + 明示的承認</li>
+<li><strong>レイヤごとに決める</strong> — 「全部 TypeScript」など一括決定より、言語 / FW / DB / 認証 / 観測を分けて判断する</li>
+<li><strong>候補はレイヤあたり最大 2 つ</strong> — 比較不能なほど選択肢を増やさない。第三候補が必要なら ADR 化</li>
+<li><strong>デフォルトはチーム標準</strong> — 新規でも「理由なく別 FW」は避ける。変更するなら trade-off を文章で残す</li>
+<li><strong>AI 向けに型・テスト・rules を先に決める</strong> — スタック確定と同時に <code>.cursor/rules/</code> の globs と検証コマンド（<code>tsc</code> / <code>pytest</code> / <code>go test</code>）を揃える</li>
+</ul>
+
+<h4 id="21-stack-dimensions"><a class="toclink" href="#21-stack-dimensions">7 つの観点軸</a></h4>
+<p>各候補を次の軸で 1〜5 段階または「高/中/低」で揃え、<strong>弱い軸が許容できるか</strong>で絞る。表は Phase 1 や ADR のたたき台にそのまま貼れる。</p>
+<table>
+<thead>
+<tr><th>観点</th><th>見ること</th><th>判断の例</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>1. プロジェクト制約</td>
+<td>期限・予算・リリース頻度・規制（金融・医療・個人情報）</td>
+<td>2 週間 MVP なら BaaS + マネージド DB。規制業界なら監査ログ・データ residency が先</td>
+</tr>
+<tr>
+<td>2. チーム熟練度</td>
+<td>言語・FW・クラウドの経験、オンボーディング人数</td>
+<td>Go 未経験チーム 3 人なら Python/FastAPI を標準に。学習コストは ADR に明記</td>
+</tr>
+<tr>
+<td>3. ドメイン要件</td>
+<td>リアルタイム、バッチ、モバイル、AI/RAG、ファイル処理、多言語</td>
+<td>WebSocket 多め → 長寿命接続に強いランタイム / インフラ。RAG → pgvector 等（<a href="memo-ai-reference-rag.html">RAG 参考</a>）</td>
+</tr>
+<tr>
+<td>4. 非機能要件</td>
+<td>可用性、レイテンシ p99、同時接続、データ量、RPO/RTO</td>
+<td>p99 &lt; 100ms が必須なら DB 近接 + キャッシュ設計を先に固定。Serverless のコールドスタートもここ</td>
+</tr>
+<tr>
+<td>5. 運用・観測</td>
+<td>既存 CI/CD、Secret 管理、ログ基盤、オンコール体制</td>
+<td>Datadog 既契約なら OpenTelemetry  exporter を統一。<code>trace_id</code> 貫通はフロント/バック共通</td>
+</tr>
+<tr>
+<td>6. エコシステム・保守</td>
+<td>LTS、CVE 対応、採用実績、ライセンス、ベンダーロックイン</td>
+<td>Pages Router 廃止方向など「新規非推奨」は採らない。ORM は FW 公式寄りを優先</td>
+</tr>
+<tr>
+<td>7. AI 開発適性</td>
+<td>型の強さ、テスト速度、rules で縛れるか、ドキュメント量</td>
+<td>TypeScript strict + Zod、Go interface + table test は AI 修正のレビューがしやすい</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="21-stack-layers"><a class="toclink" href="#21-stack-layers">レイヤ別の判断ポイント</a></h4>
+<p>「何を使うか」の前に、<strong>そのレイヤで何を満たす必要があるか</strong>を書く。</p>
+<table>
+<thead>
+<tr><th>レイヤ</th><th>先に決めること</th><th>よくある分岐</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>フロントエンド</td>
+<td>SEO / SSR 要否、オフライン、管理画面のみか公開サイトか</td>
+<td>コンポーネント SPA 中心 → React。routing / SSR / Server Actions 一体 → <a href="#123-nextjs-react">Next.js</a></td>
+</tr>
+<tr>
+<td>バックエンド API</td>
+<td>同期 REST 中心か、gRPC/GraphQL か、長時間ジョブの有無</td>
+<td>CRUD + OpenAPI 型生成 → Go / Python。Django 管理画面込み → Django</td>
+</tr>
+<tr>
+<td>データ</td>
+<td>トランザクション、全文検索、ベクトル、イベントソーシング</td>
+<td>PostgreSQL をデフォルト。ベクトルは pgvector または <a href="memo-cloud.html#21-infra-vector-db">専用 Vector DB</a></td>
+</tr>
+<tr>
+<td>認証・認可</td>
+<td>IdP 連携、B2B SSO、端末種別、セッション vs JWT</td>
+<td>Next.js なら Auth.js / Clerk。API のみなら OIDC + API Gateway</td>
+</tr>
+<tr>
+<td>非同期・ジョブ</td>
+<td>キュー、スケジュール、再試行、冪等性</td>
+<td>AWS なら SQS + Lambda/ECS（<a href="lambda-api-guide.html">Lambda ガイド</a>）。軽量なら DB ベースキュー</td>
+</tr>
+<tr>
+<td>ホスティング</td>
+<td>トラフィック形状、デプロイ頻度、プレビュー環境</td>
+<td>Next.js → Vercel。既存 AWS 標準 → Lambda / ECS（<a href="memo-cloud.html#21-infra">クラウド比較</a>）</td>
+</tr>
+<tr>
+<td>観測</td>
+<td>ログ・メトリクス・トレース・エラー監視の一本化</td>
+<td>OpenTelemetry を共通。Sentry（FE）+ 構造化ログ（BE）が一般的</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="21-stack-flow"><a class="toclink" href="#21-stack-flow">選定手順（新規プロジェクト）</a></h4>
+<ol class="steps">
+<li><strong>制約と非機能を列挙する</strong> — <a href="guide-workflow.html#0-5-requirements">要件すり合わせ</a> の成果物から、期限・SLA・データ分類・既存システム連携を抜き出す</li>
+<li><strong>チーム標準を確認する</strong> — 既存リポジトリ、社内テンプレ、契約中 SaaS。あればそれがデフォルト候補</li>
+<li><strong>レイヤごとに候補を 2 つまで絞る</strong> — 上記 7 軸でスコアリング。引き分けは「運用コストが低い方」「rules 化しやすい方」</li>
+<li><strong>API 契約の方式を決める</strong> — OpenAPI / GraphQL / tRPC のいずれか。モノレポなら型生成パイプラインまでセットで決める</li>
+<li><strong>Phase 1 で rules と CI を生成する</strong> — スタック確定後、<code>AGENTS.md</code> / <code>.cursor/rules/*.mdc</code> に globs・検証コマンド・禁止事項を書く（<a href="guide-rules-phase1.html#phase-1">Phase 1</a>）</li>
+<li><strong>理由を docs に残す</strong> — 機能単位は <code>04_tech_decisions.md</code>、組織に効く判断は <a href="guide-repo-docs-1.html#11-7-adr">ADR</a>。採らなかった案と理由を 3 行以上</li>
+</ol>
+
+<h4 id="21-stack-tradeoffs"><a class="toclink" href="#21-stack-tradeoffs">言語・FW の trade-off 早見</a></h4>
+<p>「正解」は 1 つではない。よくある対比と、<strong>こういうときに寄せる</strong>の目安。</p>
+<table>
+<thead>
+<tr><th>分岐</th><th>寄せる先（目安）</th><th>トレードオフ</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Python vs Go（API）</td>
+<td>Python: プロトタイプ・ML 連携・Django 一体 / Go: 高スループット・単一バイナリ・厳格な型</td>
+<td>Python は GIL・型の弱さ。Go は ORM エコシステムが薄い分、sqlc 等で補う</td>
+</tr>
+<tr>
+<td>FastAPI vs Django</td>
+<td>FastAPI: 小さな API・OpenAPI 自動生成 / Django: 管理画面・認証・ORM 一体</td>
+<td>Django は API のみプロジェクトでは重い。FastAPI は admin が別途必要</td>
+</tr>
+<tr>
+<td>React vs Next.js</td>
+<td>React: 既存 Vite/SPA・埋め込み UI / Next.js: 新規 Web アプリ・SSR・Vercel デプロイ</td>
+<td>Next.js はフレームワーク opinion が強い。React のみなら routing 等を自前選定</td>
+</tr>
+<tr>
+<td>REST vs GraphQL vs tRPC</td>
+<td>REST+OpenAPI: 多言語クライアント / GraphQL: クライアント主導の取得 / tRPC: TS モノレポ</td>
+<td>GraphQL は N+1・キャッシュ複雑。tRPC は TS 以外と相性が悪い</td>
+</tr>
+<tr>
+<td>Monolith vs マイクロサービス</td>
+<td>初期はモノリス（または modular monolith）</td>
+<td>分割はデプロイ独立・チーム分割が本当に必要になってから ADR</td>
+</tr>
+</tbody>
+</table>
+<p class="wiki-lead">フロントを早めに絞るなら、コンポーネント中心の SPA が主なら React、routing / SSR / Server Actions まで一体なら Next.js を初期候補にする。Next.js 内で React を使う構成なら両方を前提にしてよい。</p>
+
+<h4 id="21-stack-record"><a class="toclink" href="#21-stack-record">記録テンプレ（04_tech_decisions）</a></h4>
+<p>Phase 3 プロンプトや手動追記で、次の項目を埋める。AI に書かせるときも同じ見出しを指定する。</p>
+<pre><code class="language-markdown">## 技術選定: &lt;レイヤ名&gt;
+
+### 背景
+- 何を満たす必要があるか（非機能・制約）
+
+### 決定
+- 採用: &lt;具体名とバージョン目安&gt;
+
+### 検討した代替案
+- 案 A: 不採用理由
+- 案 B: 不採用理由
+
+### 影響
+- CI / rules / デプロイ / セキュリティ / コスト
+
+### 見直し条件
+- 例: 月間リクエスト 10x、チーム +5 人、p99 が SLA 超過</code></pre>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-stack-selection-invoice">
+<h4 class="info-panel__title" id="scenario-stack-selection-invoice">請求書エクスポート機能（新規）</h4>
+<div class="info-panel__body">
+<p>制約: 4 週間、PDF 生成 30 秒以内、既存 Go API リポジトリあり。</p>
+<ul>
+<li>バックエンド: 既存 <strong>Go + sqlc + pgx</strong> を踏襲（軸 2・6）</li>
+<li>PDF: 重い処理は <strong>SQS + Worker</strong>（軸 3・4 — <a href="lambda-api-guide.html">Lambda ガイド</a> の非同期パターン）</li>
+<li>フロント: 管理画面のみ → 既存 <strong>Next.js App Router</strong> に追加（軸 1・7）</li>
+<li>記録: <code>docs/invoice-export/04_tech_decisions.md</code> に「なぜ新 FW を入れないか」を 3 行</li>
+</ul>
+</div>
+</aside>
+
+<h3 id="121-python"><a class="toclink" href="#121-python">例: Python バックエンドの場合</a></h3>
+<table>
+<thead>
+<tr>
+<th>レイヤ</th>
+<th>選択</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>言語</td>
+<td>Python 3.12+</td>
+<td>既存プロジェクトに合わせる</td>
+</tr>
+<tr>
+<td>FW</td>
+<td>FastAPI / Django / Flask</td>
+<td>プロジェクト方針</td>
+</tr>
+<tr>
+<td>DB</td>
+<td>PostgreSQL / MySQL</td>
+<td>チーム標準</td>
+</tr>
+<tr>
+<td>ORM</td>
+<td>SQLAlchemy 2.0 / Django ORM</td>
+<td>FWに揃える</td>
+</tr>
+<tr>
+<td>マイグレーション</td>
+<td>Alembic / Django migrations</td>
+<td></td>
+</tr>
+<tr>
+<td>テスト</td>
+<td>pytest + pytest-cov + testcontainers</td>
+<td></td>
+</tr>
+<tr>
+<td>ログ</td>
+<td>structlog / 標準logging</td>
+<td>チーム標準</td>
+</tr>
+<tr>
+<td>メトリクス</td>
+<td>OpenTelemetry + Datadog/Grafana</td>
+<td>既存基盤に従う</td>
+</tr>
+<tr>
+<td>CI</td>
+<td>GitHub Actions / GitLab CI</td>
+<td>既存基盤</td>
+</tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-fastapi-phase1-rules-pyt">
+<h4 class="info-panel__title" id="scenario-fastapi-phase1-rules-pyt">FastAPI プロジェクトのテスト・移行構成</h4>
+<div class="info-panel__body"><p>新規 FastAPI プロジェクトでは Phase 1 で <a href="guide-rules-phase1.html#phase-1">Phase 1</a> 後、<code>pytest + testcontainers</code> を CI に追加する。ORM は SQLAlchemy 2.0 に揃え Alembic でマイグレーションする。</p></div>
+</aside>
+<h3 id="122-go-golang"><a class="toclink" href="#122-go-golang">例: Go (Golang) バックエンドの場合</a></h3>
+<table>
+<thead>
+<tr>
+<th>レイヤ</th>
+<th>選択</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>言語</td>
+<td>Go 1.22+</td>
+<td><code>log/slog</code> 標準採用のため 1.21+ 推奨</td>
+</tr>
+<tr>
+<td>FW</td>
+<td>Echo / Gin / Chi / 標準 <code>net/http</code></td>
+<td>軽量FW派が主流。小規模なら標準ライブラリのみでも可</td>
+</tr>
+<tr>
+<td>DB</td>
+<td>PostgreSQL / MySQL</td>
+<td>チーム標準</td>
+</tr>
+<tr>
+<td>DB ドライバ</td>
+<td>pgx (PostgreSQL) / go-sql-driver/mysql</td>
+<td>公式 <code>database/sql</code> 経由</td>
+</tr>
+<tr>
+<td>クエリ層</td>
+<td>sqlc / sqlx / GORM / ent</td>
+<td>sqlc は SQL→型安全コード生成で実務で人気</td>
+</tr>
+<tr>
+<td>マイグレーション</td>
+<td>golang-migrate / goose / atlas</td>
+<td></td>
+</tr>
+<tr>
+<td>バリデーション</td>
+<td>go-playground/validator</td>
+<td>構造体タグでルール定義</td>
+</tr>
+<tr>
+<td>DI</td>
+<td>手書きコンストラクタ注入 / wire (Google)</td>
+<td>重いDIフレームワークは少数派</td>
+</tr>
+<tr>
+<td>テスト</td>
+<td>標準 <code>testing</code> + testify + testcontainers-go</td>
+<td>テーブル駆動テストが慣習</td>
+</tr>
+<tr>
+<td>モック</td>
+<td>gomock / mockery / 手書き</td>
+<td>Protocol(interface) を手書きで差し替えるパターンが多い</td>
+</tr>
+<tr>
+<td>ログ</td>
+<td><code>log/slog</code> (標準, Go 1.21+) / zap / zerolog</td>
+<td>新規なら <code>slog</code> 推奨</td>
+</tr>
+<tr>
+<td>メトリクス</td>
+<td>OpenTelemetry + Prometheus / Datadog</td>
+<td>標準的</td>
+</tr>
+<tr>
+<td>CI</td>
+<td>GitHub Actions / GitLab CI</td>
+<td><code>go test ./...</code> / <code>golangci-lint</code> 必須</td>
+</tr>
+<tr>
+<td>Lint</td>
+<td>golangci-lint</td>
+<td>複数linter統合の事実上標準</td>
+</tr>
+<tr>
+<td>パッケージ管理</td>
+<td>Go Modules (<code>go.mod</code>)</td>
+<td>標準</td>
+</tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-go-api-sqlc-pgx-ci-go-test">
+<h4 class="info-panel__title" id="scenario-go-api-sqlc-pgx-ci-go-test">Go API のスタック選定例</h4>
+<div class="info-panel__body"><p>Go 新規 API では sqlc + pgx を選び、CI で <code>go test ./...</code> と <code>golangci-lint run</code> を必須にする。ログは <code>log/slog</code>、マイグレーションは golang-migrate を使う。</p></div>
+</aside>
+<h4 id="go-cursorrules20-coding-stylemdc"><a class="toclink" href="#go-cursorrules20-coding-stylemdc">Go 特有の <code><a href="flow-rules-samples.html#sample-20-coding-style-mdc">.cursor/rules/20-coding-style.mdc</a></code> 差分例</a></h4>
+<pre><code class="language-text">---
+description: Go コーディング規約
+globs: **/*.go
+---
+
+# Go Coding Style
+
+## 命名
+- 公開: PascalCase, 非公開: camelCase
+- パッケージ名: 短く小文字 (例: user, order)
+- インタフェース名: 通常は -er サフィックス (Reader, Writer, UserRepository)
+
+## エラーハンドリング
+- error は早期 return。ネストを深くしない
+- 業務エラーは独自型 (`var ErrInsufficientStock = errors.New(&quot;...&quot;)` または独自struct + `errors.Is/As`)
+- パニックは原則使わない (recoverもライブラリ境界のみ)
+- ラップは `fmt.Errorf(&quot;doing X: %w&quot;, err)`
+
+## 並行性
+- goroutine の起動箇所には必ず終了条件 (context.Context / chan close) を用意
+- channel の close は送信側のみ
+- 共有メモリより通信 (channel) を優先、ただし sync.Mutex を恐れない
+
+## context
+- 公開関数の第1引数は context.Context
+- context は構造体に保持しない
+
+## テスト
+- t.Run でサブテスト + テーブル駆動
+- t.Parallel() でレース検出
+- ヘルパは t.Helper() を呼ぶ
+</code></pre>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-phase1">
+<h4 class="info-panel__title" id="scenario-phase1">コーディング規約の配置と globs 指定</h4>
+<div class="info-panel__body"><p>Phase 1 で上記テンプレを <code><a href="flow-rules-samples.html#sample-20-coding-style-mdc">.cursor/rules/20-coding-style.mdc</a></code> に置き、globs を <code>**/*.go</code> に限定する。レビュアー B が error ラップ規約の遵守を PR で確認する。</p></div>
+</aside>
+<h3 id="123-nextjs-react"><a class="toclink" href="#123-nextjs-react">例: Next.js + React フロントエンドの場合</a></h3>
+<table>
+<thead>
+<tr>
+<th>レイヤ</th>
+<th>選択</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>言語</td>
+<td>TypeScript 5+</td>
+<td><code>strict: true</code> 必須</td>
+</tr>
+<tr>
+<td>FW</td>
+<td>Next.js 15+ (App Router)</td>
+<td>Pages Routerは新規採用しない</td>
+</tr>
+<tr>
+<td>UI ライブラリ</td>
+<td>React 19</td>
+<td>Server Components + Server Actions 活用</td>
+</tr>
+<tr>
+<td>スタイリング</td>
+<td>Tailwind CSS + shadcn/ui</td>
+<td>カスタムCSSは最小限</td>
+</tr>
+<tr>
+<td>状態管理 (Server)</td>
+<td>React Server Components + Server Actions</td>
+<td>デフォルトはサーバー側で完結</td>
+</tr>
+<tr>
+<td>状態管理 (Client)</td>
+<td>Zustand / Jotai / TanStack Query</td>
+<td>グローバル/サーバー状態の使い分け</td>
+</tr>
+<tr>
+<td>フォーム</td>
+<td>React Hook Form + Zod</td>
+<td>サーバー側でも Zod で再検証</td>
+</tr>
+<tr>
+<td>スキーマ検証</td>
+<td>Zod</td>
+<td>API境界・フォーム・環境変数すべてに使う</td>
+</tr>
+<tr>
+<td>認証</td>
+<td>Auth.js (NextAuth) / Clerk</td>
+<td>プロバイダ対応で選ぶ</td>
+</tr>
+<tr>
+<td>API クライアント</td>
+<td>TanStack Query / SWR / fetch</td>
+<td>RSC優先、必要時のみ</td>
+</tr>
+<tr>
+<td>テスト (ユニット)</td>
+<td>Vitest + React Testing Library</td>
+<td>Jest互換だが高速</td>
+</tr>
+<tr>
+<td>テスト (E2E)</td>
+<td>Playwright</td>
+<td>Cypressより推奨派が増えている</td>
+</tr>
+<tr>
+<td>ログ</td>
+<td>pino (サーバー) / 標準 console (ブラウザ)</td>
+<td>クライアント側はSentry等で集約</td>
+</tr>
+<tr>
+<td>観測</td>
+<td>OpenTelemetry + Vercel Analytics / Sentry</td>
+<td>エラー監視は Sentry が一般的</td>
+</tr>
+<tr>
+<td>パッケージ管理</td>
+<td>pnpm</td>
+<td>高速・ディスク効率</td>
+</tr>
+<tr>
+<td>Lint / Format</td>
+<td>ESLint + Prettier / Biome</td>
+<td>Biomeは新興だが高速</td>
+</tr>
+<tr>
+<td>型生成</td>
+<td>OpenAPI Generator / GraphQL Codegen / tRPC</td>
+<td>バックエンドAPIから型を引く</td>
+</tr>
+<tr>
+<td>CI</td>
+<td>GitHub Actions</td>
+<td><code>tsc --noEmit</code> / lint / test / build</td>
+</tr>
+<tr>
+<td>ホスティング</td>
+<td>Vercel / Cloud Run / 自前Node</td>
+<td>Next.js は Vercel が最適化されている</td>
+</tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-next">
+<h4 class="info-panel__title" id="scenario-next">Next.js 新規画面のスタック選定例</h4>
+<div class="info-panel__body"><p>Next.js 15 新規画面では App Router + Server Actions を既定にし、<code>pnpm exec tsc --noEmit</code> と Playwright を CI に入れる。UI は shadcn/ui + Tailwind に揃える。</p></div>
+</aside>
+<h4 id="nextjs-cursorrules20-coding-stylemdc"><a class="toclink" href="#nextjs-cursorrules20-coding-stylemdc">Next.js 特有の <code><a href="flow-rules-samples.html#sample-20-coding-style-mdc">.cursor/rules/20-coding-style.mdc</a></code> 差分例</a></h4>
+<pre><code class="language-text">---
+description: Next.js / React コーディング規約
+globs: **/*.{ts,tsx}
+---
+
+# Next.js / React Coding Style
+
+## ファイル配置 (App Router)
+- ルーティング: app/&lt;segment&gt;/page.tsx
+- レイアウト: app/&lt;segment&gt;/layout.tsx
+- API: app/api/&lt;endpoint&gt;/route.ts
+- 共通コンポーネント: components/
+- 業務ロジック: lib/ または domain/
+- 型: types/ または同居の types.ts
+
+## サーバー / クライアントの境界
+- デフォルトは Server Component
+- &quot;use client&quot; は必要最小限のリーフコンポーネントのみ
+- Server Action は app/actions/ または同居の actions.ts に集約
+- フォームは Server Action 経由を優先
+
+## TypeScript
+- any 禁止 (どうしても必要なら unknown + 型ガード)
+- 公開関数には引数/戻り値の型を明示
+- API境界は Zod で実行時検証
+- 環境変数も Zod でパース (process.env.* を直接使わない)
+
+## コンポーネント設計
+- Props は interface ではなく type
+- children は ReactNode
+- 副作用は useEffect 最小化、Server Component で済むなら使わない
+- イベントハンドラは on* 命名
+
+## アクセシビリティ
+- セマンティックHTML優先 (div の濫用禁止)
+- 画像は next/image、alt 必須
+- フォームは label + input の関連付け
+- キーボード操作可能を維持
+
+## パフォーマンス
+- 動的import (`next/dynamic`) で初期バンドル削減
+- 画像最適化は next/image 必須
+- Suspense + Streaming を活用
+- &quot;use client&quot; を上位に置きすぎない (バンドルが膨らむ)
+
+## テスト
+- ユニット: Vitest + React Testing Library (`screen.getByRole` 優先、`getByTestId` は最終手段)
+- E2E: Playwright で主要動線
+- アクセシビリティ: axe / @testing-library/jest-dom
+</code></pre>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-cursor-rules-20-coding-style">
+<h4 class="info-panel__title" id="scenario-cursor-rules-20-coding-style">TS/React のコーディング規約配置例</h4>
+<div class="info-panel__body"><p><code><a href="flow-rules-samples.html#sample-20-coding-style-mdc">.cursor/rules/20-coding-style.mdc</a></code> に globs <code>**/*.{ts,tsx}</code> で配置する。新規ページは <code>app/invoices/page.tsx</code> を Server Component のまま作り、<code>"use client"</code> はフォーム部品だけに限定する。</p></div>
+</aside>
+<h3 id="124"><a class="toclink" href="#124">フロント / バックエンド共通の留意点</a></h3>
+<ul>
+<li>モノレポ運用: フロントとバックが同居するなら pnpm workspaces / Turborepo / Nx を検討。Cursor では <code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code>、Claude Code では <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> / <code>.claude/skills/</code>、Codex では <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> / <code>.agents/skills/</code> をサブパッケージ単位で重ねられる</li>
+<li>API 契約: OpenAPI / GraphQL / tRPC のいずれかで型を一元化。Go backend + Next.js なら OpenAPI からの自動生成が現実的</li>
+<li>エラー連携: フロント・バック・ログ基盤で <code>trace_id</code> を貫通させる (<a href="guide-glossary-infra.html#opentelemetry">OpenTelemetry</a>)</li>
+<li>環境変数: 12-factor app に従い <code>.env</code> で分離、本番は基盤側のSecret Manager</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-go-api-next">
+<h4 class="info-panel__title" id="scenario-go-api-next">Go + Next.js monorepo の型・トレース連携</h4>
+<div class="info-panel__body"><p>Go API + Next.js の monorepo では OpenAPI から型を生成し、<code>trace_id</code> を両方のログに貫通させる。選定理由は <code>docs/invoice-export/04_tech_decisions.md</code> に残す。</p></div>
+</aside>
+<blockquote>
+<p>既存プロジェクトでは選定し直さない。既存スタックに合わせるのが原則。新規導入が必要なら docs/04_tech_decisions.md に理由を残す。</p>
+</blockquote>
+  </div>
+</div>

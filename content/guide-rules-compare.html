@@ -1,0 +1,52 @@
+<!--meta {"title": "Rules / Skills / Plan の切り分け", "desc": "Rules・Skills・Plan・docs の役割を1表で押さえる。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-compare">Rules / Skills / Plan の切り分け</h1>
+      <p class="lead">Rules・Skills・Plan・docs の役割を1表で押さえる。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li><strong>Rules</strong> — 毎回守る短い制約</li>
+<li><strong>Skills</strong> — 繰り返す多段手順だけ SKILL.md へ</li>
+<li><strong>Plan</strong> — 今回のスコープ（<code>tasks/todo.md</code>）</li>
+</ul>
+<p class="page-brief__tasks">判断地図の表を読む — 完了: Rules / Skills / Plan を説明できる</p>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-tools-intro.html">3ツール早見 — 共通と選び方 →</a></p>
+</aside>
+<h3 id="17-general-work-bridge"><a class="toclink" href="#17-general-work-bridge">一般業務から開発へ移るとき</a></h3>
+<ul>
+<li>毎回守る制約 → <a href="#17-compare">Rules</a> / <a href="guide-rules-skills-1.html#17-skills-guide">Skills</a></li>
+<li>今回だけの作業範囲 → <a href="guide-ops-harness.html#18-plan-patterns">Plan</a> / <code>tasks/todo.md</code></li>
+<li>仕様の正本 → <code>docs/</code>（AI への命令文は Rules に混ぜない）</li>
+<li>一般業務の安全原則 → <a href="guide-setup.html#1-general-ai-safety">一般業務の AI 安全運用</a></li>
+</ul>
+<!-- guide-rules-general-work:end -->
+<span id="rules-plan" class="redirect-anchor" aria-hidden="true"></span>
+<h3 id="17-compare"><a class="toclink" href="#17-compare">Rules / Skills / Plan — いつ何を使う</a></h3>
+<table>
+<thead><tr><th>種類</th><th>役割</th><th>いつ使う</th></tr></thead>
+<tbody>
+<tr><td><a href="guide-rules-compare.html#17-compare">Rules</a></td><td>毎回守る禁止事項・パス・検証手順</td><td>プロジェクト全体。常時またはファイル種別ごと</td></tr>
+<tr><td>Skills</td><td>反復手順（lint 一括・デプロ手順など）</td><td>同じ手順を何度も頼むとき</td></tr>
+<tr><td><a href="guide-rules-compare.html#17-compare">Plan</a></td><td>今回のタスク分解・終わりの条件（Done when）・リスク</td><td>実装前。中規模以上は必須</td></tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr><th>レイヤ</th><th>役割</th><th>全ツール共通の正本</th></tr>
+</thead>
+<tbody>
+<tr><td>Plan</td><td>今回のスコープ・終わりの条件（Done when）</td><td><code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code>（<code>.cursor/plans/</code> は Cursor の下書きのみ）</td></tr>
+<tr><td>仕様</td><td>要件・設計のチーム共有</td><td><code>docs/&lt;feature&gt;/</code>・<code>docs/adr/</code></td></tr>
+<tr><td>検証</td><td>ルール・仕様との整合</td><td>lint / テスト / CI</td></tr>
+<tr><td>振り返り</td><td>指摘パターン</td><td><code><a href="flow-rules-samples.html#sample-tasks-lessons-md">tasks/lessons.md</a></code> → 再発時に各ツールの Rules へ</td></tr>
+</tbody>
+</table>
+<p>全体像: <a href="guide-setup.html#0-quick">0章 3段フロー</a> · ツール選定: <a href="guide-setup.html#2-ai-selection">AIツール — 選定</a> · 実装参考: <a href="memo-ai-reference-rag.html">RAG・ベクトルDB</a> · <a href="memo-ai-reference-tools.html">Tool Use・MCP</a>。</p>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules.html">← 章トップ</a><a class="flow-pager__next" href="guide-rules-tools-intro.html">3ツール早見 — 共通と選び方 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

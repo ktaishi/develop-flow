@@ -1,0 +1,328 @@
+<!--meta {"title": "メモ — 開発手法", "desc": "セッションの進め方（Plan・検証・記録）は エージェント運用 — 6つの基本 と 運用章 が正本。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<header class="memo-page-head">
+    <h1>PRD・設計</h1>
+    <p>PRD・設計の参考。手順は <a href="guide-design.html#phase-3-design">設計章</a>。事例16件は下の折りたたみ。</p>
+  </header>
+  <div class="memo-content">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>PRD・設計書の置き場所と切り分けを先に決める</li>
+<li>5段階フローに沿って手を動かす（手順は設計章）</li>
+<li>事例16件は折りたたみから必要な型だけ参照する</li>
+</ul>
+<p class="page-brief__nav"><a href="memo-ai-tools.html">↑ メモ目次</a> <a href="memo-stack.html">← 開発スタック</a> <a href="memo-keywords.html">キーワード索引 →</a></p>
+</aside>
+<p class="wiki-lead">セッションの進め方（Plan・検証・記録）は <a href="guide-ops-orchestration.html#18-principles">エージェント運用 — 6つの基本</a> と <a href="guide-ops-orchestration.html#18-orchestration">運用章</a> が正本。</p>
+<h3 id="21-prd"><a class="toclink" href="#21-prd">docs 配下の PRD</a></h3>
+<div class="callout green">
+    正式な置き場 — <code>docs/PRD-workflow.md</code>
+  </div>
+  <h3 id="s-1">ツール別（メモ）</h3>
+  <p>Cursor / Claude Code / Codex ごとの PRD 作成の進め方。</p>
+  <table>
+    <tr><th></th><th>Cursor（IDE）</th><th>Claude Code（CLI）</th><th>Codex</th></tr>
+    <tr><td>進め方</td><td>Agent / Composer から <code>docs/prd/</code> へ直接作成・編集</td><td>ターミナルで <code>claude</code>、会話でドラフト作成</td><td><code>codex</code> CLI / IDE / クラウドタスク</td></tr>
+    <tr><td>永続ルール</td><td><code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> 等</td><td><code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> / <code><a href="flow-rules-samples.html#sample-claude-user-md">~/.claude/CLAUDE.md</a></code></td><td><code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> / <code><a href="flow-rules-samples.html#sample-codex-agents-global">~/.codex/AGENTS.md</a></code></td></tr>
+    <tr><td>コンテキスト</td><td><code>@docs/PRD-workflow.md</code> や関連ファイルを添付</td><td>パス指示、URL、必要なら MCP</td><td>同上 + <code>/init</code>、PR で <code>@codex</code></td></tr>
+    <tr><td>再利用</td><td>ルール・プロンプトテンプレ</td><td><code>.claude/skills/</code> に PRD Skill</td><td><code>.agents/skills/</code> に PRD Skill</td></tr>
+  </table>
+  <h3 id="s-2">置き場所</h3>
+  <p>単一機能・エピック・ドラフトのパス例。</p>
+  <table>
+    <tr><th>種別</th><th>パス例</th></tr>
+    <tr><td>単一機能</td><td><code>docs/prd/&lt;機能スラッグ&gt;.md</code></td></tr>
+    <tr><td>エピック</td><td><code>docs/prd/&lt;名前&gt;/README.md</code></td></tr>
+    <tr><td>ドラフト</td><td><code>docs/prd/drafts/yymmdd-概要.md</code> → 確定後に移動</td></tr>
+  </table>
+  <h3 id="s-3">フロー（5段階）</h3>
+  <ol>
+    <li>起票 — Issue 等へのリンクをPRDに必ず残す。</li>
+    <li>ドラフト — メタ・背景・ゴール/非ゴール・ユーザー・機能/非機能・受け入れ条件・メトリクス・リスク。</li>
+    <li>レビュー — PM・開発。コメントはPRまたはファイル上で残す。</li>
+    <li>承認 — ステータスと承認日を更新。</li>
+    <li>実装連携 — 実装PRにPRDパスを記載。詳細設計は別ドキュメント（API/DB等）へ。</li>
+  </ol>
+  <aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-cursor-rules">
+<h4 class="info-panel__title" id="scenario-cursor-rules">cursor/rules/</h4>
+<div class="info-panel__body"><p>Issue #482 向けに <code>docs/prd/invite-resend.md</code> を起票 → PM レビューで Approved → 実装 PR の description に PRD パスを記載。API 詳細は <code>docs/invite-resend/02_design.md</code> へ分離する。</p></div>
+</aside>
+  <h3 id="s-4">設計書との切り分け</h3>
+  <p>PRDは「何を・なぜ・誰のために」。API・DB・クラス設計は別ファイル。<code><a href="flow-rules-samples.html#sample-design-document-format-mdc">design-document-format.mdc</a></code> を参照。</p>
+
+<h3 id="21-devmethod"><a class="toclink" href="#21-devmethod">AI 開発手法</a></h3>
+
+  <h3 id="s-5">フロントエンドにおける AI 統合</h3>
+  <h4 id="21-devmethod-mfe"><a class="toclink" href="#21-devmethod-mfe">マイクロフロントエンドとモジュールフェデレーション</a></h4>
+  <p>大規模チームでは、独立してデプロイ可能なフロントエンドスライスを組み合わせるマイクロフロントエンドアーキテクチャが成熟してきた。チームが互いに踏み込まずに高速に動けると同時に、ユーザーには統合された体験を提供できる。AI ツールはマイクロフロントエンド間のインターフェース設計に特に有効だ。</p>
+  <h4 id="21-devmethod-typesafe"><a class="toclink" href="#21-devmethod-typesafe">型安全フルスタックワークフロー</a></h4>
+  <p>TypeScript がフロントエンドの事実上の標準になり、クライアントとサーバーの境界が曖昧になる中、バックエンドの処理・入力チェック・DB スキーマを共有型で表現するパターンが普及した（tRPC・Zod・Drizzle の組み合わせが代表例）。AI ツールはこの型情報を理解した上でコードを生成するため、型エラーが少ない。</p>
+  <h4 id="21-devmethod-ai-components"><a class="toclink" href="#21-devmethod-ai-components">AI ファーストなコンポーネント設計</a></h4>
+  <p>AI は人間の直感や歴史的コンテキストを持たないため、フロントエンドは 解釈可能性と予測可能性を優先して設計する必要がある。コンポーネントの責務を明確に分離し、props の型を明示し、副作用を局所化することで AI ツールの理解精度が上がる。</p>
+
+  <h3 id="s-6">バックエンドにおける AI 統合</h3>
+  <p>バックエンドは 2026 年に「受動的な部品」から「AI が判断・処理も担う層」へ変わりつつある。自動スケーリング、異常検知、スマート認証などが標準的な構成要素になってきた。</p>
+  <h4 id="21-infra-serverless-ai"><a class="toclink" href="#21-infra-serverless-ai">サーバーレス AI 推論</a></h4>
+  <p>推論ワークロードをサーバーレスで処理するパターンが広まっている。リクエストごとにスケールし、アイドル時のコストがかからず、GPU インスタンスを常時維持する必要がない。AWS Lambda on Graviton・GCP Cloud Run・Cloudflare Workers AI などが代表的な実装プラットフォームだ。</p>
+  <h4 id="21-infra-api-ai"><a class="toclink" href="#21-infra-api-ai">API 設計の AI 対応</a></h4>
+  <p>LLM やエージェントが API を呼び出すユースケースが増えた結果、AI ファースト API 設計が求められるようになった。エラーメッセージの自己記述性向上、OpenAPI スキーマによる自動ドキュメント、ストリーミングレスポンス対応（Server-Sent Events）、ツール定義との親和性が設計上の考慮点だ。</p>
+
+  <h3 id="s-7">AI 開発における品質管理</h3>
+  <p>AI 特有のリスクと対策。</p>
+  <table>
+    <tr><th>リスク</th><th>対策</th></tr>
+    <tr><td>もっともらしい誤回答による誤実装</td><td>生成されたコードのロジックを必ず理解してからマージする</td></tr>
+    <tr><td>古い API / 非推奨パターンの使用</td><td>CLAUDE.md・rules ファイルに現在の推奨パターンを明示する</td></tr>
+    <tr><td>セキュリティ脆弱性の混入</td><td>AI 生成コードも SAST・コードレビューの対象に含める</td></tr>
+    <tr><td>テストなしの実装</td><td>テスト作成も AI に依頼し、テスト通過を実装完了の条件にする</td></tr>
+    <tr><td>理解なきマージ</td><td>diff を必ず読む。理解できないコードはマージしない</td></tr>
+  </table>
+
+  <h3 id="s-8">アーキテクチャ選択の考え方</h3>
+  <p>AI ツールはアーキテクチャの提案はできるが、最終的な判断は人間が行う必要がある。以下は 2026 年時点で実証されているアーキテクチャ判断の指針だ。</p>
+  <p>モノリス vs マイクロサービス: 初期は単一サービスで始め、チームが成長し境界が明確になってから分割する（Majestic Monolith からの段階移行）。AI ツールはモノリスの特定機能を別サービスに切り出す作業に有効だ。データベース選択: トランザクション整合性が必要なら PostgreSQL、スキーマレスな柔軟性が必要なら MongoDB、RAG（検索で外部知識を LLM に渡す方式）用のベクトル検索には pgvector か専用ベクトル DB を追加する。フロントエンド フレームワーク: Next.js（React エコシステム・SSR 重視）、SvelteKit（パフォーマンス・軽量重視）、Nuxt.js（Vue エコシステム）が 2026 年の主要選択肢。</p>
+
+<h3 id="21-ddd-clean-arch"><a class="toclink" href="#21-ddd-clean-arch">DDD / クリーンアーキテクチャ</a></h3>
+<p class="callout yellow">位置づけ — 採用判断の正式な置き場はプロジェクトの ADR・<code>docs/</code>・rules。<a href="guide-design.html#phase-3-design">AI 開発フロー</a>本体とは別。</p>
+
+<h4>つのレイヤの違い</h4>
+<p>AI 協働・設計・検証の役割分担。</p>
+<table>
+<thead>
+<tr><th>観点</th><th>AI 協働（フロー正式な置き場）</th><th>設計（本メモ）</th><th>検証</th></tr>
+</thead>
+<tbody>
+<tr><td>役割</td><td>AI 出力の範囲・禁止・進め方</td><td>責務分割・不変条件・層境界</td><td>仕様・ルールとの整合確認</td></tr>
+<tr><td>正式な置き場</td><td><code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> 等 + Plan</td><td><code>docs/&lt;feature&gt;/02_design.md</code> + ADR</td><td>テスト / CI / レビュー</td></tr>
+<tr><td>典型タイミング</td><td>Phase 1 → 全 Phase</td><td>Phase 3 設計</td><td>Phase 4〜4、PR 前</td></tr>
+</tbody>
+</table>
+
+<h4>DDD とは</h4>
+<p>ドメイン駆動設計 (DDD) — ビジネスの複雑さをコードに反映させる設計思想。Entity / Value Object / Aggregate / Domain Service / Repository 等で業務知識と不変条件を表現する。</p>
+<ul>
+<li>向く: ドメインルールが複雑、長期運用、チームで用語を共有したい</li>
+<li>向かない: CRUD 中心・短期 PoC・ドメインが薄い管理画面</li>
+</ul>
+
+<h4>クリーンアーキテクチャとは</h4>
+<p>層と依存方向を固定する構成。Interface → Application → Domain ← Infrastructure のように、内側（Domain）が外側に依存しないことを徹底する。</p>
+<ul>
+<li>Domain: 業務ロジック（他レイヤ非依存）</li>
+<li>Application: ユースケース 運用</li>
+<li>Interface: HTTP / CLI 等</li>
+<li>Infrastructure: DB・外部 API 実装</li>
+</ul>
+<p>用語・レイヤ詳細は <a href="guide-glossary-design.html#design-concepts">用語集 — 設計概念</a> を参照。</p>
+
+<h4>採用時の docs 追記（Phase 3 プロンプト追記用）</h4>
+<p><a href="guide-design.html#61-design-addon">Phase 3</a> の設計プロンプトに、採用する場合のみ以下を足す。</p>
+<pre><code>【02_design.md 追記 — DDD / クリーンアーキ採用時】
+- DDD を適用する範囲 (Entity / VO / Aggregate / Domain Service / Repository)
+- クリーンアーキテクチャの層境界と依存方向
+- 主要クラス/関数の責務 (新規/変更)
+- エラー設計 (業務例外と技術例外の分離)
+- トランザクション境界・並行制御方針
+
+【04_tech_decisions.md 追記】
+- DDD / クリーンアーキをどこまで採るか、その理由
+- 採用しなかった選択肢 (Vertical Slice / モノリス CRUD 等)
+</code></pre>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-ddd">
+<h4 class="info-panel__title" id="scenario-ddd">DDD / クリーンアーキテクチャ</h4>
+<div class="info-panel__body"><p>注文キャンセル機能で DDD を採用する場合、Phase 3 プロンプト末尾に上記ブロックを足し、02_design に「Order＝集約ルート、明細は VO」と 04_tech_decisions に Vertical Slice を採らなかった理由を 3 行書かせる。</p></div>
+</aside>
+
+<h4>他の設計スタイル</h4>
+<p>DDD + クリーンアーキがデフォルトではない。Vertical Slice・モジュラモノリス・CRUD モノリス等を ADR で選んでよい。AI フローは「選んだ方針を rules と docs に書き、AI に毎回渡す」ことに専念する。</p>
+
+<h3 id="21-case-projects"><a class="toclink" href="#21-case-projects">プロジェクト事例一覧</a></h3>
+<p class="wiki-lead">技術設計・実装パターンの参考事例（16件）。各事例は初期表示で開いています。</p>
+<table>
+<thead><tr><th>ジャンル</th><th>プロジェクト</th><th>概要</th><th>ロール例</th></tr></thead>
+<tbody>
+<tr><td>🤖 AIオペレーター</td><td><a href="#21-case-ai-operator">AIオペレーター導入</a></td><td>コンタクトセンター向け AI 代替・自動化（PoC→本番）</td><td>バックエンドエンジニア · インフラエンジニア</td></tr><tr><td>🤖 AIオペレーター</td><td><a href="#21-case-voice-reservation">音声予約（IVR×AI）</a></td><td>Amazon Connect・Lambda・ノーコード IVR 中継</td><td>バックエンドエンジニア · インフラエンジニア</td></tr><tr><td>🧠 LLM・RAG</td><td><a href="#21-case-llm-rag">LLM／RAG基盤構築</a></td><td>社内向け RAG・エージェント基盤の設計・構築</td><td>バックエンドエンジニア · データサイエンティスト</td></tr><tr><td>🏦 銀行・証券</td><td><a href="#21-case-bank-coding">大手ネット銀行</a></td><td>銀行系コーディング・品質・コンプライアンス重視</td><td>バックエンドエンジニア</td></tr><tr><td>🏦 銀行・証券</td><td><a href="#21-case-securities-cloud">証券 クラウド移行</a></td><td>証券基幹の AWS/Azure 移行・Strangler Fig</td><td>インフラエンジニア · バックエンドエンジニア</td></tr><tr><td>🏦 銀行・証券</td><td><a href="#21-case-insurance-dx">保険会社 DX推進</a></td><td>保険基幹のモダナイゼーション・テックリード</td><td>バックエンドエンジニア · インフラエンジニア</td></tr><tr><td>💳 Fintech</td><td><a href="#21-case-fintech-ai">Fintech AI</a></td><td>金融×AI・予測モデルと API</td><td>データサイエンティスト · バックエンドエンジニア</td></tr><tr><td>💳 Fintech</td><td><a href="#21-case-payment-java">決済システム（Java）</a></td><td>決済基盤のクラウドネイティブ化</td><td>バックエンドエンジニア</td></tr><tr><td>🏢 ERP</td><td><a href="#21-case-erp-odoo">ERP刷新（Odoo）</a></td><td>Odoo による業務システム刷新</td><td>バックエンドエンジニア</td></tr><tr><td>⚡ SaaS</td><td><a href="#21-case-saas-em">SaaS EM／テックリード</a></td><td>プロダクト技術方針とチームマネジメント</td><td>バックエンドエンジニア · フロントエンドエンジニア</td></tr><tr><td>🏦 銀行・証券</td><td><a href="#21-case-infra-terraform">金融系インフラ Terraform</a></td><td>IaC・セキュリティ・FinOps</td><td>インフラエンジニア</td></tr><tr><td>🔧 インフラ</td><td><a href="#21-case-sre-k8s">SRE／DevOps（Kubernetes）</a></td><td>K8s・ArgoCD・CI/CD・SLO</td><td>インフラエンジニア · バックエンドエンジニア</td></tr><tr><td>📊 機械学習</td><td><a href="#21-case-mlops">機械学習 MLOps</a></td><td>推薦エンジン・MLOps パイプライン</td><td>データサイエンティスト · バックエンドエンジニア</td></tr><tr><td>⚡ SaaS</td><td><a href="#21-case-go-adtech">広告代理店（Go）</a></td><td>RTB・低レイテンシ Go API</td><td>バックエンドエンジニア</td></tr><tr><td>📡 通信</td><td><a href="#21-case-telecom-5g">通信キャリア 5G</a></td><td>5G 関連バックエンド・高可用</td><td>バックエンドエンジニア · インフラエンジニア</td></tr><tr><td>⚡ SaaS</td><td><a href="#21-case-global-python">外資系 Python バックエンド</a></td><td>グローバルチーム向け Python API</td><td>バックエンドエンジニア</td></tr>
+</tbody>
+</table>
+
+
+<details class="section-fold" id="21-case-ai-operator" open>
+<summary>事例：AIオペレーター導入プロジェクト</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-voice-reservation" open>
+<summary>事例：AIを使用した音声予約機能の拡張および新規開発</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-llm-rag" open>
+<summary>事例：LLM／RAG基盤構築</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-bank-coding" open>
+<summary>事例：大手ネット銀行コーディング業務</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-securities-cloud" open>
+<summary>事例：証券システム クラウド移行</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-insurance-dx" open>
+<summary>事例：大手保険会社DX推進テックリード</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-fintech-ai" open>
+<summary>事例：Fintech AI（データサイエンティスト）</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-payment-java" open>
+<summary>事例：決済システム刷新（Java/Spring）</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-erp-odoo" open>
+<summary>事例：ERP刷新（Odoo）</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-saas-em" open>
+<summary>事例：SaaS系スタートアップ EM／テックリード</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-infra-terraform" open>
+<summary>事例：金融系クラウドインフラ設計（Terraform/AWS）</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-sre-k8s" open>
+<summary>事例：SRE／DevOps（Kubernetes/ArgoCD）</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-mlops" open>
+<summary>事例：機械学習MLOps／推薦システム基盤構築</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-go-adtech" open>
+<summary>事例：広告代理店（Go）バックエンド</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-telecom-5g" open>
+<summary>事例：通信キャリア向け5G関連バックエンドシステム設計</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<details class="section-fold" id="21-case-global-python" open>
+<summary>事例：外資系 Python バックエンド</summary>
+<div class="memo-case-body">
+<ul>
+<li>アーキテクチャ・フェーズ設計の参考（手順正本: <a href="guide-design.html#phase-3-design">Phase 3</a>）</li>
+<li>Rules / Plan: <a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+<li>インフラ: <a href="memo-cloud.html">クラウド比較</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul></div>
+</details>
+
+
+<!-- INFRA -->
+</div>
+</div>

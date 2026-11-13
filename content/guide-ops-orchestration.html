@@ -1,0 +1,117 @@
+<!--meta {"title": "エージェント運用", "desc": "Plan・調査の任せ方・6ルール。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-ops-orchestration">エージェント運用</h1>
+      <p class="lead">Plan・調査の任せ方・6ルール。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>Plan から</li>
+<li>調査は別 AI</li>
+<li>lessons に残す</li>
+</ul>
+<p class="page-brief__tasks">小タスク1件を完走 — 完了: 2ルールを試した</p>
+<p class="page-brief__nav"><a href="guide-ops.html">↑ 章トップ</a> <a href="guide-ops-harness.html">ハーネスとマルチエージェント →</a></p>
+</aside>
+<span id="18-principles" class="redirect-anchor" aria-hidden="true"></span>
+<h3 id="18-orchestration"><a class="toclink" href="#18-orchestration">エージェント運用 — 6つの基本ルール</a></h3>
+<p class="wiki-lead">Plan 先・調査委譲・lessons・検証・簡潔さ・自律修正。詳細は下の折りたたみと <a href="flow-rules-samples.html#sample-agent-workflow-orchestration-mdc">agent-workflow-orchestration.mdc</a>。</p>
+<table>
+<thead><tr><th>#</th><th>ルール</th><th>参照</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Plan で始める</td><td><a href="guide-design.html#phase-2-plan">Phase 2 Plan</a></td></tr>
+<tr><td>2</td><td>調査は別 AI に任せる</td><td><a href="guide-ops-harness.html#18-multiagent">マルチエージェント</a></td></tr>
+<tr><td>3</td><td>lessons に残す</td><td><a href="#18-3-lessons">lessons</a> · <code>tasks/lessons.md</code></td></tr>
+<tr><td>4</td><td>完了前に検証</td><td><a href="#18-4-verify">検証</a></td></tr>
+<tr><td>5</td><td>簡潔さ</td><td>単純修正に過剰設計しない</td></tr>
+<tr><td>6</td><td>自律的バグ修正</td><td><a href="#18-6-bugs">バグ修正</a>（git は許可後）</td></tr>
+</tbody></table>
+<!-- guide-ops-dev-workflows:start -->
+<h3 id="18-dev-workflows"><a class="toclink" href="#18-dev-workflows">定期ワークフロー（4要素）</a></h3>
+<p>都度チャットで依頼する作業と、トリガーで回す作業を分ける。チャットは答えるだけ、ワークフローは成果物を渡す。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>要素</th><th>開発での置き場</th></tr></thead>
+<tbody>
+<tr><td>ROLE</td><td><code>.cursor/rules/</code> · <code>AGENTS.md</code> · <code>SKILL.md</code></td></tr>
+<tr><td>TOOLS</td><td>MCP（GitHub · CI）· <code>gh</code> · テストコマンド</td></tr>
+<tr><td>TRIGGER</td><td>Cursor Automations · Hooks · <code>/loop</code> · CI Webhook</td></tr>
+<tr><td>OUTPUT</td><td>Issue コメント · digest メモ · Draft PR 案（マージは人間）</td></tr>
+</tbody>
+</table>
+</div>
+<p>最初の1本: <strong>CI 失敗 digest</strong>（失敗ジョブ · エラー要約 · 次アクション1行）。<code>git push</code> / マージは人間。</p>
+<details class="section-fold">
+<summary>CI 失敗 digest — プロンプト例</summary>
+<pre><code class="language-text">ROLE: CI 失敗要約。憶測で原因を断定しない。
+TRIGGER: main の CI が red になったとき（または平日朝の定期確認）
+TOOLS: GitHub MCP / gh cli — 読み取りのみ
+OUTPUT: 1メッセージ（FAILURES / LIKELY_CAUSE / NEXT_ACTION 各3行以内）
+制約: 自動修復・push 禁止。修正案は diff 案まで。</code></pre>
+</details>
+<p class="workflow-split-lead">実装手段: <a href="guide-ops-harness.html#18-2-subagents">委譲 · /loop</a> · <a href="guide-ops-harness.html#18-harness-2026">Hooks</a>。Loop トレンド早見 → <a href="memo-ai-tools.html#21-loop-engineering">memo Loop engineering</a>。一般業務の型 → <a href="memo-ai-tools.html#21-chat-vs-workflow">4要素早見</a>。参考: <a href="https://x.com/0xchromium/status/2062515355306631467">@0xchromium</a> · <a href="https://x.com/samueljmcd/status/2066524627585634765">@samueljmcd（verifier）</a> · <a href="https://x.com/steipete/status/2063697162748260627">@steipete</a>（2026-06）。</p>
+<!-- guide-ops-dev-workflows:end -->
+<details class="section-fold" id="18-orch-detail">
+<summary>6つの基本ルール・タスク管理（詳細）</summary>
+<ol class="steps">
+<li><strong>Plan で始める</strong> — 完了条件・検証ステップまで書く（<a href="guide-design.html#51-plan-outputs">Plan 成果物</a>）</li>
+<li><strong>調査は別 AI に任せる</strong> — 1担当=1タスク。メイン会話を散らかさない</li>
+<span id="18-3-lessons" class="redirect-anchor" aria-hidden="true"></span>
+<li><strong>lessons に残す</strong> — 指摘パターンを <code>tasks/lessons.md</code> → 再発時に rules へ</li>
+<span id="18-4-verify" class="redirect-anchor" aria-hidden="true"></span>
+<li><strong>完了前に検証</strong> — テスト・curl 等で動いたことを示す</li>
+<li><strong>簡潔さ</strong> — 単純な修正に過剰設計しない</li>
+<span id="18-6-bugs" class="redirect-anchor" aria-hidden="true"></span>
+<li><strong>自律的バグ修正</strong> — git push 等はユーザー許可を待つ</li>
+</ol>
+<p>Plan 置き場パターン・適用シナリオの詳細は <a href="flow-rules-samples.html#sample-agent-workflow-orchestration-mdc">ルールサンプル</a> と上記 .mdc を参照。</p>
+</details>
+
+<h4 id="18-context"><a class="toclink" href="#18-context">会話の文脈管理（2026）</a></h4>
+<p>AI の回答の質は、渡す情報の量より、余計な情報が少ないかで決まる。下表は状況別の推奨。</p>
+<table>
+<thead><tr><th>状況</th><th>推奨</th></tr></thead>
+<tbody>
+<tr><td>コードベースの調査・「どこにある？」</td><td>ファイルを総 <code>@</code> しない。自然言語で領域を指定。必要なら 1 ファイルだけ <code>@</code></td></tr>
+<tr><td>ブランチ上の作業・レビュー</td><td><code>@Branch</code> で差分コンテキストを渡す</td></tr>
+<tr><td>前セッションの続き</td><td>会話全文のコピペではなく <code>@Past Chats</code> で選択的に参照（手順: <a href="guide-rules-cursor.html#17-past-chats">ルール/プラン — @Past Chats</a>）</td></tr>
+<tr><td>別タスク・別機能に着手</td><td>新規チャット。Plan（チャット or ファイル）/ ADR / 必要なら <code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code> を正式な記録に</td></tr>
+<tr><td>同じ機能の反復・デバッグ</td><td>同一会話を継続（直前の実装文脈が必要）</td></tr>
+<tr><td>エージェントが同じミスを繰り返す</td><td>会話を切り、ルールを 1 条追加してから再開</td></tr>
+<tr><td>広い調査・並列分析</td><td>別の AI 担当（Task）に委譲し、結果だけメインへ（<a href="guide-ops-harness.html#18-2-subagents">調査の任せ方</a>）</td></tr>
+</tbody>
+</table>
+
+<p>ツール横断の整理・公式 BP 対応表: <a href="guide-rules-tools-intro.html#17-cross-tool">ルール/プラン — 3ツール横断</a> · <a href="guide-rules-tools-intro.html#17-official-sources">公式ドキュメント</a>。プロンプト: <a href="guide-rules-prompt.html#17-prompt">プロンプト設計</a>。</p>
+<h4 id="18-decompose-2026"><a class="toclink" href="#18-decompose-2026">分解・並列・検証の分離（2026-07）</a></h4>
+<p>出典: <a href="https://code.claude.com/docs/en/best-practices">Claude Code — Best practices</a>（公式）· 2026 上半期のコミュニティ検証。エージェント時代に効くのは<strong>仕事の分解の設計</strong> — どのタスクが自己完結か、どの出力が短く要約できるか、人間レビューのゲートをどこに置くか。</p>
+<h5 id="18-decompose-unit">切り出す単位の目安</h5>
+<table>
+<thead><tr><th>形</th><th>使う場面</th><th>例</th></tr></thead>
+<tbody>
+<tr><td><strong>Command</strong>（スラッシュコマンド）</td><td>プロンプトの定型文で足りるとき</td><td><code>/verify</code> · <code>/standup</code></td></tr>
+<tr><td><strong>Skill</strong></td><td>ドメイン手順・補助ファイルが要るとき</td><td>PR レビュー観点 + チェックリスト同梱</td></tr>
+<tr><td><strong>Subagent</strong></td><td>隔離して並列に走らせたい・結果だけ欲しいとき</td><td>広い調査 · 大量ファイルの横断確認</td></tr>
+</tbody>
+</table>
+<h5 id="18-parallel-limit">並列数の目安</h5>
+<ul>
+<li>並列 subagent は <strong>3〜5 が費用対効果の山</strong>。10 を超えても精度はほぼ上がらず、コストとレビュー負荷だけ増える</li>
+<li>並列にするのは<strong>出力を短く要約して返せるタスクだけ</strong>。要約できない（diff 全文が要る等）ものはメイン会話で扱う</li>
+<li>ブランチ衝突を避けるなら <a href="guide-ops-harness.html#18-worktree-parallel">worktree 並列</a> と組み合わせる</li>
+</ul>
+<h5 id="18-verifier-split">検証の分離 — 作った本人に採点させない</h5>
+<ul>
+<li>実装した会話（エージェント）に「動いた？」と聞かない。<strong>別の verifier</strong>（新しい会話 or 検証 subagent）に<strong>反証を試みさせる</strong></li>
+<li>verifier に渡すのは<strong>完了条件と検証コマンド</strong>のみ。実装の経緯を渡すと採点が甘くなる</li>
+<li>機械で検証できるもの（テスト・lint・curl）は <a href="#18-orchestration">ルール4（完了前検証）</a>どおり自動で。人間レビューは<strong>設計判断とセキュリティ境界</strong>に集中させる</li>
+</ul>
+<p>関連: <a href="guide-ops-harness.html">ハーネスとマルチエージェント</a> · <a href="guide-rules.html#rules-skills-quick-map">ルール設定・スキル設定の判断地図</a></p>
+
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-ops.html">← 章トップ</a><a class="flow-pager__next" href="guide-ops-harness.html">ハーネスとマルチエージェント →</a></nav>" aria-label="前後の章"><a href="guide-implement.html">← 実装</a><a class="flow-pager__next" href="guide-repo.html">リポジトリ →</a></nav>" aria-label="前後の章"><a href="guide-implement.html">← 実装</a><a class="flow-pager__next" href="guide-repo.html">リポジトリ →</a></nav>" aria-label="前後の章"><a href="guide-workflow.html">← 全体像</a><a class="flow-pager__next" href="guide-glossary.html">用語集 →</a></nav>
+  </article>
+</div>

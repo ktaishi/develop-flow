@@ -1,0 +1,116 @@
+<!--meta {"title": "運用・監視・保守", "desc": "オブザーバビリティ3本柱・SLI/SLO・リリース後検証・インシデント対応・runbook・技術的負債・Feature flag・バックアップ・依存更新/バージョンアップ。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Chapter 08</div>
+    <h1>🔧 運用・監視・保守</h1>
+    <p class="hb-lead">作って終わりではない。観測し、障害に備え、負債を返済し、依存を更新し続ける。リリース後検証から次サイクルの改善までが運用の仕事。</p>
+    <img class="hb-hero-img" src="/assets/handbook/operations.svg" alt="運用・監視・保守のイメージ">
+
+    <h2 id="s-1">オブザーバビリティの3本柱</h2>
+    <div class="hb-grid hb-cols-3">
+      <div class="hb-card"><h4>📈 メトリクス</h4>レイテンシ(p50/p95/p99)・エラー率・スループット・コスト・飽和度。傾向と異常を数値で。</div>
+      <div class="hb-card"><h4>📝 ログ(構造化)</h4>JSON構造化 + 相関ID。検索・集計可能に。秘密/個人情報は出さない。</div>
+      <div class="hb-card"><h4>🔗 トレース</h4>分散トレースでリクエストを横断追跡。ボトルネック特定に必須。</div>
+    </div>
+    <p>3本柱は<strong>相関ID(trace id)</strong>で繋ぐ。あるエラーログから、そのリクエストのトレースとメトリクスへ辿れる状態が理想（<a href="development.html">05 開発・実装</a>の相関IDと接続）。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">構造化ログ（1行1JSON・grep/集計しやすい）</div>
+<pre><span class="hb-c">// ❌ 検索も集計もできない</span>
+console.log("order failed for user " + userId);
+
+<span class="hb-c">// ✅ 構造化 + 相関ID（秘密は出さない）</span>
+logger.error({ event: "order.failed", traceId, userId, reason: "stock_out" });
+<span class="hb-c">// → {"level":"error","event":"order.failed","traceId":"a1b2","userId":"u_42",...}</span></pre>
+      <div class="hb-cap">図: フィールドで出すと <code>event=order.failed</code> で件数・傾向を集計できる。</div>
+    </figure>
+
+    <h2 id="s-2">SLI / SLO とアラート</h2>
+    <p><strong>SLI</strong>（実測指標）と <strong>SLO</strong>（目標値）を定義し、<strong>エラーバジェット</strong>で意思決定する（尽きたら新機能より安定化を優先）。</p>
+    <table>
+      <tr><th>SLI例</th><th>SLO例</th></tr>
+      <tr><td>可用性（成功レスポンス率）</td><td>99.9% / 月</td></tr>
+      <tr><td>レイテンシ（p95応答時間）</td><td>&le; 300ms</td></tr>
+      <tr><td>エラー率</td><td>&le; 0.1%</td></tr>
+    </table>
+    <p><strong>意味のあるアラートだけ鳴らす</strong>（アラート疲れの回避）。それ以外はダッシュボードで見る。</p>
+    <div class="hb-callout hb-gotcha"><b>落とし穴:</b> <code>/health</code> はアプリのプロセスが生きていれば、DBダウン時も200を返す実装が多い。死活確認には依存先（DB・キャッシュ等）まで見る <code>/ready</code> を使う。</div>
+    <figure class="hb-snippet">
+      <div class="hb-fname">/health と /ready の違い</div>
+<pre><span class="hb-c">// /health: プロセスが生きているか（DBが落ちても 200 を返す）</span>
+app.get("/health", (_, res) =&gt; res.send("ok"));
+
+<span class="hb-c">// /ready: 依存先まで確認（DBが落ちたら 503 → 監視で検知できる）</span>
+app.get("/ready", async (_, res) =&gt; {
+  try { await db.query("SELECT 1"); res.send("ready"); }
+  catch { res.status(503).send("db down"); }
+});</pre>
+      <div class="hb-cap">図: リリース後検証・死活監視は依存込みの <code>/ready</code> を見る。</div>
+    </figure>
+
+    <h2 id="s-3">リリース後検証 — ここまでで「完了」</h2>
+    <figure>
+      <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant D as デプロイ
+  participant H as ヘルスチェック
+  participant F as 主要動線
+  participant M as メトリクス監視
+  D->>H: /ready が 200 か
+  H-->>D: OK
+  D->>F: 主要動線のスモークテスト
+  F-->>D: OK
+  D->>M: エラーレート/レイテンシを監視
+  alt 閾値超過
+    M-->>D: ロールバック発動
+  else 正常
+    M-->>D: リリース完了として記録
+  end
+      </pre>
+      <figcaption>図: ヘルスチェック→主要動線→メトリクス監視。異常ならロールバック。</figcaption>
+    </figure>
+
+    <h2 id="s-4">インシデント対応</h2>
+    <p><strong>runbook（オンコール手順書）</strong>を用意し、障害時に迷わない。対応は「トリアージ → 暫定対応 → 復旧 → ブレームレスなポストモーテム」。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  A["🚨 検知<br/>(アラート/報告)"] --> T["トリアージ<br/>影響範囲・重大度"]
+  T --> M["暫定対応<br/>(ロールバック等)"]
+  M --> R["復旧確認"]
+  R --> P["📝 ポストモーテム<br/>(原因・再発防止/非難しない)"]
+  P --> K["runbook/ドキュメント更新"]
+      </pre>
+      <figcaption>図: 検知→トリアージ→暫定対応→復旧→ポストモーテム→知見の蓄積。</figcaption>
+    </figure>
+
+    <h2 id="s-5">保守 — 負債・フラグ・バックアップ</h2>
+    <ul>
+      <li><strong>ドキュメントをコードと同居</strong>（README/runbook/ADR）。PRで同時更新し腐らせない。</li>
+      <li><strong>技術的負債を可視化</strong>し優先度を付けて定期返済する。「動いているから触らない」を続けるとまとめて壊れる。</li>
+      <li><strong>Feature flag</strong> で段階公開とキルスイッチ。デプロイとリリースを分離できる。</li>
+      <li><strong>バックアップはリストア訓練</strong>して初めて有効。取れているだけでは不十分。</li>
+    </ul>
+
+    <h2 id="s-6">依存更新・バージョンアップ</h2>
+    <p>更新は溜めると破壊的変更が積み重なり危険。<strong>小さく継続的に</strong>上げる。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart TD
+  P["パッチ更新<br/>(x.y.Z)"] --> T1{"テスト緑?"}
+  T1 -->|No| F1["切り分け→修正"]
+  T1 -->|Yes| Mi["マイナー更新<br/>(x.Y.0)"]
+  Mi --> Ma["メジャー更新<br/>(X.0.0)<br/>※破壊的変更を読む"]
+  Ma --> CM["公式codemod適用"]
+  CM --> Done["テスト緑で完了"]
+      </pre>
+      <figcaption>図: 小→大の順で一段ずつ。各段でテストを安全網にする。</figcaption>
+    </figure>
+    <ul>
+      <li><strong>Renovate / Dependabot</strong> で更新PRを自動生成。セキュリティ更新は優先。</li>
+      <li>パッチ → マイナー → メジャーの順で<strong>一度に一つ</strong>。各段でテスト全件グリーンを確認。</li>
+      <li>メジャーは<strong>CHANGELOG/破壊的変更を読み、公式codemod</strong>を使う。LTS/EOLを追い計画的に更新。</li>
+    </ul>
+    <div class="hb-callout hb-gotcha"><b>落とし穴:</b> AIの知識にはカットオフがあり、カットオフ以降の破壊的変更や新APIを知らない。メジャー更新では必ず公式の移行ガイドを一次情報としてAIに渡し、それに沿わせる。</div>
+
+    <div class="hb-callout hb-tip"><b>サイクルの環:</b> リリース後検証や監視で得た数値（遅い動線・多いエラー・返すべき負債）は、次サイクルの <a href="requirements.html">02 要件定義</a> の入力になる。運用は終点ではなく次の改善の起点。</div>
+</div>

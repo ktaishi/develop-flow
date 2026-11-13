@@ -1,0 +1,110 @@
+<!--meta {"title": "AIを業務に組み込む", "desc": "対象業務の選定から定着・効果測定までの導入手順。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-ai-business">AIを業務に組み込む</h1>
+      <p class="lead">対象業務の選定から定着・効果測定までの導入手順。</p>
+    </header>
+    <div class="flow-body">
+
+<p class="wiki-lead">AI を「個人が時々使う」状態から「業務プロセスに組み込まれて毎日価値を出す」状態へ進めるための手順。開発以外の一般業務も対象。ツール選定は<a href="guide-ai-tools.html">ツール徹底比較</a>、技術的な統合は<a href="guide-ai-system.html">システムへの組み込み</a>へ。</p>
+
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>対象業務を選定し、小さく試す範囲を決める</li>
+<li>定着パターンとガバナンスを先に整える</li>
+<li>ROI と効果測定の指標を最初に決める</li>
+</ul>
+<p class="page-brief__nav"><a href="index.html#playbook-hub">↑ 章トップ</a> <a href="guide-ai-tools.html">← ツール徹底比較</a> <a href="guide-ai-system.html">システムへの組み込み →</a></p>
+</aside>
+<h3 id="biz-steps"><a class="toclink" href="#biz-steps">導入5ステップ</a></h3>
+<ol class="steps">
+<li><strong>棚卸し</strong> — 部門の定常業務を書き出し、頻度と所要時間を付ける（1週間分の実績で十分）</li>
+<li><strong>選定</strong> — 下のマトリクスで「頻度が高い × 入出力が定型」の業務から着手対象を1〜2個選ぶ</li>
+<li><strong>PoC（2週間）</strong> — 担当者1〜2名で実運用に並走させる。成果物の品質と所要時間を記録</li>
+<li><strong>手順化</strong> — うまくいったプロンプト・手順をテンプレ化し、チームの共有場所（Wiki / リポジトリ）に置く</li>
+<li><strong>定着・計測</strong> — 月次で利用率と削減時間を確認。使われない手順は捨てるか書き直す</li>
+</ol>
+
+<h4 id="biz-matrix"><a class="toclink" href="#biz-matrix">業務選定マトリクス</a></h4>
+<table>
+<thead><tr><th>入出力が定型 ＼ 頻度</th><th>高頻度（毎日〜毎週）</th><th>低頻度（毎月〜）</th></tr></thead>
+<tbody>
+<tr><td><strong>定型</strong>（議事録、定型レポート、一次対応）</td><td>◎ 最優先。ワークフロー化・自動実行まで狙う</td><td>○ テンプレ＋チャットで十分</td></tr>
+<tr><td><strong>非定型</strong>（企画、分析、交渉）</td><td>○ チャットで支援。完全自動化は狙わない</td><td>△ 後回し。個人の工夫に任せる</td></tr>
+</tbody>
+</table>
+
+<hr />
+<h3 id="biz-patterns"><a class="toclink" href="#biz-patterns">4つの組み込み型</a></h3>
+<p>「AI を業務に組み込む」の中身は実際には4段階ある。右に行くほど効果が大きく、設計と管理のコストも上がる。</p>
+<table>
+<thead><tr><th>型</th><th>姿</th><th>例</th><th>必要なもの</th></tr></thead>
+<tbody>
+<tr><td>1. チャット利用</td><td>人がその都度 AI に聞く</td><td>調査・要約・文面作成・壁打ち</td><td>ツール契約と<a href="guide-setup.html#1-general-ai-safety">安全ルール</a>だけ</td></tr>
+<tr><td>2. テンプレ運用</td><td>共有プロンプト・手順書を全員が使う</td><td>議事録の型、レビュー観点表、翻訳指示</td><td>テンプレ置き場と更新係</td></tr>
+<tr><td>3. ワークフロー</td><td>決まった入力→処理→出力を AI が担う</td><td>受信メール分類→下書き、週次レポート生成</td><td>トリガー・入出力の定義（<a href="memo-ai-tools.html#21-chat-vs-workflow">4要素</a>）</td></tr>
+<tr><td>4. エージェント</td><td>目標を渡し、手順は AI が判断</td><td>コーディングエージェント、調査エージェント</td><td>権限設計・検証ループ（<a href="guide-ops-orchestration.html#18-orchestration">運用ループ</a>）</td></tr>
+</tbody>
+</table>
+
+<aside class="info-panel info-panel--tip">
+<h4 class="info-panel__title">順番を飛ばさない</h4>
+<div class="info-panel__body">
+<p>2（テンプレ運用）を飛ばして3・4に行くと失敗しやすい。テンプレ運用の段階で「何を入力すると何が出てほしいか」が言語化され、それがそのままワークフロー／エージェントの仕様になる。</p>
+</div>
+</aside>
+
+<h4 id="biz-dept"><a class="toclink" href="#biz-dept">部門別の定番ユースケース</a></h4>
+<table>
+<thead><tr><th>部門</th><th>まず効くもの</th><th>次に狙うもの</th></tr></thead>
+<tbody>
+<tr><td>開発</td><td>コーディング支援・PR レビュー前段・テスト生成</td><td>CI 組み込み・課題からの自動 PR</td></tr>
+<tr><td>営業・CS</td><td>問い合わせ下書き・商談メモ整理・FAQ 検索</td><td>ナレッジベース連携の一次回答ボット</td></tr>
+<tr><td>企画・マーケ</td><td>調査要約・ドラフト作成・多言語展開</td><td>定例レポートの自動生成</td></tr>
+<tr><td>管理部門</td><td>規程検索・文書チェック・議事録</td><td>申請内容の事前チェックフロー</td></tr>
+</tbody>
+</table>
+
+<hr />
+<h3 id="biz-governance"><a class="toclink" href="#biz-governance">ガバナンス — 最小セット</a></h3>
+<p>ルールがないと現場は萎縮するか暴走するかの二択になる。最初に決めるのは次の5点だけでよい。</p>
+<ol class="steps">
+<li><strong>入れてよいデータ</strong> — 機密区分ごとに可否を明文化（例: 顧客個人情報は不可、社内文書は学習無効設定のツールのみ可）</li>
+<li><strong>人間レビューの境界</strong> — 社外に出るもの・契約や金額に関わるものは必ず人間が最終確認</li>
+<li><strong>出典の扱い</strong> — 事実主張には出典を付けさせ、確認してから使う</li>
+<li><strong>使ってよいツールの一覧</strong> — 契約済みツールを列挙し、それ以外への業務データ投入を禁止</li>
+<li><strong>事故時の報告先</strong> — 誤送信・漏えい疑いの一次報告先を決めておく</li>
+</ol>
+<p>詳細は<a href="guide-setup.html#1-general-ai-safety">安全運用</a>を参照。開発リポジトリ側の規約は <a href="guide-rules.html">ルール / Skills</a> に置く。</p>
+
+<h3 id="biz-roi"><a class="toclink" href="#biz-roi">効果測定</a></h3>
+<ul>
+<li><strong>時間</strong>: 対象業務の所要時間（導入前後）。PoC 時の記録がベースライン</li>
+<li><strong>品質</strong>: 手戻り率・レビュー指摘数・顧客応答の一次解決率など、業務ごとの既存指標を流用</li>
+<li><strong>利用</strong>: 週次アクティブ利用者・テンプレ利用回数。「契約したのに使われない」を早期検知</li>
+<li>測れないものを無理に数値化しない。「この業務はこの手順で AI 化済み」という<strong>カバレッジの一覧</strong>が一番説明に使える</li>
+</ul>
+
+<h3 id="biz-gotchas"><a class="toclink" href="#biz-gotchas">Gotchas</a></h3>
+<ul>
+<li>「全社展開」から始めない。1業務×1チームで成功例を作ってから横展開する方が結局速い</li>
+<li>ツール配布だけして手順を渡さないと、使うのは元々得意な2割だけになる。テンプレとセットで配る</li>
+<li>自動化したワークフローは<strong>放置すると静かに腐る</strong>。入力形式の変化・モデル更新で品質が変わるため、月次のサンプル確認を運用に含める</li>
+<li>削減時間の自己申告は過大になりがち。PoC の実測値を使う</li>
+</ul>
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-setup.html#1-general-ai-safety">安全運用ルール</a></li>
+  <li><a href="memo-ai-tools.html#21-general-work-tools">一般業務ツール早見</a></li>
+  <li><a href="guide-ai-cases.html#cases-biz">業務の導入事例</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+    </div><nav class="flow-pager" aria-label="前後の章"><a href="guide-ai-tools.html">← ツール徹底比較</a><a class="flow-pager__next" href="guide-ai-system.html">システムへの組み込み →</a></nav>
+  </article>
+</div>

@@ -1,0 +1,110 @@
+<!--meta {"title": "AIの誤りと運用注意", "desc": "誤り早見と本番注意。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-ops-pitfalls">AIの誤りと運用注意</h1>
+      <p class="lead">誤り早見と本番注意。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>完了報告の前に検証コマンドで確認する</li>
+<li>rules の陳腐化・境界・コストに注意する</li>
+<li>チーム展開は段階的に進めると決める</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-ops.html">↑ 章トップ</a> <a href="guide-ops-history.html">← 履歴・記録</a></p>
+</aside>
+<h3 id="16-ai-pitfalls"><a class="toclink" href="#16-ai-pitfalls">AIのよくある誤り</a></h3><p>プロジェクト固有のルールとは別に、AI がよく間違える論点の早見表。該当行があればテスト・docs・rules で先回りする。</p>
+<p>下表は論点ごとの典型ミスと対策。プロジェクト docs に境界表・丸めポリシー等を書いておくと効く。</p>
+<table>
+<thead>
+<tr><th>論点</th><th>典型ミス</th><th>対策</th></tr>
+</thead>
+<tbody>
+<tr><td>金額/数量</td><td>float 使用</td><td>Decimal 必須。丸めポリシーを docs に明示</td></tr>
+<tr><td>時刻/TZ</td><td>ローカル保存</td><td>UTC 保存。境界値テスト</td></tr>
+<tr><td>境界条件</td><td>0/null/上限未テスト</td><td>境界表をテストケース化</td></tr>
+<tr><td>並行更新</td><td>ロック未考慮</td><td>楽観/悲観ロック方針を docs 化</td></tr>
+<tr><td>冪等性</td><td>リトライで二重実行</td><td>idempotency key / 一意制約</td></tr>
+<tr><td>エラーパス</td><td>ハッピーパスのみ</td><td>異常系チェックリスト</td></tr>
+<tr><td>既存整合</td><td>「最善実装」提案</td><td>既存パスをコンテキストに必須</td></tr>
+<tr><td>国際化</td><td>単一言語前提</td><td>通貨・単位・エンコーディング</td></tr>
+<tr><td>権限</td><td>認証=認可</td><td>行レベル権限を設計 docs に</td></tr>
+<tr><td>性能</td><td>N+1</td><td>クエリ数をテスト/ログで確認</td></tr>
+<tr><td>データ移行</td><td>後方互換なし</td><td>移行手順 + rollback</td></tr>
+</tbody>
+</table>
+<blockquote>
+<p>NOTE: 言語・FW・ライブラリの最新仕様は AI の学習データより古いことが多い。公式ドキュメント・チェンジログと突き合わせる習慣をつける。</p>
+</blockquote>
+<hr />
+<hr />
+<p>ルールは古くなります。四半期見直し・チーム導入・コスト管理をセットで運用してください。</p>
+<h3 id="19-ops"><a class="toclink" href="#19-ops">運用の注意</a></h3><details class="section-fold" id="19-ops-detail">
+<summary>運用の注意（6項目・クリックで展開）</summary>
+<h4 id="rules-staleness"><a class="toclink" href="#rules-staleness">ルールの陳腐化対策</a></h4>
+<ul>
+<li>スプリント終了時や四半期ごとに利用中ラインのルール (<code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> / <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> / <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> / <code>.claude/skills/</code> / <code>.agents/skills/</code>) を見直す</li>
+<li>ルール改訂時は docs/adr/ に意思決定を残す（例: ADR-NNNN: Update testing rule）</li>
+<li>新規メンバーのオンボーディング時のフィードバックを取り込む</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-scenario">
+<h4 class="info-panel__title" id="scenario-scenario">四半期レトロで rules を全員レビュー</h4>
+<div class="info-panel__body"><p>四半期レトロで <code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> を全員レビューする。変更は <code>docs/adr/0020-update-docker-rule.md</code> に残し、Slack #dev で共有する。</p></div>
+</aside>
+<h4 id="rules-global-boundary"><a class="toclink" href="#rules-global-boundary">グローバルルールとの境界</a></h4>
+<ul>
+<li>個人のグローバルルール (<code>/Users/&lt;user&gt;/.cursor/rules/</code>、<code><a href="flow-rules-samples.html#sample-claude-user-md">~/.claude/CLAUDE.md</a></code>、<code><a href="flow-rules-samples.html#sample-codex-agents-global">~/.codex/AGENTS.md</a></code>) と重複させない</li>
+<li>プロジェクト固有のものだけリポジトリに置く</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-scenario-2">
+<h4 class="info-panel__title" id="scenario-scenario-2">個人設定とリポジトリ設定の分離</h4>
+<div class="info-panel__body"><p>個人の <code>~/.cursor/rules/</code> にある prettier 設定はグローバルのままにし、<code>docker exec</code> 禁止はリポジトリの <code>.cursor/rules/agent-safety.mdc</code> だけに書く。</p></div>
+</aside>
+<h4 id="ai"><a class="toclink" href="#ai">AIツールのバージョン管理</a></h4>
+<ul>
+<li>モデル変更で挙動が変わることがある</li>
+<li>重要な意思決定では「どのモデルでいつ生成したか」を履歴に残す</li>
+<li>モデル変更時はチーム内で動作確認を共有</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-cursor-plan">
+<h4 class="info-panel__title" id="scenario-cursor-plan">モデル変更時は同じプロンプトで比較</h4>
+<div class="info-panel__body"><p>Cursor のモデルを変更した週は、代表タスク「Plan 作成」を同じプロンプトで試し、結果を <code>z_docs/history/</code> に「モデル X・日付」付きで残す。</p></div>
+</aside>
+<h3 id="16-rules-ops"><a class="toclink" href="#16-rules-ops">ルール運用の注意点</a></h3>
+<h4 id="rules-team-rollout"><a class="toclink" href="#rules-team-rollout">チームへの導入手順</a></h4>
+<ol class="steps">
+<li>まず 1〜2 人で試し、ルールの初版を固める</li>
+<li>設計レビューで Cursor / Claude Code / Codex のルール群の存在を共有</li>
+<li>ペアプロでフロー実演</li>
+<li>既存リポジトリへは PR 単位で rules を追加</li>
+<li>1〜2 スプリント後にレトロでフィードバック収集</li>
+</ol>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-a-2">
+<h4 class="info-panel__title" id="scenario-a-2">新規ルールは PR でレビュー後に全体適用</h4>
+<div class="info-panel__body"><p>開発者 A が 2 週間試し、<code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> 初版を PR #50 で追加する。設計レビューでペア実演後、他メンバーは新規 PR から rules を適用する。</p></div>
+</aside>
+<h4 id="rules-incremental-adoption"><a class="toclink" href="#rules-incremental-adoption">既存プロジェクトへの段階適用</a></h4>
+<ul>
+<li>既存コードを一括書き換えしない</li>
+<li>新規 PR から本フローを適用</li>
+<li>既存実装と異なる選択は <code>docs/&lt;feature&gt;/04_tech_decisions.md</code> または <code>docs/adr/</code> に理由を残す</li>
+</ul>
+<h4 id="rules-cost-control"><a class="toclink" href="#rules-cost-control">コスト管理</a></h4>
+<ul>
+<li>長セッションはコンテキストコスト高 → 1 チャット 1 タスクで分ける</li>
+<li>単純な補完は Tab 補完 / cmd+K で済ませる</li>
+<li>Plan/設計の議論は Web の Free Tier でも可</li>
+</ul>
+<p class="scenario-inline"><span class="scenario-inline__label">1 機能 = 1 チャットに分ける</span> — 1 機能 = 1 チャットに分ける。変数名修正は Tab 補完、Plan 議論だけ別チャットで行い、実装チャットのコンテキストを薄く保つ。</p>
+
+</details>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-docker-exec">
+<h4 class="info-panel__title" id="scenario-docker-exec">レトロでの指摘から ADR・rules 改訂へ</h4>
+<div class="info-panel__body"><p>四半期レトロ: 新メンバーが「docker exec 禁止が分かりにくい」と指摘 → ADR-0020 で rules 改訂 → 全員に共有。</p></div>
+</aside>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-ops-history.html">← 履歴・記録</a><span class="muted flow-pager__next">章内末尾 →</span></nav>" aria-label="前後の章"><a href="guide-implement.html">← 実装</a><a class="flow-pager__next" href="guide-repo.html">リポジトリ →</a></nav>" aria-label="前後の章"><a href="guide-implement.html">← 実装</a><a class="flow-pager__next" href="guide-repo.html">リポジトリ →</a></nav>" aria-label="前後の章"><a href="guide-workflow.html">← 全体像</a><a class="flow-pager__next" href="guide-glossary.html">用語集 →</a></nav>
+  </article>
+</div>

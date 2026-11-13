@@ -1,0 +1,1086 @@
+<!--meta {"title": "メモ — RAG・実装参考", "desc": "検索拡張生成（RAG）の設計から実装まで。埋め込み・ベクトル検索・チャンキング戦略・Hybrid Search・評価まで網羅。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<header class="memo-page-head">
+    <h1>RAG・実装参考</h1>
+    <p>RAG（検索拡張生成）の設計・実装参考。</p>
+  </header>
+  <div class="memo-content memo-ref-content">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>RAG を入れる前に検索品質の評価軸を決める</li>
+<li>ベクトルDB・チャンク設計は用途から逆算して選ぶ</li>
+<li>Tool Use と組む場合は実装参考（Tools）と併読する</li>
+</ul>
+<p class="page-brief__nav"><a href="memo-ai-tools.html">↑ メモ目次</a> <a href="memo-cloud.html">← クラウド</a> <a href="memo-ai-reference-tools.html">Tool Use 参考 →</a></p>
+</aside>
+<p class="memo-lead-line">検証日は各節の badge を参照。</p>
+<div class="memo-ref-section" data-source-id="ai-agent-rag">
+<h3 id="21-ref-ai-agent-rag"><a class="toclink" href="#21-ref-ai-agent-rag">RAG・ベクトルDB 実装</a></h3>
+  <p class="wiki-lead">検索拡張生成（RAG）の設計から実装まで。埋め込み・ベクトル検索・チャンキング戦略・Hybrid Search・評価まで網羅。</p>
+
+  <!-- ══ 1. RAGの全体フロー ══ -->
+  <div>
+    <h4>RAGパイプライン全体像</h4>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-header"><span class="badge">① Indexing（事前処理）</span></div>
+        <div class="card-desc">ドキュメントを読み込み → チャンク分割 → Embedding モデルでベクトル化 → ベクトルDBに保存。バッチで定期実行する。</div>
+        <div class="card-example"><div class="card-example-label">技術選定</div><code>Loader: LangChain DocumentLoaders<br>Chunker: RecursiveCharacterTextSplitter<br>Embedding: text-embedding-3-small (OpenAI)<br>         voyage-3 (Anthropic推奨)<br>DB: pgvector / Pinecone / Qdrant</code></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="badge">② Retrieval（検索）</span></div>
+        <div class="card-desc">ユーザークエリをベクトル化 → コサイン類似度でTop-K検索 → BM25と組み合わせる Hybrid Search → Reranker で精度向上。</div>
+        <div class="card-example"><div class="card-example-label">精度向上策</div><code>・Hybrid: Vector + BM25 (0.7/0.3)<br>・Reranker: Cohere Rerank / bge-reranker<br>・HyDE: 仮の回答でベクトル生成して検索<br>・MMR: 多様性を保った検索結果選択</code></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="badge">③ Generation（生成）</span></div>
+        <div class="card-desc">取得したチャンクをコンテキストとしてLLMに渡す。ソース引用・不確実性の表現・ハルシネーション抑制プロンプトが重要。</div>
+        <div class="card-example"><div class="card-example-label">プロンプト構造</div><code>System: 必ず提供コンテキストのみから回答。<br>       不明な場合は「情報がありません」と答えよ<br>Context: {retrieved_chunks}<br>User: {question}</code></div>
+      </div>
+    </div>
+        <div class="memo-ref-diagrams">
+      <figure class="memo-ref-figure">
+        <figcaption>RAG 全体（事前 Indexing と質問時 Retrieval/Generation）</figcaption>
+        <div class="mermaid">
+flowchart TB
+  subgraph offline["Indexing 事前"]
+    A[Load docs] --> B[Chunk]
+    B --> C[Embed]
+    C --> D[(Vector DB)]
+  end
+  subgraph online["Query 質問時"]
+    E[User query] --> F[Hybrid Search]
+    F --> G[Rerank]
+    G --> H[LLM]
+    D -.-> F
+  end
+        </div>
+      </figure>
+      <figure class="memo-ref-figure">
+        <figcaption>質問 1 回のシーケンス（Hybrid + Rerank + 生成）</figcaption>
+        <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant App as App
+  participant Emb as Embedding
+  participant DB as Vector DB
+  participant RR as Reranker
+  participant LLM as LLM
+  U->>App: question
+  App->>Emb: query vector
+  Emb-->>App: vector
+  App->>DB: vector plus BM25
+  DB-->>App: top-K chunks
+  App->>RR: rerank
+  RR-->>App: top-3
+  App->>LLM: context and question
+  LLM-->>App: answer
+  App-->>U: answer and sources
+        </div>
+      </figure>
+      <figure class="memo-ref-figure">
+        <figcaption>document_chunks（pgvector の最小スキーマ）</figcaption>
+        <div class="mermaid">
+erDiagram
+  document_chunks {
+    uuid id PK
+    text content
+    vector embedding
+    jsonb metadata
+    text collection
+    timestamptz created_at
+  }
+        </div>
+      </figure>
+    </div>
+  </div>
+
+  <!-- ══ 1b. Agentic RAG ══ -->
+  <div>
+    <h4 id="21-ref-agentic-rag"><a class="toclink" href="#21-ref-agentic-rag">Agentic RAG（発展）</a></h4>
+    <p class="wiki-lead"><strong>Naive RAG</strong> は質問ごとに固定フロー（retrieve → generate）で動く。<strong>Agentic RAG</strong> は LLM が「検索が必要か」「取得結果は十分か」「クエリを書き換えるか」を判断し、ループしながら回答する。多段推論・鮮度・出典検証が必要なときに有効。導入方針は <a href="guide-repo-ai-1.html#118-rag-fit">flow-11 RAG 向き不向き</a>、マルチエージェント実装は <a href="memo-ai-reference-tools.html#21-ref-multi-agent">Tool Use 参考 — マルチエージェント</a>。</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-header"><span class="badge">Router / Adaptive RAG</span></div>
+        <div class="card-desc">LLM が質問を分類し、<strong>検索が必要か</strong>を先に判断してから retrieve する。挨拶・計算・既知の一般知識は検索をスキップし、latency とコストを抑える。</div>
+        <div class="card-example"><div class="card-example-label">分岐例</div><code>「こんにちは」→ 直接回答<br>「ADR-0003 の決定理由は？」→ Vector DB 検索<br>「昨日の売上は？」→ SQL / API ツール</code></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="badge">Self-RAG / CRAG</span></div>
+        <div class="card-desc">取得したチャンクを <strong>grade</strong>（関連性・十分性）し、不十分なら query rewrite や web fallback で再検索する。Corrective RAG（CRAG）は外部検索へのフォールバックが特徴。</div>
+        <div class="card-example"><div class="card-example-label">ループ</div><code>retrieve → grade → OK? → generate<br>              ↓ NG<br>         rewrite query → re-retrieve</code></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="badge">Query decomposition</span></div>
+        <div class="card-desc">複雑な質問をサブクエリに分解し、<strong>並列検索</strong>してから統合する。「A と B の違いは？」「3社を比較して」など多要素質問向き。</div>
+        <div class="card-example"><div class="card-example-label">分解例</div><code>「React と Vue の SSR 比較」<br>→ [React SSR], [Vue SSR], [比較観点]<br>→ 各結果を統合して回答</code></div>
+      </div>
+    </div>
+
+    <figure class="memo-ref-figure">
+      <figcaption>Naive RAG と Agentic RAG の違い</figcaption>
+      <div class="mermaid">
+flowchart TB
+  subgraph naive["Naive RAG"]
+    NQ[User query] --> NR[Retrieve fixed]
+    NR --> NG[Generate]
+  end
+  subgraph agentic["Agentic RAG"]
+    AQ[User query] --> AR{Need search?}
+    AR -->|No| AG[Generate direct]
+    AR -->|Yes| AV[Retrieve]
+    AV --> GR{Grade docs}
+    GR -->|OK| AG2[Generate with context]
+    GR -->|NG| RW[Rewrite query]
+    RW --> AV
+  end
+      </div>
+    </figure>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>状況</th>
+            <th>推奨</th>
+            <th>理由</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>単一ドメイン FAQ・社内規程 Q&amp;A</td>
+            <td>Naive RAG（Hybrid + Rerank）</td>
+            <td>フローが単純で十分。Agentic は過剰</td>
+          </tr>
+          <tr>
+            <td>多段推論・比較・複合質問</td>
+            <td>Query decomposition + Agentic</td>
+            <td>1回の retrieve では文脈が足りない</td>
+          </tr>
+          <tr>
+            <td>検索結果の品質が不安定</td>
+            <td>Self-RAG / CRAG</td>
+            <td>grade と rewrite で精度を自己修正</td>
+          </tr>
+          <tr>
+            <td>挨拶・雑談とナレッジ検索が混在</td>
+            <td>Router / Adaptive RAG</td>
+            <td>不要な retrieval を避けコスト削減</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bp-block">
+      <div class="bp-tabs">
+        <button class="bp-tab active">LangGraph</button>
+        <button class="bp-tab">Tool Use</button>
+      </div>
+
+      <div class="bp-pane active" id="agentic-rag-pane-langgraph">
+        <div class="bp-header"><span class="bp-header-label">Self-RAG 風パイプライン（LangGraph StateGraph）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="agentic-rag-langgraph-code">from typing import Literal, TypedDict
+from langgraph.graph import StateGraph, END
+
+class RAGState(TypedDict):
+    question: str
+    query: str
+    documents: list[str]
+    grade: str          # "relevant" | "irrelevant"
+    generation: str
+    retries: int
+
+def retrieve(state: RAGState) -> RAGState:
+    # 既存 Hybrid Search を呼ぶ（上記「Hybrid Search」タブ参照）
+    docs = hybrid_search(state["query"], top_k=5)
+    return {**state, "documents": docs}
+
+def grade_documents(state: RAGState) -> RAGState:
+    # LLM に関連性を判定させる（structured output 推奨）
+    verdict = llm_grade(state["question"], state["documents"])
+    return {**state, "grade": verdict}
+
+def rewrite_query(state: RAGState) -> RAGState:
+    new_q = llm_rewrite(state["question"], state["documents"])
+    return {**state, "query": new_q, "retries": state["retries"] + 1}
+
+def generate(state: RAGState) -> RAGState:
+    answer = llm_generate(state["question"], state["documents"])
+    return {**state, "generation": answer}
+
+def route_after_grade(state: RAGState) -> Literal["generate", "rewrite", "end"]:
+    if state["grade"] == "relevant":
+        return "generate"
+    if state["retries"] &gt;= 2:
+        return "end"  # 打ち切り — 「情報がありません」
+    return "rewrite"
+
+graph = StateGraph(RAGState)
+graph.add_node("retrieve", retrieve)
+graph.add_node("grade", grade_documents)
+graph.add_node("rewrite", rewrite_query)
+graph.add_node("generate", generate)
+graph.set_entry_point("retrieve")
+graph.add_edge("retrieve", "grade")
+graph.add_conditional_edges("grade", route_after_grade, {
+    "generate": "generate", "rewrite": "rewrite", "end": END,
+})
+graph.add_edge("rewrite", "retrieve")
+graph.add_edge("generate", END)
+app = graph.compile()</pre>
+        <div class="bp-note">💡 上の retrieve / hybrid_search は本ページ「実装コード — Hybrid Search」タブの関数をそのまま使う。Agentic は検索基盤が安定してから足す。</div>
+      </div>
+
+      <div class="bp-pane" id="agentic-rag-pane-tool">
+        <div class="bp-header"><span class="bp-header-label">Router + RAG ツール（Anthropic Tool Use）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="agentic-rag-tool-code">import anthropic
+
+client = anthropic.Anthropic()
+
+tools = [
+    {
+        "name": "search_knowledge_base",
+        "description": "社内ドキュメント・ADR・仕様書を検索する。固有名詞・手順・ポリシーに関する質問で使う。挨拶や一般常識には使わない。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "検索クエリ（日本語可）"},
+                "collection": {"type": "string", "enum": ["docs", "adr", "runbook"]},
+            },
+            "required": ["query"],
+        },
+    },
+]
+
+def run_agentic_rag(question: str, max_iter: int = 5) -> str:
+    messages = [{"role": "user", "content": question}]
+    for _ in range(max_iter):
+        resp = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
+            system="必要なときだけ search_knowledge_base を呼ぶ。検索結果のみから回答し、不明ならそう述べる。",
+            tools=tools,
+            messages=messages,
+        )
+        if resp.stop_reason == "end_turn":
+            return next(b.text for b in resp.content if hasattr(b, "text"))
+        tool_results = []
+        for block in resp.content:
+            if block.type == "tool_use":
+                chunks = hybrid_search(block.input["query"])  # 既存 RAG 関数
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": format_chunks(chunks),
+                })
+        messages.append({"role": "assistant", "content": resp.content})
+        messages.append({"role": "user", "content": tool_results})
+    return "最大イテレーションに達しました"</pre>
+        <div class="bp-note">💡 LLM が検索要否を判断する最小 Agentic RAG。Self-RAG 相当の grade は tool_result に「関連チャンクなし」を返し、LLM に再検索を促す形でも実装できる。</div>
+      </div>
+    </div>
+
+    <h5 class="memo-ref-subhead">よくある失敗と対策</h5>
+    <div class="table-wrap">
+      <table class="memo-ref-failure-table">
+        <thead>
+          <tr>
+            <th scope="col">失敗パターン</th>
+            <th scope="col">対策</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fail-problem">
+              <strong>❌ retrieval ループが止まらない</strong>
+              grade が常に NG になり rewrite → retrieve を繰り返し、latency / コストが爆増
+            </td>
+            <td class="fail-fix">
+              <strong>✅ 対策</strong>
+              max_retries（2〜3）で打ち切り。grade は structured output + 閾値固定。LangSmith / Langfuse でトレース
+            </td>
+          </tr>
+          <tr>
+            <td class="fail-problem">
+              <strong>❌ Agentic にしたが精度が上がらない</strong>
+              chunking・Hybrid Search・Reranker が未調整のままループだけ増やしている
+            </td>
+            <td class="fail-fix">
+              <strong>✅ 対策</strong>
+              まず Naive RAG の faithfulness を RAGAS で 0.85 以上に。Agentic はその上の改善策
+            </td>
+          </tr>
+          <tr>
+            <td class="fail-problem">
+              <strong>❌ Router が検索をスキップしすぎる</strong>
+              社内固有名詞の質問でも「一般知識」と誤判定
+            </td>
+            <td class="fail-fix">
+              <strong>✅ 対策</strong>
+              Router プロンプトに「社内用語・ADR・Runbook は必ず search」を明示。迷ったら検索側に倒す
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bp-block">
+      <div class="bp-header"><span class="bp-header-label">Agentic RAG を AI に依頼するプロンプト例</span></div>
+      <div class="bp-prompt-list">
+        <div class="bp-prompt-row bp-prompt-row--purple">
+          <span class="bp-prompt-label">Self-RAG パイプライン</span>
+          <pre class="bp-prompt-text">LangGraph で Self-RAG パイプラインを実装してください。
+・retrieve → grade → generate / rewrite の条件分岐
+・grade は structured output（relevant / irrelevant）
+・max_retries=2、打ち切り時は「情報がありません」
+・retrieve は既存 hybrid_search 関数を利用</pre>
+        </div>
+        <div class="bp-prompt-row">
+          <span class="bp-prompt-label">Router 付き RAG</span>
+          <pre class="bp-prompt-text">Anthropic Tool Use で Router 付き RAG を実装してください。
+・search_knowledge_base ツールは社内 docs/adr/runbook のみ
+・挨拶・計算・一般常識はツールを呼ばず直接回答
+・検索結果のみから回答、出典を末尾に列挙</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 2. 実装コード ══ -->
+  <div>
+    <h4>実装コード</h4>
+    <div class="bp-block">
+      <div class="bp-tabs">
+        <button class="bp-tab active">Indexing</button>
+        <button class="bp-tab">Hybrid Search</button>
+        <button class="bp-tab">pgvector設定</button>
+        <button class="bp-tab">評価</button>
+      </div>
+
+      <div class="bp-pane active" id="rag-impl-pane-index">
+        <div class="bp-header"><span class="bp-header-label">ドキュメントIndexing パイプライン（Python）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="rag-index-code">from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import PGVector
+import os
+
+# ── 1. ドキュメントロード ────────────────────────────────────
+def load_documents(source_dir: str):
+    loader = DirectoryLoader(
+        source_dir,
+        glob="**/*.pdf",
+        loader_cls=PyPDFLoader,
+        show_progress=True,
+    )
+    return loader.load()
+
+# ── 2. チャンキング戦略 ──────────────────────────────────────
+# chunk_size と overlap はドメインによって要調整
+# 技術文書: 1000-1500 / FAQ: 300-500 / コード: 500-800
+def chunk_documents(docs, chunk_size=1000, chunk_overlap=200):
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        separators=["
+
+", "
+", "。", ".", " ", ""],  # 日本語対応
+        length_function=len,
+    )
+    chunks = splitter.split_documents(docs)
+    print(f"  {len(docs)} docs → {len(chunks)} chunks")
+    return chunks
+
+# ── 3. Embeddingモデル選択 ───────────────────────────────────
+# OpenAI text-embedding-3-small: コスト安・高品質
+# Voyage voyage-3: Anthropic推奨・多言語強い
+# BGE-M3: OSS・日本語強い・セルフホスト可
+embedding_model = OpenAIEmbeddings(
+    model="text-embedding-3-small",
+    dimensions=1536,
+)
+
+# ── 4. pgvector に保存 ───────────────────────────────────────
+CONNECTION_STRING = os.getenv("DATABASE_URL")
+COLLECTION_NAME = "knowledge_base"
+
+def index_documents(source_dir: str):
+    docs   = load_documents(source_dir)
+    chunks = chunk_documents(docs)
+
+    # バッチでUpsert（大量データは100件ずつ）
+    vectorstore = PGVector.from_documents(
+        documents=chunks,
+        embedding=embedding_model,
+        collection_name=COLLECTION_NAME,
+        connection_string=CONNECTION_STRING,
+        pre_delete_collection=False,  # 差分更新
+    )
+    print(f"✅ Indexed {len(chunks)} chunks to pgvector")
+    return vectorstore
+
+# ── 5. メタデータフィルタリング ──────────────────────────────
+# ソース・日付・カテゴリなどでフィルタリングして精度を上げる
+def search_with_filter(query: str, category: str = None):
+    vectorstore = PGVector(
+        collection_name=COLLECTION_NAME,
+        connection_string=CONNECTION_STRING,
+        embedding_function=embedding_model,
+    )
+
+    filter_dict = {}
+    if category:
+        filter_dict["category"] = category
+
+    results = vectorstore.similarity_search_with_score(
+        query, k=5, filter=filter_dict
+    )
+
+    return [
+        {"content": doc.page_content, "source": doc.metadata.get("source"), "score": score}
+        for doc, score in results
+        if score &gt; 0.75  # 類似度スコアでフィルタリング
+    ]</pre>
+        <div class="bp-note">💡 チャンキング戦略のポイント：① 親チャンク（大）で文脈を保持し、子チャンク（小）で精度よく検索する「Parent Document Retriever」が効果的 ② 日本語は separators に「。」を追加 ③ chunk_overlap で文脈の途切れを防ぐ</div>
+      </div>
+
+      <div class="bp-pane" id="rag-impl-pane-search">
+        <div class="bp-header"><span class="bp-header-label">Hybrid Search（ベクトル + BM25 + Reranker）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="rag-search-code">from langchain_community.retrievers import BM25Retriever
+from langchain.retrievers import EnsembleRetriever
+import cohere
+import anthropic
+
+# ── Hybrid Retriever: ベクトル検索 + BM25 ────────────────────
+# ベクトル検索: 意味的類似性 (semantic)
+# BM25: キーワード一致 (lexical)
+# 組み合わせで両方の弱点を補完する
+
+def create_hybrid_retriever(chunks, vectorstore):
+    # ベクトル検索 (k=10で広めに取る)
+    vector_retriever = vectorstore.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": 10}
+    )
+
+    # BM25（キーワードマッチ）
+    bm25_retriever = BM25Retriever.from_documents(chunks)
+    bm25_retriever.k = 10
+
+    # アンサンブル（重み: ベクトル70% + BM25 30%）
+    hybrid = EnsembleRetriever(
+        retrievers=[vector_retriever, bm25_retriever],
+        weights=[0.7, 0.3],
+    )
+    return hybrid
+
+# ── Reranker: Cohere Rerank で精度向上 ───────────────────────
+# 上位10件を取得後、Reranker で再スコアリングしてTop-3に絞る
+def rerank_results(query: str, docs: list, top_n: int = 3) -> list:
+    co = cohere.Client(os.getenv("COHERE_API_KEY"))
+
+    reranked = co.rerank(
+        query=query,
+        documents=[doc.page_content for doc in docs],
+        top_n=top_n,
+        model="rerank-multilingual-v3.0",  # 日本語対応
+    )
+
+    return [docs[r.index] for r in reranked.results]
+
+# ── HyDE: 仮の回答で検索精度を上げる ─────────────────────────
+# ユーザークエリを直接ベクトル化するより、
+# 「そのクエリに対する仮の回答」をベクトル化した方が精度が上がるケースがある
+def hyde_search(query: str, vectorstore) -> list:
+    client = anthropic.Anthropic()
+
+    # 仮の回答を生成
+    hypothetical = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=300,
+        messages=[{"role": "user", "content": f"以下の質問に対する理想的な回答を書いてください（情報は作っても良い）:
+{query}"}]
+    ).content[0].text
+
+    # 仮の回答でベクトル検索
+    results = vectorstore.similarity_search(hypothetical, k=5)
+    return results
+
+# ── 統合RAGパイプライン ───────────────────────────────────────
+def rag_query(question: str, vectorstore, chunks) -> dict:
+    # 1. Hybrid検索
+    hybrid = create_hybrid_retriever(chunks, vectorstore)
+    retrieved = hybrid.invoke(question)
+
+    # 2. Reranking
+    top_docs = rerank_results(question, retrieved, top_n=3)
+
+    # 3. コンテキスト構築（ソース引用のためメタデータも含める）
+    context_parts = []
+    for i, doc in enumerate(top_docs):
+        source = doc.metadata.get("source", "不明")
+        context_parts.append(f"[ソース{i+1}: {source}]
+{doc.page_content}")
+    context = "
+
+---
+
+".join(context_parts)
+
+    # 4. Claude で回答生成
+    client = anthropic.Anthropic()
+    response = client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=1024,
+        system="""あなたは社内ナレッジベースの質問応答AIです。
+以下のルールを厳守してください:
+1. 提供されたコンテキストの情報のみを使って回答する
+2. コンテキストに情報がない場合は「提供された資料には該当情報がありません」と回答する
+3. 回答の根拠となったソースを [ソースN] の形式で引用する
+4. 推測や外部知識を混ぜない""",
+        messages=[{
+            "role": "user",
+            "content": f"コンテキスト:
+{context}
+
+質問: {question}"
+        }],
+    )
+
+    return {
+        "answer": response.content[0].text,
+        "sources": [doc.metadata.get("source") for doc in top_docs],
+        "retrieved_count": len(retrieved),
+    }</pre>
+        <div class="bp-note">💡 Hybrid Search が重要な理由：ベクトル検索は「概念的に似た文書」を見つけるが、固有名詞・型番・コマンド名などのキーワード検索が苦手。BM25と組み合わせることで両方カバーできる。</div>
+      </div>
+
+      <div class="bp-pane" id="rag-impl-pane-pgvector">
+        <div class="bp-header"><span class="bp-header-label">pgvector セットアップ（PostgreSQL）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="rag-pgvector-code">-- ── PostgreSQL に pgvector 拡張をインストール ──────────────
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- ── ドキュメントチャンクテーブル ─────────────────────────────
+CREATE TABLE document_chunks (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    content     TEXT NOT NULL,
+    embedding   VECTOR(1536),            -- text-embedding-3-small の次元数
+    metadata    JSONB DEFAULT '{}',      -- source, page, category など
+    collection  TEXT NOT NULL DEFAULT 'default',
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ── インデックス（近似最近傍探索）──────────────────────────────
+-- IVFFlat: 高速だが精度は近似（大量データに）
+CREATE INDEX ON document_chunks
+    USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = 100);  -- lists = sqrt(行数) が目安
+
+-- HNSW: より高精度・メモリ使用量大（中規模に）
+-- CREATE INDEX ON document_chunks
+--     USING hnsw (embedding vector_cosine_ops)
+--     WITH (m = 16, ef_construction = 64);
+
+-- ── 検索クエリ ────────────────────────────────────────────────
+-- コサイン類似度でTop-5取得
+SELECT
+    id,
+    content,
+    metadata->>'source' AS source,
+    1 - (embedding &lt;=&gt; $1::vector) AS similarity  -- &lt;=&gt; はコサイン距離
+FROM document_chunks
+WHERE collection = 'knowledge_base'
+    AND metadata->>'category' = 'technical'       -- メタデータフィルタ
+ORDER BY embedding &lt;=&gt; $1::vector                -- コサイン距離でソート
+LIMIT 5;
+
+-- ── メタデータフィルタ付きHybrid（pgvector + tsvector）─────
+SELECT
+    id, content, metadata->>'source' AS source,
+    1 - (embedding &lt;=&gt; $1::vector) AS vector_score,
+    ts_rank(to_tsvector('japanese', content), query) AS bm25_score
+FROM document_chunks,
+     to_tsquery('japanese', $2) query
+WHERE to_tsvector('japanese', content) @@ query
+    OR (embedding &lt;=&gt; $1::vector) &lt; 0.3
+ORDER BY
+    (1 - (embedding &lt;=&gt; $1::vector)) * 0.7 +
+    ts_rank(to_tsvector('japanese', content), query) * 0.3 DESC
+LIMIT 10;</pre>
+        <div class="bp-note">💡 pgvector の選択基準：① 既存 PostgreSQL があれば追加コストゼロ ② 〜100万件規模なら IVFFlat インデックスで十分 ③ 100万件超・低レイテンシ必須なら Pinecone/Qdrant を検討 ④ Supabase は pgvector をマネージドで提供している</div>
+      </div>
+
+      <div class="bp-pane" id="rag-impl-pane-eval">
+        <div class="bp-header"><span class="bp-header-label">RAG評価（RAGAS）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="rag-eval-code">from ragas import evaluate
+from ragas.metrics import (
+    faithfulness,          # 回答がコンテキストに忠実か（ハルシネーション検出）
+    answer_relevancy,      # 回答が質問に関連しているか
+    context_precision,     # 取得コンテキストの精度
+    context_recall,        # 必要な情報を取得できているか
+)
+from datasets import Dataset
+
+# ── 評価データセット準備 ─────────────────────────────────────
+eval_data = {
+    "question": [
+        "有給休暇の申請方法を教えてください",
+        "リモートワーク手当の条件は何ですか",
+    ],
+    "answer": [
+        "有給休暇は社内システム HRCore から申請...",  # RAGの回答
+        "リモートワーク手当は月額5000円で...",
+    ],
+    "contexts": [
+        ["就業規則第10条：有給休暇は...", "申請手順: 1. HRCoreにログイン..."],
+        ["リモートワーク規程: 月額5,000円を支給..."],
+    ],
+    "ground_truth": [
+        "HRCore システムから申請し、上長承認後に取得できます",  # 正解
+        "月額5,000円、週3日以上のリモート勤務が条件です",
+    ],
+}
+
+dataset = Dataset.from_dict(eval_data)
+
+# ── 評価実行 ─────────────────────────────────────────────────
+results = evaluate(
+    dataset=dataset,
+    metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+)
+
+print(results)
+# faithfulness:      0.92  ← 1.0に近いほどハルシネーションなし
+# answer_relevancy:  0.88  ← 1.0に近いほど質問に的確
+# context_precision: 0.85  ← 取得コンテキストのノイズが少ない
+# context_recall:    0.90  ← 必要な情報を取り逃していない
+
+# ── 継続的評価（CI/CDに組み込む） ───────────────────────────
+# GitHub Actions でRAG変更時に自動評価
+# 閾値を下回ったら PR をブロックする
+THRESHOLDS = {
+    "faithfulness": 0.85,
+    "answer_relevancy": 0.80,
+    "context_precision": 0.75,
+    "context_recall": 0.80,
+}
+
+for metric, threshold in THRESHOLDS.items():
+    score = results[metric]
+    status = "✅" if score &gt;= threshold else "❌"
+    print(f"{status} {metric}: {score:.2f} (threshold: {threshold})")</pre>
+        <div class="bp-note">💡 RAGASの4指標：① faithfulness（最重要）= ハルシネーションがないか ② answer_relevancy = 質問ズレがないか ③ context_precision = 無関係なチャンクを取ってないか ④ context_recall = 必要な情報を取り逃していないか。週次でモニタリングして劣化を検知する。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 3. AIへの指示パターン ══ -->
+  <div>
+    <h4>AIへの指示パターン</h4>
+    <div class="bp-block">
+      <div class="bp-header"><span class="bp-header-label">RAG実装をAIに依頼するプロンプト例</span></div>
+      <div class="bp-prompt-list">
+        <div class="bp-prompt-row">
+          <span class="bp-prompt-label">チャンク最適化</span>
+          <pre class="bp-prompt-text">以下のドキュメント種別に最適なチャンキング戦略を提案してください。
+① 法律文書（条文・定義が多い） ② Markdownの技術ドキュメント ③ 会議議事録
+各ドキュメントについて chunk_size・overlap・separator・メタデータ設計を示してください。</pre>
+        </div>
+        <div class="bp-prompt-row bp-prompt-row--green">
+          <span class="bp-prompt-label">Hybrid Search実装</span>
+          <pre class="bp-prompt-text">pgvector を使った Hybrid Search（ベクトル検索 + tsvector全文検索）を実装してください。
+・Python（SQLAlchemy + asyncpg）
+・重み付きスコアリング（ベクトル70% + BM25 30%）
+・日本語形態素解析（pgroonga または pg_bigm）対応</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 id="21-ref-rag-design"><a class="toclink" href="#21-ref-rag-design">設計・運用の実務</a></h3>
+  <!-- ══ 4. RAGで成し遂げたいこと（ユースケース別） ══ -->
+  <h4>RAGで成し遂げたいこと — ユースケース別設計</h4>
+
+  <p>RAGは「LLMが知らない情報を使って回答させる」技術だが、ユースケースによって<strong>何を重視するか（精度・速度・鮮度・コスト）</strong>が大きく異なる。目的を明確にしてから設計する。</p>
+
+  <div class="memo-ref-uc-list">
+
+    <!-- UC1: 社内ナレッジBot -->
+    <article class="memo-ref-uc">
+      <header class="memo-ref-uc-head">
+        <img class="memo-ref-uc-thumb" src="images/memo-rag/uc-knowledge.png" alt="社内ナレッジBotのイメージ" width="120" height="68" loading="lazy">
+        <p class="memo-ref-uc-title">社内ナレッジBot — 「就業規則・制度・手順書を自然言語で検索したい」</p>
+      </header>
+      <div class="memo-ref-uc-body">
+        <div>
+          <p class="memo-ref-uc-col-label">成し遂げたいこと</p>
+          <ul>
+            <li>就業規則・社内規程を「有給はいつから取れる？」のように質問して即答</li>
+            <li>ソース（条文番号・ページ）付きで回答し、担当者への問い合わせを70%削減</li>
+            <li>情報が古くなったら差分だけ再インデックス</li>
+          </ul>
+        </div>
+        <div class="memo-ref-uc-points">
+          <p class="memo-ref-uc-col-label">設計のポイント</p>
+          <blockquote class="cite-example">
+            <ul>
+              <li>チャンクサイズ 500〜800 token（条文単位で区切る）</li>
+              <li>メタデータに <code>規程名・改定日・カテゴリ</code> を付与</li>
+              <li>Faithfulness（ハルシネーション検出）を最重要指標に</li>
+              <li>「情報がない場合は答えない」プロンプトが必須</li>
+            </ul>
+          </blockquote>
+        </div>
+      </div>
+      <div class="memo-ref-stack">
+        <p class="memo-ref-stack-caption">技術スタック例（コスト重視）</p>
+        <figure class="memo-ref-figure">
+          <div class="mermaid">
+flowchart LR
+  PDF --> Loader --> Embed --> DB[(pgvector)]
+  DB --> LLM[Claude haiku]
+          </div>
+        </figure>
+        <p class="wiki-lead">PDF → LangChain PyPDFLoader → text-embedding-3-small → pgvector（Supabase）→ Claude claude-haiku-4-5</p>
+      </div>
+    </article>
+
+    <!-- UC2: カスタマーサポート自動化 -->
+    <article class="memo-ref-uc memo-ref-uc--support">
+      <header class="memo-ref-uc-head">
+        <img class="memo-ref-uc-thumb" src="images/memo-rag/uc-support.png" alt="カスタマーサポート自動化のイメージ" width="120" height="68" loading="lazy">
+        <p class="memo-ref-uc-title">カスタマーサポート自動化 — 「FAQと過去チケットから即座に回答案を生成したい」</p>
+      </header>
+      <div class="memo-ref-uc-body">
+        <div>
+          <p class="memo-ref-uc-col-label">成し遂げたいこと</p>
+          <ul>
+            <li>新着チケットに対して過去の解決済みチケットと FAQ から回答案を自動生成</li>
+            <li>オペレーターが「送信 or 編集」を選ぶだけにして処理時間を50%短縮</li>
+            <li>製品バージョン・エラーコードなどのキーワードを確実にヒットさせる</li>
+          </ul>
+        </div>
+        <div class="memo-ref-uc-points">
+          <p class="memo-ref-uc-col-label">設計のポイント</p>
+          <blockquote class="cite-example">
+            <ul>
+              <li><strong>Hybrid Search 必須</strong>：エラーコード・型番はBM25、意味検索はVector</li>
+              <li>製品バージョンでメタデータフィルタを掛けて古い情報を除外</li>
+              <li>チャンクサイズ 300〜500（FAQ は Q&A 単位で区切る）</li>
+              <li>レイテンシ優先のため Reranker は軽量モデルを選択</li>
+            </ul>
+          </blockquote>
+        </div>
+      </div>
+      <div class="memo-ref-stack">
+        <p class="memo-ref-stack-caption">技術スタック例（品質重視）</p>
+        <figure class="memo-ref-figure">
+          <div class="mermaid">
+flowchart LR
+  CSV --> Chunk --> Embed --> DB[(Qdrant)]
+  DB --> Rerank --> LLM[Claude sonnet]
+          </div>
+        </figure>
+        <p class="wiki-lead">Zendesk CSV → チャンキング → voyage-3（多言語） → Qdrant → Cohere Rerank → Claude claude-sonnet-4-6</p>
+      </div>
+    </article>
+
+    <!-- UC3: コードベース検索 -->
+    <article class="memo-ref-uc memo-ref-uc--code">
+      <header class="memo-ref-uc-head">
+        <img class="memo-ref-uc-thumb" src="images/memo-rag/uc-code.png" alt="コードベース検索のイメージ" width="120" height="68" loading="lazy">
+        <p class="memo-ref-uc-title">コードベース理解・検索 — 「20万行のコードを自然言語で検索・説明させたい」</p>
+      </header>
+      <div class="memo-ref-uc-body">
+        <div>
+          <p class="memo-ref-uc-col-label">成し遂げたいこと</p>
+          <ul>
+            <li>「認証周りの処理はどのファイルにある？」を即座に特定</li>
+            <li>新メンバーのオンボーディング時間を短縮（コードを読んで説明）</li>
+            <li>PR レビュー時に「同じパターンが他にあるか」を検索</li>
+          </ul>
+        </div>
+        <div class="memo-ref-uc-points">
+          <p class="memo-ref-uc-col-label">設計のポイント</p>
+          <blockquote class="cite-example">
+            <ul>
+              <li>チャンクは<strong>関数・クラス単位</strong>で区切る（行数ではなくAST解析）</li>
+              <li>メタデータに <code>ファイルパス・言語・モジュール名・関数名</code> を付与</li>
+              <li>コード用 Embedding モデル（voyage-code-3）が汎用より精度高</li>
+              <li>Git の差分更新で変更ファイルだけ再インデックス</li>
+            </ul>
+          </blockquote>
+        </div>
+      </div>
+      <div class="memo-ref-stack">
+        <p class="memo-ref-stack-caption">技術スタック例</p>
+        <figure class="memo-ref-figure">
+          <div class="mermaid">
+flowchart LR
+  AST[tree-sitter] --> Embed --> DB[(pgvector)]
+  DB --> Agent[Claude Code]
+          </div>
+        </figure>
+        <p class="wiki-lead">tree-sitter（AST分割）→ voyage-code-3 → pgvector → Claude Code（コンテキストとして渡す）</p>
+      </div>
+    </article>
+
+    <!-- UC4: リアルタイム金融情報 -->
+    <article class="memo-ref-uc memo-ref-uc--realtime">
+      <header class="memo-ref-uc-head">
+        <img class="memo-ref-uc-thumb" src="images/memo-rag/uc-realtime.png" alt="リアルタイム情報RAGのイメージ" width="120" height="68" loading="lazy">
+        <p class="memo-ref-uc-title">リアルタイム情報への対応 — 「常に最新の情報で回答させたい（ニュース・株価・仕様）」</p>
+      </header>
+      <div class="memo-ref-uc-body">
+        <div>
+          <p class="memo-ref-uc-col-label">成し遂げたいこと</p>
+          <ul>
+            <li>ニュース記事・製品仕様書が更新されたら即座にインデックスへ反映</li>
+            <li>古いチャンクが検索に出てこないよう鮮度管理</li>
+            <li>「この情報はいつ時点のものか」を回答に必ず含める</li>
+          </ul>
+        </div>
+        <div class="memo-ref-uc-points">
+          <p class="memo-ref-uc-col-label">設計のポイント</p>
+          <blockquote class="cite-example">
+            <ul>
+              <li>メタデータに <code>published_at</code> を付与し、検索時に日付フィルタ</li>
+              <li>Incremental Indexing：変更差分のみ再ベクトル化してコスト削減</li>
+              <li>古いバージョンを <code>is_latest=false</code> フラグで除外（物理削除しない）</li>
+              <li>Streaming 生成でレスポンス体感速度を改善</li>
+            </ul>
+          </blockquote>
+        </div>
+      </div>
+      <div class="memo-ref-stack">
+        <p class="memo-ref-stack-caption">技術スタック例</p>
+        <figure class="memo-ref-figure">
+          <div class="mermaid">
+flowchart LR
+  Feed[RSS Webhook] --> Delta --> Reindex --> DB[(Qdrant)]
+  DB --> LLM[Claude sonnet]
+          </div>
+        </figure>
+        <p class="wiki-lead">RSS/Webhook → 差分検出 → 再インデックス → Qdrant（メタデータフィルタ強力） → Claude claude-sonnet-4-6</p>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- ══ 5. 周辺知識 ══ -->
+  <h4>周辺知識</h4>
+
+  <!-- 埋め込みモデル比較 -->
+  <div>
+    <h5 class="memo-ref-subhead">Embedding モデル比較</h5>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>モデル</th>
+            <th>次元数</th>
+            <th>日本語</th>
+            <th>コスト</th>
+            <th>特徴・用途</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>text-embedding-3-small</td>
+            <td>1,536</td>
+            <td>◯</td>
+            <td>$0.02/1M tokens</td>
+            <td>汎用・最安。まずこれで始める</td>
+          </tr>
+          <tr>
+            <td>text-embedding-3-large</td>
+            <td>3,072</td>
+            <td>◯</td>
+            <td>$0.13/1M tokens</td>
+            <td>高精度が必要な本番環境向け</td>
+          </tr>
+          <tr>
+            <td>voyage-3</td>
+            <td>1,024</td>
+            <td>◎</td>
+            <td>$0.06/1M tokens</td>
+            <td>Anthropic推奨。多言語・長文に強い</td>
+          </tr>
+          <tr>
+            <td>voyage-code-3</td>
+            <td>1,024</td>
+            <td>◯</td>
+            <td>$0.06/1M tokens</td>
+            <td>コード検索専用。コードRAGに必須</td>
+          </tr>
+          <tr>
+            <td>BGE-M3（OSS）</td>
+            <td>1,024</td>
+            <td>◎</td>
+            <td>無料（自己ホスト）</td>
+            <td>日本語最強クラス。セルフホスト前提</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ベクトルDB比較 -->
+  <div>
+    <h5 class="memo-ref-subhead">ベクトルDB 選定基準</h5>
+    <div class="memo-ref-vdb-grid">
+      <div class="memo-ref-vdb-card">
+        <strong>pgvector</strong>
+        <p>既存PostgreSQLに追加できる。〜100万件規模。RDSの他テーブルとJOINできる点が強力。Supabaseがマネージドで提供。</p>
+        <p class="memo-ref-vdb-fit">✓ 既存PG環境がある・結合クエリが必要</p>
+      </div>
+      <div class="memo-ref-vdb-card">
+        <strong>Qdrant</strong>
+        <p>Rust製で高速・低メモリ。メタデータフィルタが強力（payload filter）。OSSでセルフホスト可。Dockerで即起動できる。</p>
+        <p class="memo-ref-vdb-fit">✓ 高スループット・複雑なフィルタ条件</p>
+      </div>
+      <div class="memo-ref-vdb-card">
+        <strong>Pinecone</strong>
+        <p>フルマネージド。インフラ不要で10億件以上のスケールに対応。コストは高め。名前空間でマルチテナント管理が容易。</p>
+        <p class="memo-ref-vdb-fit">✓ 大規模・インフラ管理したくない</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- チャンキング戦略 -->
+  <div>
+    <h5 class="memo-ref-subhead">チャンキング戦略の選び方</h5>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ドキュメント種別</th>
+            <th>推奨サイズ</th>
+            <th>区切り方</th>
+            <th>注意点</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>社内規程・法律文書</td>
+            <td>500〜800 token</td>
+            <td>条文・項番単位</td>
+            <td>条文番号をメタデータに必ず含める</td>
+          </tr>
+          <tr>
+            <td>FAQ / Q&A</td>
+            <td>200〜400 token</td>
+            <td>Q&Aペア単位（分割しない）</td>
+            <td>QとAを必ず同じチャンクに含める</td>
+          </tr>
+          <tr>
+            <td>技術ドキュメント（MD）</td>
+            <td>800〜1200 token</td>
+            <td>見出し（##）単位</td>
+            <td>MarkdownHeaderTextSplitter を使う</td>
+          </tr>
+          <tr>
+            <td>ソースコード</td>
+            <td>関数・クラス単位</td>
+            <td>AST解析（tree-sitter）</td>
+            <td>行数ではなく構造で分割する</td>
+          </tr>
+          <tr>
+            <td>会議議事録</td>
+            <td>300〜600 token</td>
+            <td>話題・アクションアイテム単位</td>
+            <td>日付・参加者をメタデータに追加</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      💡 <strong>Parent Document Retriever パターン</strong>：大きなチャンク（親）で文脈を保持し、小さなチャンク（子）でベクトル検索する。子が当たったら親全体をコンテキストとして渡す。精度と文脈保持の両立に効果的。
+    </div>
+  </div>
+
+  <!-- よくある失敗と対策 -->
+  <div>
+    <h5 class="memo-ref-subhead">よくある失敗と対策</h5>
+    <div class="table-wrap">
+      <table class="memo-ref-failure-table">
+        <thead>
+          <tr>
+            <th scope="col">失敗パターン</th>
+            <th scope="col">対策</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fail-problem">
+              <strong>❌ 固有名詞がヒットしない</strong>
+              「ABC-1234エラー」「モデルXR-7」など型番・コードをベクトル検索だけで探すと見つからない
+            </td>
+            <td class="fail-fix">
+              <strong>✅ 対策</strong>
+              Hybrid Search（BM25）を必ず組み合わせる。キーワードはBM25の得意分野
+            </td>
+          </tr>
+          <tr>
+            <td class="fail-problem">
+              <strong>❌ 関係ない回答が返ってくる</strong>
+              Top-K で取得したチャンクに無関係なものが混じり、回答が汚染される
+            </td>
+            <td class="fail-fix">
+              <strong>✅ 対策</strong>
+              ① 類似度スコアで足切り（cosine &lt; 0.75 は除外）② Reranker で再スコアリング ③ メタデータフィルタで絞り込み
+            </td>
+          </tr>
+          <tr>
+            <td class="fail-problem">
+              <strong>❌ 「知りません」と言うべき場面で嘘をつく</strong>
+              コンテキストに情報がないのに LLM が知識から回答してしまう（ハルシネーション）
+            </td>
+            <td class="fail-fix">
+              <strong>✅ 対策</strong>
+              System プロンプトに「コンテキスト外の情報を使わない。不明なら"情報がありません"と答えよ」を明示。RAGAS の faithfulness で定期測定
+            </td>
+          </tr>
+          <tr>
+            <td class="fail-problem">
+              <strong>❌ インデックスが肥大化して遅くなる</strong>
+              更新のたびに全件再インデックスしているため、時間とコストが増大し続ける
+            </td>
+            <td class="fail-fix">
+              <strong>✅ 対策</strong>
+              Incremental Indexing：ハッシュ比較で変更のあったドキュメントだけ再ベクトル化。古いチャンクは論理削除（<code>is_active=false</code>）
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ AIへの指示パターン（追加） ══ -->
+  <h4>AIへの指示パターン（続き）</h4>
+    <div class="bp-block">
+      <div class="bp-header"><span class="bp-header-label">RAG実装をAIに依頼するプロンプト例</span></div>
+      <div class="bp-prompt-list">
+        <div class="bp-prompt-row bp-prompt-row--purple">
+          <span class="bp-prompt-label">コードRAG構築</span>
+          <pre class="bp-prompt-text">Pythonリポジトリを対象に、関数・クラス単位でチャンクするコードRAGを構築してください。
+・tree-sitter でAST解析してチャンク分割
+・voyage-code-3 でベクトル化
+・メタデータ: ファイルパス・関数名・引数・docstring
+・pgvector に保存してClaude Code から参照できる形に</pre>
+        </div>
+        <div class="bp-prompt-row">
+          <span class="bp-prompt-label">評価パイプライン</span>
+          <pre class="bp-prompt-text">RAGASを使った自動評価パイプラインをGitHub Actionsで構築してください。
+・PR マージ時に自動でfaithfulness・answer_relevancy を計測
+・faithfulness &lt; 0.85 のとき PR をブロック
+・結果をPRコメントに投稿</pre>
+        </div>
+      </div>
+    </div>
+</div>
+  </div>
+</div>

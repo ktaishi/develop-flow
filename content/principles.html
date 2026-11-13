@@ -1,0 +1,59 @@
+<!--meta {"title": "全体原則", "desc": "AI時代の開発を貫く4つの土台 — レビュー前提の協働・コンテキストの資産化・小さく検証・決定論的ガードレール。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Chapter 00</div>
+    <h1>🧭 全体を貫く原則</h1>
+    <p class="hb-lead">個別フェーズに入る前に。AIエージェントを使った開発のすべてに共通する4つの土台と、それを支える1つの核心。</p>
+    <img class="hb-hero-img" src="/assets/handbook/principles.svg" alt="全体原則のイメージ">
+
+    <h2 id="s-1">なぜ「原則」から始めるのか</h2>
+    <p>AIは大量のコードを高速に生成する。しかし速度そのものは価値ではない。<strong>検証されていないコードは負債</strong>であり、生成が速いほど負債も速く積み上がる。AI開発の成否は「どれだけ生成できるか」ではなく「どれだけ速く・確実に検証できるか」で決まる。以下の4原則はすべてこの一点に収束する。</p>
+
+    <h2 id="s-2">4つの土台</h2>
+    <div class="hb-grid hb-cols-2">
+      <div class="hb-card"><h4>① レビュー前提の協働者として扱う</h4>AIは「速い実装者」ではなく「下書きを大量に出す共同作業者」。生成物は必ず人間または別エージェントが検証してからマージする。確信のない修正・「なぜ直ったか説明できない修正」は採用しない。</div>
+      <div class="hb-card"><h4>② コンテキストを資産化する</h4>規約・判断・落とし穴を <code>CLAUDE.md</code> / ルールファイル / ADR / <code>STATUS.md</code> に蓄積し、AIが毎回参照できるようにする。暗黙知を毎回プロンプトに書き直さない。文書がAIの「長期記憶」になる。</div>
+      <div class="hb-card"><h4>③ 小さく出して小さく検証する</h4>1コミット=1論理変更。大きなタスクを一括投入せず、検証可能な単位へ分解する。各単位でテスト・型・リンタを通してから次へ。レビュー範囲が小さいほど不具合は見つかる。</div>
+      <div class="hb-card"><h4>④ 決定論的ガードレールで囲む</h4>テスト・型・リンタ・CI・セキュリティスキャン。AIの非決定的な出力を、機械的に検証できる仕組みで封じ込める。人間のレビューは「機械が見られない部分」に集中させる。</div>
+    </div>
+
+    <h2 id="s-3">原則が回るループ</h2>
+    <p class="hb-sub">4原則は独立した教訓ではなく、1本のフィードバックループを構成する。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  C["📚 コンテキスト<br/>(規約・ADR)"] --> G["✍️ 小さく生成"]
+  G --> V["🛡️ ガードレール検証<br/>(型/テスト/lint)"]
+  V -->|失敗| G
+  V -->|通過| H["👤 人間レビュー"]
+  H -->|学びを記録| C
+  H --> M["✅ マージ"]
+      </pre>
+      <figcaption>図: コンテキスト → 生成 → 自動検証 → 人間レビュー → 学びの記録、という循環。</figcaption>
+    </figure>
+
+    <h3 id="s-4">具体例: コンテキストの有無で出力が変わる</h3>
+    <p>同じ指示でも、規約（②で資産化したコンテキスト）があるかで生成結果が変わる。</p>
+    <figure class="hb-io">
+      <div class="hb-seg"><span class="hb-lbl hb-u">プロンプト（規約なし）</span><pre>商談を削除する処理を書いて</pre></div>
+      <div class="hb-seg"><span class="hb-lbl hb-a">AIの出力</span><pre>await db.orders.delete({ where: { id } });   <span class="hb-c">// 物理削除（復旧・監査が不能に）</span></pre></div>
+      <div class="hb-seg"><span class="hb-lbl hb-u">プロンプト（CLAUDE.md に「論理削除がデフォルト」）</span><pre>商談を削除する処理を書いて</pre></div>
+      <div class="hb-seg"><span class="hb-lbl hb-a">AIの出力</span><pre>await db.orders.update({
+  where: { id },
+  data: { deletedAt: new Date() },          <span class="hb-c">// 論理削除（規約に従う）</span>
+});</pre></div>
+      <div class="hb-cap">図: 規約を資産化しておくと、毎回指示しなくても正しい実装が出る（原則②）。</div>
+    </figure>
+
+    <h2 id="s-5">やってはいけないこと</h2>
+    <ul class="hb-bad">
+      <li>AIの出力を読まずにマージする（「動いたから良し」）</li>
+      <li>巨大なタスクを1プロンプトで丸投げし、巨大な差分を一気にレビューする</li>
+      <li>同じ前提・規約を毎回プロンプトに書き、文書化しない</li>
+      <li>テストや型チェックを「あとで」と後回しにして生成だけ進める</li>
+      <li>原因を説明できないまま「動いた」修正を採用する</li>
+    </ul>
+
+    <div class="hb-callout hb-ai"><b>AI活用の核心:</b> AI支援開発の品質は「生成力」ではなく「検証の自動化度」で決まる。ガードレールへの投資は、そのまま生成速度の上限になる。テストが薄いプロジェクトでは、AIを速く走らせるほど早く壊れる。</div>
+
+    <div class="hb-callout hb-tip"><b>次に進む前に:</b> この4原則は全章の前提として繰り返し参照される。実践面は次章 <a href="ai-collaboration.html">01 AIとの協働の実務</a> へ。各章の「落とし穴」は、突き詰めるとこのどれかが欠けたときに起きる。</div>
+</div>

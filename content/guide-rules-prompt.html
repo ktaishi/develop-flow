@@ -1,0 +1,91 @@
+<!--meta {"title": "プロンプト設計", "desc": "構造化プロンプトとチューニング。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-prompt">プロンプト設計</h1>
+      <p class="lead">構造化プロンプトとチューニング。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>一発勝負の文面より「回るループ」を設計する</li>
+<li>完了条件＝検証コマンドを先に書く</li>
+<li>繰り返す指示は Rules / Skills へ昇格する</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-bp.html">← ベストプラクティス参照</a> <a href="guide-rules-phase1.html">Phase 1 — 規約整備 →</a></p>
+</aside>
+<h3 id="17-prompt"><a class="toclink" href="#17-prompt">プロンプト設計</a></h3>
+<p class="callout">プロンプトの主役は「一発で正解を出す文面」から「<strong>自分で直しながら回るループ</strong>の設計」へ移っている。最新モデルは <em>ツールを使って自律的にループを回す</em>（gather context → act → verify → iterate）形で動く。だから書き手の仕事は、言い回しを磨くことより、<strong>そのループが正しく回り、正しく止まる条件を与えること</strong>になる。文面調整がゼロになるわけではなく、ループを設計する土台として位置づける。</p>
+
+<h4 id="17-loop"><a class="toclink" href="#17-loop">ループを前提に書く</a></h4>
+<p>モデルは前の手の結果を見て次の手を決める。失敗したテスト出力が次の入力に戻り、読む→直す→再実行を自分で繰り返す。つまり<strong>1ターンの完璧な指示</strong>ではなく、<strong>繰り返しても破綻しない指示</strong>を書く。これがループ設計の出発点。</p>
+<ol class="steps">
+<li><strong>ゴールと完了条件を先に書く</strong> — 「テストが通る」「<code>/health</code> が 200」「lint 警告ゼロ」など、モデルが自分で実行・判定できる<strong>検証可能な条件</strong>に落とす</li>
+<li><strong>検証コマンドを渡す</strong> — 「変更ごとに <code>pytest -q</code> を実行し、結果をそのまま報告。全部通るまで次に進まない」のように、自己申告ではなく<strong>出力に基づく判定</strong>を強制する</li>
+<li><strong>停止条件を決める</strong> — リトライは 2〜3 回まで。それで通らなければ自走を止め、失敗を表に出す（無限ループ・場当たり修正を防ぐ）</li>
+<li><strong>ズレたら follow-up より revert</strong> — 意図と違う出力は、追加指示で重ねるより<strong>変更を戻す → 不足コンテキストと完了条件を足す → 再実行</strong>の方が速くきれいなことが多い（→ <a href="guide-ops-harness.html#18-plan-revert">Plan からやり直す</a>）</li>
+</ol>
+<p>ループを「自分で回す」のではなく「回るように設計する」のが要点。実行側の仕組み（harness・retry・並列）は <a href="guide-ops-harness.html#18-harness-2026">ハーネスと文脈エンジニアリング</a> に分離している。</p>
+
+<h4 id="17-context"><a class="toclink" href="#17-context">何を毎回読ませ、何を一度だけ伝えるか</a></h4>
+<p class="callout">公式の整理では、焦点は prompt engineering から <strong>context engineering</strong>（毎ターン何をコンテキストに載せるかの設計）へ広がっている。コンテキストは有限資源で、増やすほど精度が落ちる（context rot）。<strong>最小で高シグナルなトークン</strong>に絞るのが原則。</p>
+<ul>
+<li><strong>毎回守ること</strong>は Rules / <code>CLAUDE.md</code> に置き、毎ターン読ませる。<strong>今回だけの指示</strong>はプロンプトで渡す（→ <a href="guide-rules-compare.html">Rules / Skills / Plan の使い分け</a>）</li>
+<li>全部を先に詰め込まず、ファイルパス・クエリなどの<strong>参照</strong>を渡して必要時に読み込ませる（just-in-time）。grep・glob で自分で辿らせる方が、肥大したコンテキストより精度が高い</li>
+<li>長丁場のタスクは <code>tasks/todo.md</code> など<strong>外部メモ</strong>に進捗を書かせ、文脈が溢れても辿れるようにする（→ <a href="guide-ops-harness.html#18-plan-patterns">Plan の置き場所</a>）</li>
+<li>システムプロンプトは<strong>適切な抽象度</strong>で。if-else を丸ごと書く硬さでも、曖昧すぎる一般論でもなく、その中間を狙う</li>
+</ul>
+
+<h4 id="17-write"><a class="toclink" href="#17-write">書き方の基本（ループの各手を読みやすく）</a></h4>
+<ul>
+<li>XML タグや見出しでブロックを分け、モデルが参照しやすくする（<code>&lt;instructions&gt;</code> / <code>&lt;context&gt;</code> など）</li>
+<li>技術スタックはバージョン付きで宣言（モデルは複数世代の知識を混同しうる）</li>
+<li>禁止事項（Negative instructions）を明示 — 「〜しない」と「〜する」は同じ重要度</li>
+<li>例示（few-shot）は edge case を羅列せず、<strong>代表的で多様な数例</strong>を本番と同じスキーマで揃える</li>
+<li>繰り返す依頼は Skills / Commands に昇格し、プロンプトから消す</li>
+<li>プロンプトはコードと同様にレビュー・バージョン管理する</li>
+</ul>
+<p>公式: <a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview">Anthropic — Prompt engineering</a> / <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Effective context engineering for AI agents</a></p>
+<p>claude.ai 向け <a href="https://platform.claude.com/docs/en/release-notes/system-prompts#claude-fable-5">system prompt</a> は文体の参考（箇条書き最小・コードは Markdown・単純な依頼は散文）。詳細は <a href="memo-ai-tools.html#21-claude-prompt-style">AIツールメモ</a>。</p>
+
+<h3 id="17-eval"><a class="toclink" href="#17-eval">ループを評価する</a></h3>
+<h4 id="17-tuning"><a class="toclink" href="#17-tuning">実証的チューニング — ループ自体を評価する</a></h4>
+<p>言い回しではなく「ループが安定して通るか」を測る。書き手の自己再読は評価の代替にならない。</p>
+<ol class="steps">
+<li>代表シナリオを 2〜3 件固定（入力・成功条件をファイル化）</li>
+<li>ルール / プロンプトを<strong>1 テーマだけ</strong>変えて再実行（差分を追えるようにする）</li>
+<li>自己申告 + メトリクス（手数・時間・再試行回数）を表に記録</li>
+<li>連続 N 回クリアで採用。失敗例は <code><a href="flow-rules-samples.html#sample-tasks-lessons-md">tasks/lessons.md</a></code> へ</li>
+</ol>
+<p>深掘り（別エージェントを Evaluator にしてバイアスを排除する Maker-Checker 型評価）: <a href="https://github.com/mizchi/chezmoi-dotfiles/blob/main/dot_claude/skills/empirical-prompt-tuning/SKILL.md">empirical-prompt-tuning（原典 SKILL）</a>。</p>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-cursor-rules-agent-safety">
+<h4 class="info-panel__title" id="scenario-cursor-rules-agent-safety">rules 改訂の効果を同一プロンプトで検証</h4>
+<div class="info-panel__body"><p><code>.cursor/rules/agent-safety.mdc</code> 改訂前後で、同じ「DB マイグレーション依頼」プロンプトを 3 回実行する。成功条件は「<code>docker exec</code> を提案しない」ことだけに固定し、ループが毎回その条件で止まるかを見る。</p></div>
+</aside>
+
+<hr />
+
+
+
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-setup.html#1-policy">方針</a></li>
+  <li><a href="guide-setup.html#2-ai-selection">AIツール</a></li>
+  <li><a href="flow-rules-samples.html">ルールサンプル</a></li>
+  <li><a href="guide-glossary.html">用語集</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+<hr />
+<p class="prereq-line wiki-lead"><a href="guide-setup.html#0-beginner">クイックスタート</a> Step 3 後。完了 → <a href="guide-design.html#phase-2-plan">Phase 2</a></p>
+<p>ここが本フローの中心。 先に rules・Skills・docs の置き場を決め、「毎回守ること」と「今回だけの指示」を分ける。Phase 1 を整えてから Phase 2 以降に進む。</p>
+<span id="410-dual" hidden aria-hidden="true"></span>
+<span id="phase-1" class="redirect-anchor" aria-hidden="true"></span>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-bp.html">← ベストプラクティス参照</a><a class="flow-pager__next" href="guide-rules-phase1.html">Phase 1 — 規約整備 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

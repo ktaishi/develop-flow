@@ -1,0 +1,129 @@
+<!--meta {"title": "Docker（2/2）", "desc": "トラブルシュートと本番差分。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-docker-2">Docker（2/2）</h1>
+      <p class="lead">トラブルシュートと本番差分。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>不具合はボリューム・ポート・env の食い違いを先に疑う</li>
+<li>ホスト CLI（gh / vercel / aws）は認証確認を初手に固定する</li>
+<li>本番に触れる危険操作は要確認とし rules に明記する</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-docker-1.html">← Docker（1/2）</a> <a href="guide-repo-s3.html">S3 / MinIO →</a></p>
+</aside>
+<h3 id="11-3-host-clis-overview"><a class="toclink" href="#11-3-host-clis-overview">ホスト CLI の使い方</a></h3>
+<h4 id="11-3-host-clis-quickref"><a class="toclink" href="#11-3-host-clis-quickref">早見表</a></h4>
+<table>
+<thead>
+<tr>
+<th>CLI</th>
+<th>主用途</th>
+<th>インストール（macOS 例）</th>
+<th>認証・動作確認</th>
+<th>エージェントがよく使う例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gh</code></td>
+<td>PR / Issue / CI 状況</td>
+<td><code>brew install gh</code></td>
+<td><code>gh auth status</code></td>
+<td><code>gh pr checks</code> · <code>gh run view</code></td>
+</tr>
+<tr>
+<td><code>vercel</code></td>
+<td>preview deploy · <code>env pull</code></td>
+<td><code>npm i -g vercel</code></td>
+<td><code>vercel whoami</code></td>
+<td><code>vercel link</code> · <code>vercel env pull .env.local</code></td>
+</tr>
+<tr>
+<td><code>aws</code></td>
+<td>ECS / ECR / S3 / ログ</td>
+<td><code>brew install awscli</code></td>
+<td><code>aws sts get-caller-identity</code></td>
+<td><code>aws logs tail</code> · <code>aws ecr describe-repositories</code></td>
+</tr>
+<tr>
+<td><code>supabase</code></td>
+<td>ローカル DB · migration</td>
+<td><code>brew install supabase/tap/supabase</code></td>
+<td><code>supabase projects list</code></td>
+<td><code>supabase start</code> · <code>supabase db push</code></td>
+</tr>
+<tr>
+<td><code>docker</code></td>
+<td>compose 起動</td>
+<td>Docker Desktop</td>
+<td><code>docker compose version</code></td>
+<td><code>docker compose up -d</code> · <code>docker compose exec app …</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="11-3-host-clis-danger"><a class="toclink" href="#11-3-host-clis-danger">危険操作の扱い</a></h4>
+<p><code>vercel deploy --prod</code> や本番 <code>aws</code> 変更は、エージェントが勝手に実行しないよう <a href="guide-glossary-docs.html#force-confirm-rule">強制確認ルール</a> と <a href="guide-ops-orchestration.html#18-4-verify">完了前の検証</a> を rules に書く。</p>
+<h3 id="11-3-host-clis-each"><a class="toclink" href="#11-3-host-clis-each">CLI 別の初手</a></h3>
+<h4 id="11-3-host-clis-gh"><a class="toclink" href="#11-3-host-clis-gh">GitHub CLI (gh)</a></h4>
+<ol class="steps">
+<li><strong>インストールと確認</strong>
+<pre><code class="language-bash">brew install gh
+gh --version</code></pre>
+</li>
+<li><strong>ログイン</strong> — ブラウザまたはトークン。<code>gh auth login</code> 後に <code>gh auth status</code> で <code>Logged in</code> を確認する。</li>
+<li><strong>リポジトリ紐付け</strong> — 作業ディレクトリで <code>gh repo set-default</code>（または <code>gh repo view</code> で remote 確認）。</li>
+<li><strong>エージェントの初手</strong> — PR 調査: <code>gh pr checks</code> → 失敗 run: <code>gh run view RUN_ID --log-failed</code>。</li>
+<li><strong>つまずき</strong> — SSO 組織は <code>gh auth login --hostname github.com --web</code> を再実行。トークン scope 不足は <code>repo</code> / <code>read:org</code> を付与。</li>
+</ol>
+<h4 id="11-3-host-clis-vercel"><a class="toclink" href="#11-3-host-clis-vercel">Vercel CLI</a></h4>
+<ol class="steps">
+<li><strong>インストールと確認</strong>
+<pre><code class="language-bash">npm install -g vercel
+vercel --version</code></pre>
+</li>
+<li><strong>ログイン</strong> — <code>vercel login</code>（ブラウザ）→ <code>vercel whoami</code>。</li>
+<li><strong>プロジェクト紐付け</strong> — 初回 <code>vercel link</code>。環境変数は <code>vercel env pull .env.local</code>（<code>.env.local</code> は gitignore）。</li>
+<li><strong>エージェントの初手</strong> — preview: <code>vercel</code>（対話）または CI 経由。ローカル確認前に <code>vercel env pull</code> で不足キーを潰す。</li>
+<li><strong>つまずき</strong> — 複数 team/scope があるときは <code>vercel switch</code>。本番 deploy は要確認（上記「危険操作」）。</li>
+</ol>
+<h4 id="11-3-host-clis-aws"><a class="toclink" href="#11-3-host-clis-aws">AWS CLI</a></h4>
+<ol class="steps">
+<li><strong>インストールと確認</strong>
+<pre><code class="language-bash">brew install awscli
+aws --version</code></pre>
+</li>
+<li><strong>認証（SSO 推奨）</strong>
+<pre><code class="language-bash">aws configure sso --profile myapp-dev
+aws sso login --profile myapp-dev
+export AWS_PROFILE=myapp-dev
+aws sts get-caller-identity</code></pre>
+<p>開発のみ IAM ユーザーの場合は <code>aws configure --profile myapp-dev</code>。本番 CI は OIDC（<a href="guide-repo-cicd-1.html#11-5-cicd">11.5 CI/CD</a>）を正本とする。</p>
+</li>
+<li><strong>プロファイル確認</strong> — <code>aws configure list-profiles</code>。複数アカウントでは <code>AWS_PROFILE</code> を rules に明記する。</li>
+<li><strong>エージェントの初手</strong> — ログ: <code>aws logs tail /ecs/myapp --follow</code>。イメージ: <code>aws ecr describe-repositories</code>。</li>
+<li><strong>つまずき</strong> — SSO セッションは数時間で切れる。<code>aws sso login</code> を再実行。region 未設定は <code>AWS_DEFAULT_REGION=ap-northeast-1</code> 等を profile に固定。</li>
+</ol>
+<h4 id="11-3-host-clis-supabase"><a class="toclink" href="#11-3-host-clis-supabase">Supabase CLI（短文）</a></h4>
+<ul>
+<li><code>brew install supabase/tap/supabase</code> → <code>supabase login</code> → <code>supabase projects list</code></li>
+<li>ローカル: <code>supabase init</code> → <code>supabase start</code>（Docker 必須。詳細は <a href="guide-repo-docker-1.html#11-3-docker">11.3</a>）</li>
+<li>マイグレーション: <code>supabase db push</code> / <code>supabase migration new</code></li>
+</ul>
+<h4 id="11-3-host-clis-docker"><a class="toclink" href="#11-3-host-clis-docker">Docker / Compose（短文）</a></h4>
+<ul>
+<li>ホストに Docker Desktop（または Linux engine）を入れ、<code>docker compose version</code> が通る状態にする</li>
+<li>アプリ・DB・テストは <a href="guide-repo-docker-1.html#11-3-docker">11.3 ローカル開発</a> の <code>make up</code> / <code>docker compose exec</code> を正本とする</li>
+<li>エージェントへの指示は「ホストで compose 起動、実行は exec 経由」と rules で固定する</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-host-clis-pr-check">
+<h4 class="info-panel__title" id="scenario-host-clis-pr-check">PR チェック失敗を Cursor が調査</h4>
+<div class="info-panel__body"><p>CI が red の PR。<code>gh pr checks</code> で失敗 job を特定 → <code>gh run view --log-failed</code> でログ → 修正 → プロジェクトのテストコマンドでローカル再現。merge 前に <code>gh pr view --json statusCheckRollup</code> で green 確認。</p></div>
+</aside>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-docker-1.html">← Docker（1/2）</a><a class="flow-pager__next" href="guide-repo-s3.html">S3 / MinIO →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

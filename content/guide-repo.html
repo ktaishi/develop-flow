@@ -1,0 +1,115 @@
+<!--meta {"title": "リポジトリ", "desc": "構成・Docker・CI・docs への導線。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo">リポジトリ</h1>
+      <p class="lead">構成・Docker・CI・docs への導線。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>Plan: tasks/ · 仕様: docs/</li>
+<li>カードからサブページへ</li>
+</ul>
+</aside>
+
+<nav class="guide-hub-grid" aria-label="章内ページ">
+<article class="guide-hub-card">
+  <a href="guide-repo-directory.html">
+    <p class="guide-hub-card__title">ディレクトリ構成</p>
+    <p class="guide-hub-card__lead">実業務向けフォルダ配置。</p>
+    <p class="guide-hub-card__meta">2 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-gitignore.html">
+    <p class="guide-hub-card__title">.gitignore</p>
+    <p class="guide-hub-card__lead">秘密情報と生成物の除外。</p>
+    <p class="guide-hub-card__meta">2 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-docker-1.html">
+    <p class="guide-hub-card__title">Docker（1/2）</p>
+    <p class="guide-hub-card__lead">compose・起動・日常コマンド。</p>
+    <p class="guide-hub-card__meta">1 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-docker-2.html">
+    <p class="guide-hub-card__title">Docker（2/2）</p>
+    <p class="guide-hub-card__lead">トラブルシュートと本番差分。</p>
+    <p class="guide-hub-card__meta">1 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-s3.html">
+    <p class="guide-hub-card__title">S3 / MinIO</p>
+    <p class="guide-hub-card__lead">本番 S3 とローカル MinIO。</p>
+    <p class="guide-hub-card__meta">1 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-cicd-1.html">
+    <p class="guide-hub-card__title">CI/CD（1/2）</p>
+    <p class="guide-hub-card__lead">パイプラインと AWS 想定。</p>
+    <p class="guide-hub-card__meta">1 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-cicd-2.html">
+    <p class="guide-hub-card__title">CI/CD（2/2）</p>
+    <p class="guide-hub-card__lead">デプロイ・ロールバック。</p>
+    <p class="guide-hub-card__meta">1 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-docs-1.html">
+    <p class="guide-hub-card__title">docs と履歴（1/2）</p>
+    <p class="guide-hub-card__lead">docs/ と ADR。</p>
+    <p class="guide-hub-card__meta">1 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-docs-2.html">
+    <p class="guide-hub-card__title">docs と履歴（2/2）</p>
+    <p class="guide-hub-card__lead">Obsidian ログ。</p>
+    <p class="guide-hub-card__meta">1 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-ai-1.html">
+    <p class="guide-hub-card__title">AI設定（1/2）</p>
+    <p class="guide-hub-card__lead">MCP・env。</p>
+    <p class="guide-hub-card__meta">1 ポイント</p>
+  </a>
+</article>
+<article class="guide-hub-card">
+  <a href="guide-repo-ai-2.html">
+    <p class="guide-hub-card__title">AI設定（2/2）</p>
+    <p class="guide-hub-card__lead">API キー・コスト。</p>
+    <p class="guide-hub-card__meta">1 ポイント</p>
+  </a>
+</article>
+</nav>
+
+
+
+    <details class="archive-fold">
+<summary>2026年6月時点の X 上の話題（記録）</summary>
+<p class="archive-fold__note">当時の投稿の要点を記録として残しています。現在の状況は公式の Docs / changelog と <a href="trends-2026.html">2026年11月のトレンド</a> を確認してください。</p>
+<table>
+<thead><tr><th>出典</th><th>要点</th><th>この章</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/commte/status/2055485189401567472">@commte</a></td><td>ルート <code>CLAUDE.md</code> は薄く · 作業は<strong>サブディレクトリ</strong>から · Hooks→Skills→Plugins→MCP</td><td><a href="guide-repo-directory.html#11-1-directory">構成</a> · <a href="guide-repo-docs-1.html#11-6-docs-z-docs">docs</a></td></tr>
+<tr><td><a href="https://x.com/bcherny/status/2017742741636321619">@bcherny</a></td><td><strong>git worktree</strong> で 3–5 並列が最大の生産性 — 衝突を物理分離</td><td><a href="guide-ops-harness.html#18-worktree-parallel">worktree</a></td></tr>
+<tr><td><a href="https://x.com/reach_vb/status/2063713960495558940">@reach_vb</a></td><td>Codex App でも Worktrees + Skills + markdown/Linear で状態管理</td><td><a href="guide-repo-ai-1.html#11-8-ai-group">AI 設定</a></td></tr>
+<tr><td><a href="https://x.com/bcherny/status/2007179832300581177">@bcherny</a></td><td>共有設定を git 管理 · PR で <code>@.claude</code> 学習をチームに還元</td><td><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></td></tr>
+</tbody>
+</table>
+</details>
+</div>
+    <nav class="flow-pager" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

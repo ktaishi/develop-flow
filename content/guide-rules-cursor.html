@@ -1,0 +1,167 @@
+<!--meta {"title": "Cursor 設定早見", "desc": "Rules / Skills / @Past Chats と Cursor 公式 BP。", "kind": "flow", "scripts": [], "reviewed": "2026-11-13"} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-cursor">Cursor 設定早見</h1>
+      <p class="lead">Rules / Skills / @Past Chats と Cursor 公式 BP。</p>
+<aside class="update-note"><b>2026-11 追記:</b> Auto モードは Cursor Router による振り分けになり、Voice Chat・Build Live Apps・iOS アプリが加わった。Rules / Skills の考え方は変わらない。要点は <a href="trends-2026.html#cursor">トレンド：Cursor</a> を参照。</aside>
+
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>Plan Mode → 承認 → Build</li>
+<li>Rules は <code>.cursor/rules/*.mdc</code> に置くと決める</li>
+<li>@Past Chats で要約して続行</li>
+</ul>
+<p class="page-brief__tasks">Rule Type を決める — 完了: Cursor 設定が決まった</p>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-tools-intro.html">← 3ツール早見 — 共通と選び方</a> <a href="guide-rules-claude.html">Claude Code 設定早見 →</a></p>
+</aside>
+<h3 id="17-cursor"><a class="toclink" href="#17-cursor">Cursor</a></h3>
+
+<h4 id="17-cursor-setup"><a class="toclink" href="#17-cursor-setup">手順: Cursor 初期設定（リポ）</a></h4>
+<ol class="steps">
+<li><code>AGENTS.md</code> をルートに置く → <a href="guide-rules-skills-2.html#17-agents-template">サンプル</a></li>
+<li><code>.cursor/rules/00-project.mdc</code> を <code>alwaysApply: true</code> で作成 → <a href="guide-rules-skills-2.html#17-rules-template">Rules サンプル</a></li>
+<li>（任意）<code>.cursor/commands/</code> に <code>plan.md</code> 等 — 本リポは <code>AI_Doc/.cursor/commands/</code> をコピー可</li>
+<li>（任意）<code>.cursor/skills/&lt;name&gt;/SKILL.md</code> — 週次の多段手順のみ</li>
+</ol>
+<pre><code class="language-text">.cursor/
+├── rules/
+│   ├── 00-project.mdc      # alwaysApply: true
+│   └── 10-domain-rules.mdc
+├── commands/
+│   └── plan.md             # → Composer で /plan
+├── skills/
+│   └── pr-review/SKILL.md
+└── plans/                  # Plan モード「Save to workspace」
+</code></pre>
+
+<h4 id="17-cursor-workflows"><a class="toclink" href="#17-cursor-workflows">手順: 典型ワークフロー（Cursor）</a></h4>
+<p>出典: <a href="https://cursor.com/ja/blog/agent-best-practices">agent-best-practices</a></p>
+
+<p><strong>A. 新機能 — Plan → 実装</strong></p>
+<ol class="steps">
+<li>Composer で <kbd>Shift</kbd>+<kbd>Tab</kbd> → <strong>Plan</strong></li>
+<li>プロンプト例を貼る（下記）→ 計画承認 → <strong>Build</strong></li>
+<li>「Save to workspace」→ <code>.cursor/plans/YYYYMMDD-feature.md</code></li>
+<li>確定内容を <code>tasks/todo.md</code> に転記</li>
+<li>AI（Agent）モードで実装 → <code>/verify</code> で証拠を残す</li>
+</ol>
+<pre><code class="language-text">/plan 請求PDFエクスポート。参照 @docs/prd/invoice-export.md @tasks/todo.md
+Done when: rspec spec/services/invoice_export_spec.rb green</code></pre>
+<div class="mermaid">
+flowchart LR
+  planNode[Planモードで計画] --> saveNode[plansに保存]
+  saveNode --> todoNode[todo.mdに転記]
+  todoNode --> buildNode[Agentで実装]
+  buildNode --> verifyNode[テストで確認]
+</div>
+
+<p><strong>B. 別チャットで続き — Past Chats</strong></p>
+<ol class="steps">
+<li>新規 Composer</li>
+<li><code>@Past Chats</code>（前の会話を参照）→ 関連セッション <strong>1 件</strong></li>
+<li><code>@tasks/todo.md</code> + ゴール 1〜3 行</li>
+</ol>
+<pre><code class="language-text">@Past Chats（invoice PDF セッション）
+続き: InvoicePdfService のエラーハンドリング。Done when: rspec green
+@tasks/todo.md</code></pre>
+<p>詳細: <a href="#17-past-chats">@Past Chats</a> · <code>/handoff</code></p>
+
+<p><strong>C. 検証ループ — Hooks（任意）</strong></p>
+<pre><code class="language-json">{
+  "version": 1,
+  "hooks": {
+    "stop": [{ "command": "make test" }]
+  }
+}
+</code></pre>
+<p>配置: <code>.cursor/hooks.json</code>（プロジェクトルート）。失敗時はエージェントが再試行しやすくなる。</p>
+
+<p><strong>D. PR 前</strong></p>
+<pre><code class="language-text">/review @Branch の差分。ブロッカーがあれば push しない
+/pr-check feature/foo → main。flow-14 の 9 カテゴリを [x]/[ ]</code></pre>
+
+
+<h4 id="17-bp-workflows-2026"><a class="toclink" href="#17-bp-workflows-2026">公式ワークフロー早見（2026-02）</a></h4>
+<p><a href="https://cursor.com/ja/blog/agent-best-practices">一次情報</a>のセクションと本サイトの対応。</p>
+<table>
+<thead><tr><th>公式テーマ</th><th>要点</th><th>本サイト</th></tr></thead>
+<tbody>
+<tr><td>ハーネス</td><td>Instructions + Tools + Model</td><td><a href="guide-rules-compare.html#17-compare">Rules / Skills / Plan</a></td></tr>
+<tr><td>Plan first</td><td><kbd>Shift</kbd>+<kbd>Tab</kbd> · Save to <code>.cursor/plans/</code></td><td><a href="guide-ops-harness.html#18-plan-revert">ズレたら計画からやり直す</a></td></tr>
+<tr><td>コンテキスト</td><td>総 <code>@</code> 不要 · <code>@Branch</code> · <code>@Past Chats</code></td><td><a href="#17-past-chats">Past Chats 手順</a></td></tr>
+<tr><td>TDD</td><td>テスト先行 → 実装 → 反復</td><td><a href="guide-implement.html#73-agent-tdd-2026">エージェント TDD 5 ステップ</a></td></tr>
+<tr><td>レビュー</td><td>diff 監視 · Agent Review · Bugbot</td><td><a href="guide-ship.html#14-agent-review">提出前 AI レビュー</a></td></tr>
+<tr><td>並列</td><td>worktree · 複数モデル比較</td><td><a href="guide-ops-harness.html#18-worktree-parallel">worktree / 多模型</a></td></tr>
+<tr><td>クラウド</td><td>Background / cursor.com/agents</td><td><a href="guide-setup.html#2-ai-visual-debug">Cloud · ビジュアル</a></td></tr>
+<tr><td>画像</td><td>スクショ · Figma MCP · Browser サイドバー</td><td><a href="guide-setup.html#2-ai-visual-debug">ビジュアルデバッグ</a></td></tr>
+</tbody>
+</table>
+<h3 id="17-cursor-ref"><a class="toclink" href="#17-cursor-ref">公式対応と応用</a></h3>
+<h4 id="17-cursor-official"><a class="toclink" href="#17-cursor-official">公式 BP → 本リポの対応（一覧）</a></h4>
+<table>
+<thead><tr><th>公式</th><th>ここでやること</th></tr></thead>
+<tbody>
+<tr><td>Plan first</td><td><a href="#17-cursor-workflows">A. Plan → Build</a></td></tr>
+<tr><td>コンテキスト</td><td><a href="#17-past-chats">Past Chats</a> · <code>@Branch</code></td></tr>
+<tr><td>Commands</td><td><a href="guide-rules-bp.html#17-commands-catalog">16 選</a></td></tr>
+<tr><td>レビュー</td><td><code>/review</code> · Bugbot（PR）</td></tr>
+<tr><td>並列</td><td><a href="guide-ops-harness.html#18-multiagent">worktree / Task</a></td></tr>
+</tbody>
+</table>
+
+<h4 id="17-cursor-rules-skills"><a class="toclink" href="#17-cursor-rules-skills">手順: Rule / Skill / Command の追加</a></h4>
+<table>
+<thead><tr><th>追加したいもの</th><th>置き場</th><th>手順</th></tr></thead>
+<tbody>
+<tr><td>毎回守る下限</td><td><code>.cursor/rules/*.mdc</code></td><td>frontmatter に <code>alwaysApply: true</code> → 本文は 20 行以内 → <a href="guide-rules-skills-2.html#17-rules-template">サンプル</a></td></tr>
+<tr><td>週次の多段手順</td><td><code>.cursor/skills/name/SKILL.md</code></td><td><code>description</code> を命令形で → <a href="guide-rules-skills-3.html#17-skill-template">サンプル</a></td></tr>
+<tr><td>毎日の 1 ショット</td><td><code>.cursor/commands/foo.md</code></td><td>ファイル名 = <code>/foo</code> · <code>$ARGUMENTS</code> 対応</td></tr>
+</tbody>
+</table>
+<pre><code class="language-text">---
+description: ドメイン不変条件
+alwaysApply: true
+---
+
+# ドメイン
+- 在庫は 0 以上（物理削除禁止）
+</code></pre>
+
+<h4 id="17-past-chats"><a class="toclink" href="#17-past-chats">手順: @Past Chats（前の会話を参照）</a></h4>
+<div class="mermaid">
+flowchart TD
+  newChat[新規Composerを開く] --> pastChats[Past Chatsで1件選ぶ]
+  pastChats --> goalLine[ゴールを1から3行書く]
+  goalLine --> attachFiles[todo.mdとdocsを添付]
+  attachFiles --> agentAsk[AIに依頼]
+</div>
+<table>
+<thead><tr><th>状況</th><th>操作</th></tr></thead>
+<tbody>
+<tr><td>同じバグの続き</td><td>同一会話を継続</td></tr>
+<tr><td>別 PR / 別機能</td><td>新規 + Past Chats 1 件 + todo</td></tr>
+<tr><td>差分レビュー</td><td><code>@Branch</code> を追加</td></tr>
+</tbody>
+</table>
+
+<h4 id="17-rules-tree"><a class="toclink" href="#17-rules-tree">配置ツリー（Cursor・併用）</a></h4>
+<pre><code class="language-text">project/
+├── AGENTS.md
+├── tasks/todo.md
+├── docs/invoice-export/
+├── .cursor/
+│   ├── rules/00-project.mdc
+│   ├── commands/plan.md
+│   ├── skills/pr-review/SKILL.md
+│   └── plans/20260530-feature.md
+├── .claude/skills/          # Claude 併用時
+└── .agents/skills/          # Codex 併用時
+</code></pre>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-tools-intro.html">← 3ツール早見 — 共通と選び方</a><a class="flow-pager__next" href="guide-rules-claude.html">Claude Code 設定早見 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

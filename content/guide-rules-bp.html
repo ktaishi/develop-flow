@@ -1,0 +1,306 @@
+<!--meta {"title": "ベストプラクティス参照", "desc": "公式・コミュニティの一次情報。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-bp">ベストプラクティス参照</h1>
+      <p class="lead">公式・コミュニティの一次情報。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>一次情報を正とし、二次情報は元を確認する</li>
+<li>X は早見として使い、必ず原典を当たる</li>
+<li>Commands・Plan のサンプルを自リポに取り込む</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-skills-3.html">← Skills 実践 — 判断と2026更新</a> <a href="guide-rules-prompt.html">プロンプト設計 →</a></p>
+</aside>
+<h3 id="17-bp-sources"><a class="toclink" href="#17-bp-sources">ベストプラクティス参照（公式・コミュニティ）</a></h3>
+<table>
+<thead><tr><th>区分</th><th>タイトル</th><th>要点</th></tr></thead>
+<tbody>
+<tr><td>Cursor 公式</td><td><a href="https://cursor.com/ja/blog/agent-best-practices">エージェント BP（2026-02）</a></td><td>Plan first · コンテキスト節約 · Rules/Skills/Commands · Hooks · 検証可能なゴール</td></tr>
+<tr><td>Cursor 公式</td><td><a href="https://cursor.com/ja/docs/skills">Agent Skills</a></td><td>ディレクトリ · <code>paths</code> · <code>/migrate-to-skills</code> · 入れ子</td></tr>
+<tr><td>Cursor 公式</td><td><a href="https://cursor.com/ja/docs/context/rules">Rules</a></td><td><code>.mdc</code> · <code>AGENTS.md</code> · Remote Rules（GitHub）</td></tr>
+<tr><td>Anthropic 公式</td><td><a href="https://code.claude.com/docs/en/best-practices">Claude Code BP</a></td><td>コンテキスト管理 · 検証ループ · Explore→Plan→Implement · 具体プロンプト</td></tr>
+<tr><td>標準</td><td><a href="https://agentskills.io/specification">Agent Skills 仕様</a></td><td>クロスツール互換 · Progressive Disclosure</td></tr>
+<tr><td>Zenn</td><td><a href="https://zenn.dev/643866/articles/3cd3b80972f8da">Skills 作成 Tips</a></td><td><code>SKILL.md</code> は薄く · 詳細は scripts/references</td></tr>
+<tr><td>Zenn</td><td><a href="https://zenn.dev/karamage/articles/509edb7791437d">Skills ハンズオン</a></td><td>description 設計 · 粒度 · セキュリティ</td></tr>
+<tr><td>Zenn</td><td><a href="https://zenn.dev/imkohenauser/articles/agents-md-context-configuration">AGENTS.md と Rules</a></td><td><code>AGENTS.md</code> + <code>globs</code> · Skills は別レイヤ</td></tr>
+<tr><td>Qiita</td><td><a href="https://qiita.com/nogataka/items/7476eb9dfc8bca4e0bb8">5ツール Skills 比較</a></td><td><code>.agents/skills/</code> 共有 · Remote import</td></tr>
+<tr><td>Qiita</td><td><a href="https://qiita.com/moguttero-oui/items/eca647499a4ba383aeaf">Skills パラダイム解説</a></td><td>オープン標準化 · <code>/migrate-to-skills</code> の位置づけ</td></tr>
+<tr><td>X</td><td><a href="https://x.com/leerob/status/1929727742821413331">@leerob — エージェント実践（2025-06）</a></td><td>検証ループ（高速テスト・型・lint）· Cursor＝IDE/ diff · Claude Code＝ループ · Codex＝背景レビュー</td></tr>
+<tr><td>X</td><td><a href="https://x.com/bcherny/status/2007179832300581177">@bcherny — 本人のセットアップ（2026-01）</a></td><td>並列 worktree · Plan→Build · CLAUDE.md 共有 · Hooks · 検証で品質 2–3x</td></tr>
+<tr><td>X</td><td><a href="https://x.com/bcherny/status/2017742741636321619">@bcherny — チーム Tips（2026-01）</a></td><td>worktree 並列 · Plan に注力 · Skills 化 · サブエージェント · 音声入力</td></tr>
+<tr><td>X</td><td><a href="https://x.com/bcherny/status/2038454336355999749">@bcherny — 隠れ機能（2026-03）</a></td><td><code>/loop</code> · teleport · Chrome 拡張検証 · <code>/batch</code> · <code>--add-dir</code></td></tr>
+<tr><td>X</td><td><a href="https://x.com/commte/status/2055485189401567472">@commte — 大規模 CB 要約</a></td><td>薄いルート CLAUDE.md · サブディレクトリから開始 · Stop hook</td></tr>
+<tr><td>X</td><td><a href="https://x.com/NainsiDwiv50980/status/2056021997659017452">@NainsiDwiv50980 — セットアップ 12 項</a></td><td>環境整備 · MCP · worktree · CI 連携（<a href="guide-rules-phase1.html#claude-setup-12">4章</a>）</td></tr>
+</tbody>
+</table>
+<h4 id="17-bp-x"><a class="toclink" href="#17-bp-x">X（公開スレッド）ベストプラクティス要約</a></h4>
+
+<h5 id="17-bp-x-loop"><a class="toclink" href="#17-bp-x-loop">Loop engineering（横断 · 2026-06）</a></h5>
+<table>
+<thead><tr><th>出典</th><th>推奨</th><th>置き場</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/steipete/status/2063697162748260627">@steipete</a></td><td>プロンプトではなく<strong>ループ設計</strong>。エージェントに都度指示しない</td><td><a href="memo-ai-tools.html#21-loop-engineering">Loop 早見</a></td></tr>
+<tr><td><a href="https://addyosmani.com/blog/loop-engineering/">Addy Osmani</a></td><td>5+1 部品 · <code>/goal</code> · maker–verifier · トークンコストに注意</td><td><a href="memo-ai-tools.html#21-loop-engineering">同上</a> · <a href="memo-ai-tools.html#21-addy-agent-skills">agent-skills</a></td></tr>
+<tr><td><a href="https://x.com/reach_vb/status/2063713960495558940">@reach_vb</a></td><td>Automations · Worktrees · Skills · Connectors · Sub-agents + 状態ファイル</td><td><a href="guide-rules-skills-2.html#17-skills-dirs">Skills</a> · <a href="guide-ops-harness.html#18-worktree-parallel">worktree</a></td></tr>
+<tr><td><a href="https://x.com/samueljmcd/status/2066524627585634765">@samueljmcd</a></td><td>検証ゲート（verifier）が本体。テスト通過≠本番</td><td><a href="guide-ops-orchestration.html#18-4-verify">18章 検証</a></td></tr>
+<tr><td><a href="https://x.com/weswinder/status/2063700289710964906">@weswinder</a></td><td>トークン上限下では人間の確認が要る — 無限自律は現実的でない</td><td><a href="guide-setup.html#1-policy">方針</a></td></tr>
+</tbody>
+</table>
+
+<h5 id="17-bp-x-cursor"><a class="toclink" href="#17-bp-x-cursor">Cursor</a></h5>
+<table>
+<thead><tr><th>出典（X）</th><th>推奨</th><th>本サイトでの置き場</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/leerob/status/1929727742821413331">@leerob</a>（Cursor VP DX）</td><td>エージェントに<strong>自己検証ループ</strong>を渡す — 高速テスト・型付き言語・lint。エージェントはコンパイル/テスト失敗を読んで自己修正する</td><td><a href="guide-rules-cursor.html#17-cursor-official">Cursor 公式 BP</a> · <a href="guide-ops-orchestration.html#18-4-verify">18章 検証</a></td></tr>
+<tr><td>同上</td><td>Cursor は IDE として diff レビュー・インライン編集に強い。1 ツール万能ではなく用途分担（Plan は Cursor、長いループは Claude Code 等）</td><td><a href="guide-setup.html#2-ai-selection">2章 Cursor</a> · <a href="guide-rules-tools-intro.html#17-cross-tool">横断表</a></td></tr>
+<tr><td>公式 BP（X 以外の正本）</td><td>Plan Mode（<kbd>Shift</kbd>+<kbd>Tab</kbd>）→ 計画承認 → Build。ズレたら follow-up ではなく<strong>計画を直して再実行</strong></td><td><a href="https://cursor.com/docs/agent/plan-mode">Plan Mode 公式</a> · <a href="guide-rules-cursor.html#17-past-chats">@Past Chats</a></td></tr>
+</tbody>
+</table>
+
+<h5 id="17-bp-x-claude"><a class="toclink" href="#17-bp-x-claude">Claude Code</a></h5>
+<table>
+<thead><tr><th>出典（X）</th><th>推奨</th><th>本サイトでの置き場</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/bcherny/status/2007179832300581177">@bcherny セットアップ</a></td><td>ターミナル 5 + Web 5–10 セッション並列 · Opus + thinking · 共有 <code>CLAUDE.md</code> を git 管理 · PR で <code>@.claude</code> 学習</td><td><a href="guide-rules-claude.html#17-claude-official">Claude 公式 BP</a> · <a href="guide-ops-harness.html#18-multiagent">18章 並列</a></td></tr>
+<tr><td>同上</td><td>複雑タスクは Plan mode（<kbd>Shift</kbd>+<kbd>Tab</kbd>×2）→ 計画 OK なら auto-accept で 1-shot · PostToolUse で format · 検証手段が最重要（品質 2–3x）</td><td><a href="guide-rules-phase1.html#42-claude-code">Phase1 CLAUDE</a></td></tr>
+<tr><td><a href="https://x.com/bcherny/status/2017742741636321619">@bcherny チーム Tips</a></td><td><strong>git worktree</strong> で 3–5 並列が最大の生産性 · 計画に時間を使い実装は 1-shot · 修正のたび「CLAUDE.md を更新せよ」· 1 日 2 回以上の作業は Skill 化</td><td><a href="guide-rules-phase1.html#claude-setup-12">セットアップ 12 項</a> · <a href="guide-rules-skills-2.html#17-skills-dirs">Skills 配置</a></td></tr>
+<tr><td><a href="https://x.com/bcherny/status/2038454336355999749">@bcherny 隠れ機能</a></td><td><code>/loop</code> で PR 監視・rebase 自動化 · <code>/teleport</code> で Web↔CLI · Chrome 拡張で UI 検証 · <code>/batch</code> で大規模 migration · <code>claude -w</code> worktree</td><td><a href="guide-ops-harness.html#18-2-subagents">サブエージェント</a></td></tr>
+<tr><td><a href="https://x.com/0xchromium/status/2062515355306631467">@0xchromium workflows</a></td><td>チャット≠ワークフロー。ROLE · TOOLS · TRIGGER · OUTPUT。最初は1本（朝ブリーフィング / CI digest）</td><td><a href="memo-ai-tools.html#21-chat-vs-workflow">一般4要素</a> · <a href="guide-ops-orchestration.html#18-dev-workflows">開発WF</a></td></tr>
+<tr><td><a href="https://github.com/addyosmani/agent-skills">addyosmani/agent-skills</a></td><td>Addy Osmani の 24 Skills + 7 コマンド（Define→Ship）。検証ゲート・anti-rationalization 付き。<code>/build auto</code> は計画1回承認後にタスク自律実行</td><td><a href="memo-ai-tools.html#21-addy-agent-skills">早見</a> · <a href="guide-workflow.html#dev-lifecycle-ai">Phase</a> · <a href="guide-rules-skills-1.html#17-skills-guide">Skills</a></td></tr>
+<tr><td><a href="https://x.com/samueljmcd/status/2066524627585634765">@samueljmcd loop</a></td><td>ループ設計より<strong>検証ゲート（verifier）</strong>が本体。Closed loop · inner/outer · maker–verifier。Bun port 事例はテスト通過≠本番</td><td><a href="memo-ai-tools.html#21-loop-engineering">Loop 早見</a> · <a href="guide-ops-orchestration.html#18-4-verify">18章 検証</a></td></tr>
+<tr><td><a href="https://x.com/commte/status/2055485189401567472">@commte 要約</a></td><td>ルート CLAUDE.md は薄く · 作業はサブディレクトリから · Hooks→Skills→Plugins→MCP · Stop hook で学びを CLAUDE.md へ</td><td><a href="guide-rules-phase1.html#claude-large-codebase">大規模 CB</a></td></tr>
+<tr><td><a href="https://x.com/obsidianstudio9/status/2045856830191243473">@obsidianstudio9 claude-obsidian</a></td><td><code>/wiki</code> · ingest · <code>index.md</code>/<code>hot.md</code> でセッション跨ぎ。本番 Vault ではなくサンドボックス推奨</td><td><a href="memo-ai-tools.html#21-claude-obsidian">claude-obsidian</a> · <a href="guide-setup.html#2-ai-mcp">Obsidian MCP</a></td></tr>
+<tr><td><a href="https://x.com/noisyb0y1/status/2063295755104747553">@noisyb0y1 gstack</a></td><td>Garry Tan の Phase 型 Skills（<code>/office-hours</code> · <code>/plan-eng-review</code> · <code>/qa</code> · <code>/ship</code>）。公式 <a href="https://github.com/garrytan/gstack">gstack</a> を正とする</td><td><a href="memo-ai-tools.html#21-gstack">gstack 早見</a> · <a href="guide-workflow.html#dev-lifecycle-ai">Phase 地図</a></td></tr>
+</tbody>
+</table>
+
+<h5 id="17-bp-x-codex"><a class="toclink" href="#17-bp-x-codex">Codex</a></h5>
+<table>
+<thead><tr><th>出典</th><th>推奨</th><th>本サイトでの置き場</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/leerob/status/1929727742821413331">@leerob</a>（Codex 言及）</td><td>サイドプロジェクトで<strong>背景エージェント</strong>として利用 — アーキテクチャ批判的レビュー・「コードの理解」を説明させ比較・明らかなバグ/ red flags 探索</td><td><a href="guide-setup.html#2-ai-selection">2章 Codex</a></td></tr>
+<tr><td><a href="https://developers.openai.com/codex/learn/best-practices">OpenAI 公式 BP</a>（X より正本）</td><td><code>AGENTS.md</code> に実行可能コマンド・禁止事項 · <code>/init</code> で下書き→人手で削る · 32 KiB 上限 · 同じミス 2 回で AGENTS.md 更新</td><td><a href="guide-rules-codex.html#17-codex-official">Codex 公式 BP</a> · <a href="guide-rules-phase1.html#42-codex">Phase1 テンプレ</a></td></tr>
+<tr><td>同上</td><td>検証: <code>codex --ask-for-approval never "Summarize the current instructions."</code> で読み込み確認 · モノレポはネスト <code>AGENTS.md</code> / <code>AGENTS.override.md</code></td><td><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md サンプル</a></td></tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-x-verify-loop">
+<h4 class="info-panel__title" id="scenario-x-verify-loop">横断 — @leerob / @bcherny が共通で言うこと</h4>
+<div class="info-panel__body"><p>Software 1.0（テスト・型・lint・高速 CI）が Software 2.0（エージェント）の前提。エージェントに「正しさを確認する手段」がないと、 plausible なコードで止まる。Cursor では Plan + diff レビュー、Claude Code では Chrome 拡張/テスト、Codex では AGENTS.md の verify コマンド列挙で同じ構造を作る。</p></div>
+</aside>
+<p><strong>本サイトにまだ無い / 別章の新しめ手法</strong>（Skills ページ外だが公式・開発者が推すもの）:</p>
+<ul>
+<li><strong>Cursor</strong>: Background / Cloud Agent（<a href="guide-setup.html#2-ai-selection">2章</a>）、Automations、Settings から GitHub Remote Rules</li>
+<li><strong>Claude Code</strong>: <code>/goal</code> による完了条件、Stop hook の検証ゲート、<code>claude -p</code> 非対話、Subagents（<a href="guide-ops-harness.html#18-2-subagents">18章</a>）</li>
+<li><strong>横断</strong>: チームで <code>.agents/skills/</code> を正本にし、Cursor Rules は短い <code>alwaysApply</code> のみ（<a href="https://qiita.com/sora_akagami/items/50a446ca7ca4d465f849">Qiita Rules 入門</a> は Rule Type の説明として参照可）</li>
+</ul>
+
+<p><em>以下のサンプル・Commands は <strong>Cursor 専用</strong>（Claude は <code>/スキル名</code>、Codex は Skills のみ）。</em></p>
+<h3 id="17-commands"><a class="toclink" href="#17-commands">Commands と Plan のサンプル</a></h3>
+<h4 id="17-commands-catalog"><a class="toclink" href="#17-commands-catalog">おすすめ Commands 16 選（.cursor/commands/）</a></h4>
+<p><code><a href="flow-rules-samples.html#sample-command-review">review.md</a></code> → Composer で <code><a href="flow-rules-samples.html#sample-command-review">/review</a></code>。引数は本文の <code>$ARGUMENTS</code> に差し込み。</p>
+<pre><code class="language-text">.cursor/commands/plan.md   → /plan
+~/.cursor/commands/       → 全プロジェクト共通（任意）
+AI_Doc/.cursor/commands/  → 本リポ同梱 16 件</code></pre>
+<div class="mermaid">
+flowchart LR
+  D[毎日1ショット] --> C[Commands]
+  W[週次の多段] --> S[Skills]
+  L[毎回の下限] --> R[Rules .mdc]
+</div>
+<p>コピペ例: <a href="#17-commands-examples">16件の一行例</a> · 追加手順: <a href="guide-rules-cursor.html#17-cursor-rules-skills">Rule/Skill/Command 追加</a></p>
+<table>
+<thead><tr><th>#</th><th>コマンド</th><th>いつ使う</th><th>主な参照</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code><a href="flow-rules-samples.html#sample-command-plan">/plan</a></code></td><td>3 ステップ以上・設計判断あり。着手前に Done when を固定</td><td><a href="guide-design.html#phase-2-plan">Phase 2 Plan</a>・<code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code></td></tr>
+<tr><td>2</td><td><code><a href="flow-rules-samples.html#sample-command-review">/review</a></code></td><td>PR 提出前のセルフレビュー</td><td><a href="guide-ship.html#14-pr-check">PR前チェック</a></td></tr>
+<tr><td>3</td><td><code>/pr-check</code></td><td>9 カテゴリの提出前チェックを漏れなく</td><td><a href="guide-ship.html#14-pr-detail">チェック詳細</a></td></tr>
+<tr><td>4</td><td><code>/requirements</code></td><td>PRD Must を要件 doc にトレース</td><td><a href="guide-design.html#phase-3-design">Phase 3</a></td></tr>
+<tr><td>5</td><td><code>/design</code></td><td>要件から設計 doc（API・境界・エラー）</td><td><a href="guide-design.html#61-phase3-flow">設計 doc 生成</a></td></tr>
+<tr><td>6</td><td><code>/tdd-cycle</code></td><td>RED → GREEN → REFACTOR を 1 サイクルだけ</td><td><a href="guide-implement.html#72-tdd-1-red-green-refactor-3">TDD テンプレ</a></td></tr>
+<tr><td>7</td><td><code>/verify</code></td><td>完了報告前。テスト・ログ・再現手順のいずれかを示す</td><td><a href="guide-ops-orchestration.html#18-4-verify">完了前の検証</a></td></tr>
+<tr><td>8</td><td><code>/debug</code></td><td>再現はできるが原因不明。仮説→計測→局所修正</td><td><a href="guide-setup.html#2-ai-selection">Cursor Debug モード</a></td></tr>
+<tr><td>9</td><td><code>/investigate</code></td><td>「どこにある？」系。スコープ限定の調査だけ</td><td><a href="guide-ops-harness.html#18-2-subagents">調査の任せ方</a></td></tr>
+<tr><td>10</td><td><code>/lessons</code></td><td>指摘・修正後にパターンを蓄積</td><td><code><a href="flow-rules-samples.html#sample-tasks-lessons-md">tasks/lessons.md</a></code>・<a href="guide-ops-orchestration.html#18-3-lessons">lessons</a></td></tr>
+<tr><td>11</td><td><code>/adr</code></td><td>技術選定・トレードオフを ADR に残す</td><td><a href="guide-repo-docs-1.html#11-7-adr">ADR</a></td></tr>
+<tr><td>12</td><td><code>/handoff</code></td><td>新規チャットへ。Past Chats + todo の引き継ぎ</td><td><a href="guide-rules-cursor.html#17-past-chats">@Past Chats</a></td></tr>
+<tr><td>13</td><td><code>/explain</code></td><td>変更報告。触ったパスのディレクトリツリー必須</td><td><code><a href="flow-rules-samples.html#sample-agent-workflow-orchestration-mdc">agent-workflow-orchestration.mdc</a></code></td></tr>
+<tr><td>14</td><td><code>/security</code></td><td>認可・入力検証・秘密情報のレビュー</td><td><a href="guide-ship.html#check-security">セキュリティ</a></td></tr>
+<tr><td>15</td><td><code>/fix-ci</code></td><td>CI 失敗ログから再現→修正→ green 確認</td><td><a href="guide-ops-orchestration.html#18-6-bugs">自律的バグ修正</a></td></tr>
+<tr><td>16</td><td><code>/ask-spec</code></td><td>コードを変えず仕様・ADR の壁打ち（Ask 推奨）</td><td><a href="guide-workflow.html#0-5-requirements">要件すり合わせ</a></td></tr>
+</tbody>
+</table>
+<p>使い分けの目安: 毎日の定型 → <strong>Commands</strong> / 同じ多段手順が週次 → <strong>Skills</strong> / 毎回守る下限 → <strong>Rules</strong>（<a href="guide-rules-cursor.html#17-cursor-rules-skills">Rules と Skills</a>）。</p>
+
+<h4 id="17-commands-examples"><a class="toclink" href="#17-commands-examples">各コマンドの使い方・例（16件）</a></h4>
+<p>Composer に<strong>そのまま貼れる一行</strong>と、<strong>似たコマンドとの違い</strong>。スラッシュのあとに続けた文字が <code>$ARGUMENTS</code> になる。</p>
+<table>
+<thead><tr><th>コマンド</th><th>コピペ用（一行）</th><th>混同しやすい相手</th></tr></thead>
+<tbody>
+<tr><td><code><a href="flow-rules-samples.html#sample-command-plan">/plan</a></code></td><td><code>/plan 請求PDFエクスポート Phase3。PRD: docs/prd/invoice-export.md。Done when: rspec green + staging 手動確認</code></td><td><code>/ask-spec</code>（まだ決めない）・<code>/design</code>（設計 doc 執筆）</td></tr>
+<tr><td><code><a href="flow-rules-samples.html#sample-command-review">/review</a></code></td><td><code>/review 現在ブランチの差分をセルフレビュー。ブロッカーがあれば push 提案しない</code></td><td><code>/pr-check</code>（9 カテゴリ網羅）・<code>/security</code>（セキュリティ特化）</td></tr>
+<tr><td><code>/pr-check</code></td><td><code>/pr-check feature/invoice-export → main。flow-14 の 9 カテゴリを [ ]/[x] で</code></td><td><code><a href="flow-rules-samples.html#sample-command-review">/review</a></code>（ざっくりレビュー）・<code>/verify</code>（テスト実行）</td></tr>
+<tr><td><code>/requirements</code></td><td><code>/requirements docs/prd/invoice-export.md → docs/invoice-export/01_requirements.md。Must を REQ-001 形式でトレース</code></td><td><code>/design</code>（API 詳細）・<code>/ask-spec</code>（未確定の壁打ち）</td></tr>
+<tr><td><code>/design</code></td><td><code>/design docs/invoice-export/。01_requirements.md を読み 02_design.md に API・ジョブ・エラー型</code></td><td><code>/requirements</code>（要件のみ）・<code><a href="flow-rules-samples.html#sample-command-plan">/plan</a></code>（タスク分解）</td></tr>
+<tr><td><code>/tdd-cycle</code></td><td><code>/tdd-cycle spec/services/invoice_export_spec.rb の「在庫不足で ErrInsufficientStock」1 サイクルだけ</code></td><td><code>/verify</code>（全体テスト）・Agent に「全部実装して」（サイクル無視）</td></tr>
+<tr><td><code>/verify</code></td><td><code>/verify docker compose exec app bundle exec rspec spec/services/invoice_export_spec.rb</code></td><td><code><a href="flow-rules-samples.html#sample-command-review">/review</a></code>（コード読み）・完了報告だけ口頭（証拠なし）</td></tr>
+<tr><td><code>/debug</code></td><td><code>/debug POST /api/invoices/export が 500。staging で再現可。ログは CloudWatch の該当 request_id</code></td><td><code>/fix-ci</code>（CI ログ起点）・<code>/investigate</code>（変更しない調査）</td></tr>
+<tr><td><code>/investigate</code></td><td><code>/investigate &lt;Service&gt; の呼び出し元だけ。src/domain/ と src/app/。JSON {paths, summary} のみ</code></td><td>メインに「全部 grep して」（ログ肥大）・<code>/debug</code>（修正まで）</td></tr>
+<tr><td><code>/lessons</code></td><td><code>/lessons レビュー指摘: push 許可なしで commit 提案された。再発防止を lessons に追記</code></td><td><code><a href="flow-rules-samples.html#sample-command-plan">/plan</a></code>（今回のタスク）・Rules へいきなり長文追加</td></tr>
+<tr><td><code>/adr</code></td><td><code>/adr PDF 生成を同期 vs ジョブキュー。docs/adr/016-*.md ドラフト。未決は todo リスクへ</code></td><td><code>/design</code>（機能設計 doc）・<code>/ask-spec</code>（決定前の相談）</td></tr>
+<tr><td><code>/handoff</code></td><td><code>/handoff Phase4 PDF ロジック続き。PR #482。次チャットで @Past Chats 1 件 + @tasks/todo.md</code></td><td>会話全文コピペ・<code><a href="flow-rules-samples.html#sample-command-plan">/plan</a></code>（新規 Plan 作成）</td></tr>
+<tr><td><code>/explain</code></td><td><code>/explain 直前のコミット分。ディレクトリツリー必須。検証コマンドも添える</code></td><td>「変更した」（ツリーなし）・<code><a href="flow-rules-samples.html#sample-command-review">/review</a></code>（品質評価）</td></tr>
+<tr><td><code>/security</code></td><td><code>/security src/api/middleware/auth.ts と export エンドポイント。認可漏れ・IDOR・秘密情報</code></td><td><code><a href="flow-rules-samples.html#sample-command-review">/review</a></code>（一般品質）・<code>/pr-check</code>（全カテゴリ）</td></tr>
+<tr><td><code>/fix-ci</code></td><td><code>/fix-ci spec/services/invoice_export_spec.rb:42 expected 200 got 500。ログ要点を再現して修正</code></td><td><code>/debug</code>（手元再現）・<code>/tdd-cycle</code>（1 サイクルだけ）</td></tr>
+<tr><td><code>/ask-spec</code></td><td><code>/ask-spec 請求PDFを同期生成 vs 非同期ジョブのトレードオフ。コード変更なし。ADR 案だけ</code></td><td><code><a href="flow-rules-samples.html#sample-command-plan">/plan</a></code>（実装着手）・<code>/design</code>（doc 確定執筆）</td></tr>
+</tbody>
+</table>
+
+<p class="scenario-intro">場面別の詳細（モード・添付・期待する返答）。</p>
+<dl class="scenario-list">
+<dt><code><a href="flow-rules-samples.html#sample-command-plan">/plan</a></code> — 着手前にスコープと Done when を固定</dt>
+<dd>
+<p><strong>使う</strong>: 3 ステップ以上、設計判断、影響範囲が広い。<strong>使わない</strong>: 1 ファイルの typo 修正、仕様がまだ曖昧（先に <code>/ask-spec</code>）。</p>
+<p><strong>例</strong>:</p>
+<pre><code class="language-text">/plan ユーザー招待メール再送。tasks/todo.md を更新。
+Done when: 結合テスト green、staging で 1 件再送確認、docs/invite/01_requirements.md 更新</code></pre>
+<p><strong>モード</strong>: Plan 推奨（<kbd>Shift</kbd>+<kbd>Tab</kbd>）→ 承認 → Build。<strong>添付</strong>: <code>@tasks/todo.md</code>、<code>@docs/prd/...</code></p>
+<p><strong>返ってほしいもの</strong>: チェックリスト付き <code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code> 案、リスク列挙。</p>
+</dd>
+
+<dt><code><a href="flow-rules-samples.html#sample-command-review">/review</a></code> — PR 前のざっくりセルフレビュー</dt>
+<dd>
+<p><strong>使う</strong>: コミット済み・PR 直前。<strong>使わない</strong>: 公式チェックリストの網羅（<code>/pr-check</code>）、セキュリティ特化（<code>/security</code>）。</p>
+<pre><code class="language-text">/review @Branch の差分。alwaysApply ルール違反がないか。重大度つきで</code></pre>
+<p><strong>添付</strong>: <code>@Branch</code> または <code>@git</code>（環境による）。<strong>返答</strong>: ブロッカー / 警告 / OK の箇条書き。</p>
+</dd>
+
+<dt><code>/pr-check</code> — 提出前 9 カテゴリの漏れチェック</dt>
+<dd>
+<p><strong>使う</strong>: マージ直前の最終確認。<strong>使わない</strong>: 実装中の途中確認（重い）。</p>
+<pre><code class="language-text">/pr-check PR #512。docs/invoice-export/ 01〜07、ADR、glossary、CI、セキュリティまで [x]/[ ]</code></pre>
+<p><strong>返答</strong>: カテゴリごとの [ ] / [x]。未確認は「未確認」と明記。</p>
+</dd>
+
+<dt><code>/requirements</code> — PRD → 要件 doc</dt>
+<dd>
+<p><strong>使う</strong>: Phase 3 の最初。<strong>使わない</strong>: API パスや DB カラムの確定（<code>/design</code>）。</p>
+<pre><code class="language-text">/requirements docs/prd/billing-v2.md の Must だけ。
+出力: docs/billing-v2/01_requirements.md（REQ-xxx で PRD Must にトレース）</code></pre>
+<p><strong>禁止の確認</strong>: エージェントが API を断定していないこと。</p>
+</dd>
+
+<dt><code>/design</code> — 要件 → 設計 doc</dt>
+<dd>
+<p><strong>使う</strong>: 01_requirements.md が揃ったあと。<strong>使わない</strong>: PRD から要件を起こす段階（<code>/requirements</code>）。</p>
+<pre><code class="language-text">/design docs/invoice-export/。
+@docs/invoice-export/01_requirements.md を読み 02_design.md に REST・ジョブ・エラー型</code></pre>
+<p><strong>返答</strong>: 02_design.md の diff または章立て案。未決は todo リスクへ。</p>
+</dd>
+
+<dt><code>/tdd-cycle</code> — TDD 1 サイクルだけ</dt>
+<dd>
+<p><strong>使う</strong>: 振る舞いを 1 つ追加するとき。<strong>使わない</strong>: 機能まるごと実装依頼。</p>
+<pre><code class="language-text">/tdd-cycle 「二重送信で 409」を spec/requests/invoices_export_spec.rb で RED→GREEN→REFACTOR 1 回</code></pre>
+<p><strong>返答</strong>: どのフェーズか、変更ファイル、テスト結果 1 行。</p>
+</dd>
+
+<dt><code>/verify</code> — 完了報告前の証拠</dt>
+<dd>
+<p><strong>使う</strong>: 「終わった」と言う直前。<strong>使わない</strong>: コードレビューだけで完了扱い。</p>
+<pre><code class="language-text">/verify make test と flow-17 の HTML 変更なら curl 本番 HEAD</code></pre>
+<p><strong>返答</strong>: 実行コマンド、終了コード、ログ要点または再現手順。</p>
+</dd>
+
+<dt><code>/debug</code> — 再現できる不具合</dt>
+<dd>
+<p><strong>使う</strong>: 手元または staging で再現できる 500 / 例外。<strong>使わない</strong>: CI のみで落ちる（<code>/fix-ci</code>）。</p>
+<pre><code class="language-text">/debug ローカル docker compose up 後、GET /health は 200 だが POST /export が 500。
+仮説→ログ確認→最小修正</code></pre>
+<p><strong>モード</strong>: Debug 推奨。<strong>返答</strong>: 原因 1 行 + 修正 diff + 再現手順。</p>
+</dd>
+
+<dt><code>/investigate</code> — 調査だけ（実装しない）</dt>
+<dd>
+<p><strong>使う</strong>: 呼び出し元洗い出し、設定の所在確認。<strong>使わない</strong>: バグ修正まで任せたい（<code>/debug</code>）。</p>
+<pre><code class="language-text">/investigate .cursor/rules/ で alwaysApply:true のファイル一覧だけ</code></pre>
+<p><strong>返答</strong>: <code>{ "paths": [...], "summary": "..." }</code> 程度。grep 全文禁止。</p>
+</dd>
+
+<dt><code>/lessons</code> — 指摘の蓄積</dt>
+<dd>
+<p><strong>使う</strong>: レビュー・ユーザー指摘のあと。<strong>使わない</strong>: 初回の雑談メモ。</p>
+<pre><code class="language-text">/lessons Mermaid エッジに &lt;br/&gt; を入れてパース失敗。再発防止を lessons に 1 行</code></pre>
+<p><strong>返答</strong>: <code><a href="flow-rules-samples.html#sample-tasks-lessons-md">tasks/lessons.md</a></code> 追記案。繰り返しなら Rules 昇格提案 1 条。</p>
+</dd>
+
+<dt><code>/adr</code> — 設計判断の記録</dt>
+<dd>
+<p><strong>使う</strong>: 技術選定が分岐するとき。<strong>使わない</strong>: 仕様未確定の壁打ち（<code>/ask-spec</code>）。</p>
+<pre><code class="language-text">/adr ストレージを S3 直 PUT vs 署名付き URL。docs/adr/ 次番号でドラフト</code></pre>
+<p><strong>返答</strong>: ADR ドラフト（コンテキスト・決定・代替・影響）。</p>
+</dd>
+
+<dt><code>/handoff</code> — チャット切替用の引き継ぎ文</dt>
+<dd>
+<p><strong>使う</strong>: 会話が長い・別機能へ移る。<strong>使わない</strong>: 同じ機能のデバッグ続き（同一会話を維持）。</p>
+<pre><code class="language-text">/handoff 次チャット用の冒頭 3 行を書いて。Past Chats は invoice PDF セッション 1 件想定</code></pre>
+<p><strong>操作</strong>: 新規チャット → <code>@Past Chats</code> 1 件 → 生成文を貼る → <code>@tasks/todo.md</code>。</p>
+</dd>
+
+<dt><code>/explain</code> — 変更報告（ツリー必須）</dt>
+<dd>
+<p><strong>使う</strong>: 実装・ドキュメント更新の報告時。<strong>使わない</strong>: 品質評価（<code><a href="flow-rules-samples.html#sample-command-review">/review</a></code>）。</p>
+<pre><code class="language-text">/explain さっき編集した flow-17 と .cursor/commands/ だけ。ツリー + 検証コマンド</code></pre>
+<p><strong>返答</strong>: 触ったパスのツリー（1 行役割）、why、検証結果。</p>
+</dd>
+
+<dt><code>/security</code> — セキュリティレビュー</dt>
+<dd>
+<p><strong>使う</strong>: 認証・認可・外部入力・エクスポート機能。<strong>使わない</strong>: 文言・スタイルのみの PR。</p>
+<pre><code class="language-text">/security 新規 middleware と /api/invoices/export。IDOR と認可漏れを重点</code></pre>
+<p><strong>返答</strong>: 重大度付き findings + 修正案。</p>
+</dd>
+
+<dt><code>/fix-ci</code> — CI 赤の解消</dt>
+<dd>
+<p><strong>使う</strong>: GitHub Actions / CI ログが手元にある。<strong>使わない</strong>: ローカルだけで再現（<code>/debug</code>）。</p>
+<pre><code class="language-text">/fix-ci RSpec: spec/models/order_spec.rb:88 Failure/Error: expected true got false。再現して green まで</code></pre>
+<p><strong>返答</strong>: 原因、修正、同コマンドで green の証拠。push は許可後。</p>
+</dd>
+
+<dt><code>/ask-spec</code> — コードを変えない壁打ち</dt>
+<dd>
+<p><strong>使う</strong>: 要件・ADR の選択肢整理。<strong>使わない</strong>: 実装・ファイル編集（Agent / Plan）。</p>
+<pre><code class="language-text">/ask-spec マルチテナント請求の集計単位: 組織 vs ワークスペース。Pros/Cons と ADR 案のみ</code></pre>
+<p><strong>モード</strong>: Ask 必須。<strong>返答</strong>: 選択肢表、推奨、未決リスト（doc 案は書いてよいが apply しない）。</p>
+</dd>
+</dl>
+
+<h4 id="17-commands-template"><a class="toclink" href="#17-commands-template">サンプル: Commands（.cursor/commands/*.md）</a></h4>
+<p>チャットで <code><a href="flow-rules-samples.html#sample-command-review">/review</a></code> のように呼ぶ定型。Skill より短い 1 ショット向け。下は <code><a href="flow-rules-samples.html#sample-command-review">/review</a></code> の最小例（全 16 件はリポジトリの <code>.cursor/commands/</code> を正本とする）。</p>
+<pre><code class="language-markdown"># review
+
+PR 提出前チェックを実行する。
+
+1. `.cursor/skills/pr-review/SKILL.md` のワークフローに従う
+2. 結果を箇条書きで報告。ブロッカーがあれば push を提案しない
+3. 参照: flow-14-pr-check.html のチェックリスト
+</code></pre>
+<p><code>/investigate</code> でスコープを渡す例。指定スコープだけを調査し、構造化結果（パスと要約、または表）のみ返す。長い grep ログは貼らず、git 操作は行わない。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-command-investigate">Command: investigate サンプル</a></p>
+
+<h4 id="17-plan-template"><a class="toclink" href="#17-plan-template">サンプル: Plan（全ツール共通 + Cursor 下書き）</a></h4>
+<p>チーム共有の正本は <code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code>。Cursor Plan モードは <code>.cursor/plans/</code> に下書き → 確定後 todo へ写す。タスク分解・Done when（受け入れ条件 + CI green）・リスク・レビュー結果を記録する <code>tasks/todo.md</code>、指摘の蓄積から Rules 昇格につなげる <code>tasks/lessons.md</code>、スコープとタスク分解を残す <code>.cursor/plans/&lt;date&gt;-feature.md</code> の3点をセットで使う。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a> · <a href="flow-rules-samples.html#sample-tasks-lessons-md">tasks/lessons.md</a> · <a href="flow-rules-samples.html#sample-cursor-plan-md">.cursor/plans/ サンプル</a></p>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-scenario">
+<h4 class="info-panel__title" id="scenario-scenario">新機能では</h4>
+<div class="info-panel__body"><p>禁止・参照パス → <code><a href="flow-rules-samples.html#sample-10-domain-rules-mdc">10-domain-rules.mdc</a></code> / lint 下限 → <code><a href="flow-rules-samples.html#sample-20-coding-style-mdc">20-coding-style.mdc</a></code> / PR 手順 → <code>pr-review/SKILL.md</code> / 今回のスコープ → <code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code>。仕様は <code>docs/&lt;feature&gt;/</code> のみ更新し Rules に複製しない。</p></div>
+</aside>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-skills-3.html">← Skills 実践 — 判断と2026更新</a><a class="flow-pager__next" href="guide-rules-prompt.html">プロンプト設計 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

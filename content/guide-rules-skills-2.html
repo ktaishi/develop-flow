@@ -1,0 +1,138 @@
+<!--meta {"title": "Skills 実践 — 配置と評価", "desc": "ディレクトリ・テンプレ・移行。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-skills-2">Skills 実践 — 配置と評価</h1>
+      <p class="lead">ディレクトリ・テンプレ・移行。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li><code>.agents/skills/</code> または <code>.cursor/skills/</code></li>
+<li>eval でトリガー率を測る</li>
+<li>Rules から段階的移行</li>
+</ul>
+<p class="page-brief__tasks">SKILL.md テンプレをコピー — 完了: Skill 1本の置き場がある</p>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-skills-1.html">← Skills 実践 — 設計と記述</a> <a href="guide-rules-skills-3.html">Skills 実践 — 判断と2026更新 →</a></p>
+</aside>
+<h3 id="17-skills-templates"><a class="toclink" href="#17-skills-templates">テンプレートと配置</a></h3>
+<h4 id="17-agents-template"><a class="toclink" href="#17-agents-template">サンプル: AGENTS.md（Cursor / Codex 共有入口）</a></h4>
+<p>長くしない。Cursor の詳細は <code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code>、Codex の手順は <code>.agents/skills/</code> へ。Claude は <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> を別途。</p>
+<pre><code class="language-markdown"># AI Agent Instructions
+
+## 必読（毎セッション）
+- .cursor/rules/00-project.mdc      # プロジェクト共通
+- .cursor/rules/10-domain-rules.mdc # 業務制約。違反厳禁
+- .cursor/rules/60-ai-workflow.mdc  # docs / Obsidian history / git
+
+## ビルド・検証
+- 開発: make up
+- テスト: make test
+
+## 出力先
+- チーム公式: docs/（要件・設計・ADR）
+- 作業ログ: Obsidian 03_Operations/history/YYYY-MM/
+- Plan: tasks/todo.md
+
+## 手順（Skills）
+- PR 前: .cursor/skills/pr-review/SKILL.md
+- 設計 doc: .claude/skills/phase3-design-doc/SKILL.md
+</code></pre>
+
+<h4 id="17-rules-template"><a class="toclink" href="#17-rules-template">サンプル: Rules（.cursor/rules/*.mdc）</a></h4>
+<p><strong>00-project.mdc</strong> — 毎セッション（<code>alwaysApply: true</code>）。参照順（tasks/todo.md → docs → 既存実装）と禁止事項（仕様の複製・推測断定の禁止）を定める。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-00-project-mdc">00-project.mdc サンプル</a></p>
+<p><strong>10-domain-rules.mdc</strong> — 業務制約（プロジェクト固有の事実のみ）:</p>
+<pre><code class="language-text">---
+description: ドメイン不変条件。全実装で参照。
+alwaysApply: true
+---
+
+# ドメインルール
+
+## 不変条件
+- 注文金額は 0 より大きい
+- 在庫数量は 0 以上（物理削除禁止）
+
+## 副作用
+- 注文確定時は通知ジョブを必ず enqueue（再実行可）
+
+## 用語
+- 顧客 → customer / 注文 → order
+</code></pre>
+<p><strong>20-coding-style.mdc</strong> — 言語別（<code>globs</code> で TS/React に限定。Server Component をデフォルトにし、新規 API は既存ラッパに合わせる）。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-20-coding-style-mdc">20-coding-style.mdc サンプル</a></p>
+<p><strong>git-safety.mdc</strong> — 危険操作ガード（クイックスタートでも参照）。git の add/commit/push/merge/rebase や docker exec（本番相当）は許可なしに実行しない。完了報告前に検証結果を示す。</p>
+<p class="scenario-intro">コピー用全文: <a href="flow-rules-samples.html#sample-git-safety-mdc">git-safety.mdc サンプル</a></p>
+
+<h4 id="17-skills-dirs"><a class="toclink" href="#17-skills-dirs">Skills の置き場（Cursor 2.4+ / Agent Skills 標準）</a></h4>
+<p>Cursor は起動時に次から <code>SKILL.md</code> を再帰検出する（<a href="https://cursor.com/ja/docs/skills">公式 Skills</a> · <a href="https://agentskills.io/specification">agentskills.io</a>）。<strong>チーム共有はリポジトリの <code>.agents/skills/</code> か <code>.cursor/skills/</code> のどちらかに統一</strong>すると、Cursor / Codex / Copilot 系と資産を共有しやすい（<a href="https://qiita.com/nogataka/items/7476eb9dfc8bca4e0bb8">Qiita 比較</a>）。</p>
+<table>
+<thead><tr><th>スコープ</th><th>パス</th></tr></thead>
+<tbody>
+<tr><td>プロジェクト</td><td><code>.agents/skills/</code> · <code>.cursor/skills/</code>（互換: <code>.claude/skills/</code> · <code>.codex/skills/</code>）</td></tr>
+<tr><td>グローバル</td><td><code>~/.agents/skills/</code> · <code>~/.cursor/skills/</code></td></tr>
+<tr><td>モノレポ</td><td><code>apps/web/.cursor/skills/</code> 等 — そのディレクトリ配下のファイルを触るときだけ表示（入れ子スコープ）</td></tr>
+</tbody>
+</table>
+
+
+<h4 id="17-cloud-background-agent"><a class="toclink" href="#17-cloud-background-agent">Background / Cloud Agent — いつ使うか</a></h4>
+<table>
+<thead><tr><th>状況</th><th>ローカル Agent</th><th>Background / Cloud</th></tr></thead>
+<tbody>
+<tr><td>IDE で diff を見ながら実装</td><td>◎</td><td>△（結果を後から取り込む）</td></tr>
+<tr><td>調査・テスト・lint の長いループ</td><td>△（会話が肥大化）</td><td>◎</td></tr>
+<tr><td>秘密情報・社内 VPN 必須</td><td>◎</td><td>ポリシー確認必須</td></tr>
+<tr><td>並列に 3 件以上の独立タスク</td><td>worktree + 複数ウィンドウ</td><td>◎（キュー管理）</td></tr>
+</tbody>
+</table>
+<p>正本手順: <a href="guide-ops-harness.html#18-multiagent">エージェント運用 — マルチエージェント</a> · 公式: <a href="https://cursor.com/ja/docs/cloud-agent">Cloud Agent</a> · <a href="https://cursor.com/ja/blog/agent-best-practices">エージェント BP</a>。</p>
+
+<h3 id="17-skills-ops"><a class="toclink" href="#17-skills-ops">評価と移行</a></h3>
+<h4 id="17-skills-eval-template"><a class="toclink" href="#17-skills-eval-template">Skills description — should-trigger テスト例</a></h4>
+<p><code>description</code> を書いたら、次の 10 クエリで「発火すべき / すべきでない」を 3 回ずつ試す（<a href="#17-skills-frontmatter">フロントマター</a>）。</p>
+<table>
+<thead><tr><th>種別</th><th>例（pr-review Skill）</th></tr></thead>
+<tbody>
+<tr><td>should-trigger</td><td>「PR 出す前にセルフチェックして」「レビュー観点を整理して」「lint と test を通してから merge」</td></tr>
+<tr><td>should-not-trigger</td><td>「この関数の名前を変えて」「README の誤字修正」「DB マイグレーションの SQL だけ書いて」</td></tr>
+</tbody>
+</table>
+<p>過少トリガー → description を具体化。過剰トリガー → <code>paths</code> や <code>disable-model-invocation</code> を検討。</p>
+
+<h4 id="17-plugins-marketplace"><a class="toclink" href="#17-plugins-marketplace">Plugins / Marketplace（2026）</a></h4>
+<p>Cursor は Rules · Skills · Commands · MCP · Subagents を<strong>プラグイン</strong>として Marketplace からインストールできる（<a href="https://cursor.com/docs">Cursor Docs</a> · 2026 製品更新）。Claude Code の Plugins（Hooks→Skills→Plugins→MCP の積み上げ）と同趣旨。</p>
+<table>
+<thead><tr><th>ツール</th><th>拡張の入口</th><th>チーム共有</th></tr></thead>
+<tbody>
+<tr><td><strong>Cursor</strong></td><td>Settings → Plugins / Marketplace · <code>.cursor/</code> に展開</td><td>リポにコミット + ドキュメント化</td></tr>
+<tr><td><strong>Claude Code</strong></td><td>Plugins ディレクトリ · engineering スキル</td><td><code>CLAUDE.md</code> に 1 行リンク</td></tr>
+<tr><td><strong>Codex</strong></td><td>Skills plugin · MCP</td><td><code>AGENTS.md</code> + <code>.agents/skills/</code></td></tr>
+</tbody>
+</table>
+<p>導入前: 権限（MCP・shell）・秘密情報・<code>alwaysApply</code> との重複を確認。本リポは <a href="flow-rules-samples.html#rules-samples-starter">Starter セット</a> を正本とし、Marketplace 追加は ADR または <code>tasks/lessons.md</code> に記録。</p>
+<h4 id="17-skills-frontmatter"><a class="toclink" href="#17-skills-frontmatter">SKILL.md フロントマター（公式 + コミュニティ）</a></h4>
+<table>
+<thead><tr><th>フィールド</th><th>必須</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>name</code></td><td>はい</td><td>小文字・ハイフン。親フォルダ名と一致（例: <code>pr-review</code>）</td></tr>
+<tr><td><code>description</code></td><td>はい</td><td><strong>トリガー用</strong>。命令形・具体キーワード（「PR前」「セキュリティ監査」）。曖昧な1行は発火しない（<a href="https://zenn.dev/643866/articles/3cd3b80972f8da">Zenn</a>）</td></tr>
+<tr><td><code>paths</code></td><td>任意</td><td><code>**/*.tsx</code> 等。該当ファイルを触るときだけ Skill を提示（Rules の <code>globs</code> に近いが Skill 専用）</td></tr>
+<tr><td><code>disable-model-invocation: true</code></td><td>任意</td><td>従来のスラッシュコマンド相当。<strong>自動適用しない</strong>（<code>/skill-name</code> のときだけ）</td></tr>
+</tbody>
+</table>
+<p>本文は <strong>500 行目安</strong>。詳細は <code>references/</code>・実行は <code>scripts/</code>・テンプレは <code>assets/</code> へ（Progressive Disclosure — <a href="https://zenn.dev/karamage/articles/509edb7791437d">Zenn 解説</a>）。</p>
+
+<h4 id="17-skills-migrate"><a class="toclink" href="#17-skills-migrate">既存 Rules / Commands の移行（公式）</a></h4>
+<p>Cursor 2.4+ 組み込み: Agent チャットで <code>/migrate-to-skills</code> または <code>/create-skill</code>（<a href="https://cursor.com/ja/docs/skills">公式</a>）。</p>
+<ul>
+<li><strong>移行対象</strong>: <code>alwaysApply: false</code> かつ <code>globs</code> なしの動的 Rule、ワークスペース / ユーザーの slash commands</li>
+<li><strong>移行しない</strong>: <code>alwaysApply: true</code>、<code>globs</code> 付き Rule（トリガー条件が別物）、User Rules（ファイルシステム外）</li>
+<li>Commands を残す方針も可 — 本リポは <a href="guide-rules-bp.html#17-commands-catalog">16 選</a> を維持し、多段手順だけ Skills 化</li>
+</ul>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-skills-1.html">← Skills 実践 — 設計と記述</a><a class="flow-pager__next" href="guide-rules-skills-3.html">Skills 実践 — 判断と2026更新 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

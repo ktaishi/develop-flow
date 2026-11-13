@@ -1,0 +1,126 @@
+<!--meta {"title": "要件定義", "desc": "ユーザーストーリー+MoSCoW、非機能6観点、[要確認]マーカーによる承認ゲート。AIに推測で要件を埋めさせない。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Chapter 02</div>
+    <h1>📋 要件定義</h1>
+    <p class="hb-lead">「何を作るか」を曖昧なまま実装に渡さない。AI開発で最も差がつくのは、ここで“仮定”をどれだけ可視化できるかである。</p>
+    <img class="hb-hero-img" src="/assets/handbook/requirements.svg" alt="要件定義のイメージ">
+
+    <h2 id="s-1">なぜ要件定義がAI開発で最重要なのか</h2>
+    <p>AIは要件の空白を「もっともらしい仮定」で自動的に埋めてしまう。仕様書に書かれていない部分も、それらしいコードとして出力される。結果、<strong>誰も決めていない仕様が実装され、しかも一見動いてしまう</strong>。これが手戻りの最大の源泉になる。要件定義の役割は、この“勝手な仮定”を実装前に全部あぶり出して承認ゲートで止めることにある。</p>
+
+    <p>だから、いきなり実装させず「仮定を <code>[要確認]</code> として並べさせる」よう指示する。</p>
+    <figure class="hb-io">
+      <div class="hb-seg"><span class="hb-lbl hb-u">プロンプト</span><pre>商談管理アプリの要件を整理して。ただし決まっていない前提は
+実装せず [要確認] として列挙して。</pre></div>
+      <div class="hb-seg"><span class="hb-lbl hb-a">AIの出力</span><pre>## 確定できた範囲
+- 商談の一覧・登録・編集（担当者が操作）
+
+## [要確認]（回答が要る）
+- [要確認] 認可の範囲は「自分の担当のみ」か「全社閲覧可」か？
+- [要確認] 削除は論理削除か物理削除か？
+- [要確認] 想定ユーザー数と同時接続は？（性能SLOに影響）
+- [要確認] 外部連携（SFAやメール通知）は今回のスコープ内か？</pre></div>
+      <div class="hb-cap">図: 埋めるのではなく「未確定を可視化」させる。これが approved の前提になる。</div>
+    </figure>
+
+    <h2 id="s-2">機能要件 — ユーザーストーリー + MoSCoW</h2>
+    <p>機能は「誰が・何を・なぜ」のユーザーストーリー形式で書き、優先度を <strong>MoSCoW</strong> で明示する。</p>
+    <table>
+      <tr><th>優先度</th><th>意味</th><th>扱い</th></tr>
+      <tr><td><strong>Must</strong></td><td>これがないとリリースの意味がない</td><td>今サイクルで必ず実装</td></tr>
+      <tr><td><strong>Should</strong></td><td>重要だが代替手段がある</td><td>余力があれば実装</td></tr>
+      <tr><td><strong>Could</strong></td><td>あると嬉しい</td><td>後回し候補</td></tr>
+      <tr><td><strong>Won't</strong></td><td>今回はやらない</td><td><strong>明記してスコープ外を固定</strong></td></tr>
+    </table>
+    <p>ストーリー例: <code>営業担当として、商談を一覧で見たい。なぜなら次のアクションを判断するため。</code> — 「なぜ」まで書くと、AIも人間も実装の落とし所を判断できる。</p>
+
+    <h2 id="s-3">非機能要件 — 6観点を必ず検討</h2>
+    <p>機能だけ決めて非機能を放置すると、後から設計・インフラごとやり直しになる。次の6観点を必ず検討し、<strong>対象外の観点も「対象外」と明記</strong>する（検討漏れと意図的な対象外を区別するため）。</p>
+    <div class="hb-grid hb-cols-3">
+      <div class="hb-card"><h4>性能</h4>応答時間・スループット・同時接続数の目標値</div>
+      <div class="hb-card"><h4>可用性</h4>許容ダウンタイム・SLA・障害時の挙動</div>
+      <div class="hb-card"><h4>セキュリティ</h4>認証認可・データ保護・コンプライアンス</div>
+      <div class="hb-card"><h4>スケーラビリティ</h4>想定成長・ピーク・スケール方針</div>
+      <div class="hb-card"><h4>運用</h4>監視・バックアップ・デプロイ頻度</div>
+      <div class="hb-card"><h4>コスト</h4>予算上限・無料枠終了後の月額</div>
+    </div>
+
+    <h2 id="s-4">承認ゲートのフロー</h2>
+    <p class="hb-sub">推測で埋めた前提は <code>[要確認]</code> マーカーを付け、解消するまで <code>approved</code> にしない。</p>
+    <figure>
+      <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as ユーザー
+  participant A as AI(要件分析)
+  participant D as requirements.md
+  U->>A: アイデア・要望を伝える
+  A->>A: 機能/非機能を洗い出す
+  A->>D: ドラフト作成（不明点に[要確認]）
+  A->>U: [要確認]の一覧を提示
+  U->>A: 各項目を回答 / 判断
+  A->>D: [要確認]を解消・更新
+  alt 残[要確認]あり
+    A->>U: 再確認
+  else すべて解消
+    A->>D: status = approved
+    A-->>U: 設計フェーズへ進行可
+  end
+      </pre>
+      <figcaption>図: [要確認]がゼロになるまで approved にしない承認ゲート。</figcaption>
+    </figure>
+
+    <h2 id="s-5">スコープと日付の規律</h2>
+    <ul>
+      <li><strong>スコープ外（Won't）を明示</strong>。サイクル途中の要件追加は「要件定義書の改訂」として扱い、なし崩しに実装しない。</li>
+      <li>スケジュールの日付は<strong>絶対日付（YYYY-MM-DD）</strong>。「来週」「3日後」などの相対表現を文書に残さない（読む時点で意味が変わるため）。</li>
+    </ul>
+
+    <h2 id="s-6">ファイル配置</h2>
+    <p>要件は <code>docs/01_requirements/</code> に置く。本体は1ファイル（<code>requirements.md</code>）に集約し、肥大化する補助資料だけ分割する。<code>docs/STATUS.md</code> で現在フェーズを管理する。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">📁 要件定義フェーズの配置</div>
+<pre>docs/
+├── 01_requirements/
+│   ├── requirements.md       <span class="hb-c">← 本体（承認対象。これが approved で次へ）</span>
+│   ├── user-stories.md       <span class="hb-c">← 補助: ストーリー詳細（任意）</span>
+│   └── glossary.md           <span class="hb-c">← 用語集（任意・チームで用語を統一）</span>
+└── STATUS.md                 <span class="hb-c">← 現在フェーズ / 完了条件の充足 / 次アクション</span></pre>
+      <div class="hb-cap">図: 本体は1枚に集約。分けるのは肥大化する補助のみ（YAGNI）。</div>
+    </figure>
+
+    <h2 id="s-7">requirements.md の実例</h2>
+    <p>上記のルールを1枚に落とすとこうなる。MoSCoW・6観点・<code>[要確認]</code> が同居しているのがポイント。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">docs/01_requirements/requirements.md</div>
+<pre><span class="hb-k"># 要件定義: 商談管理</span>   status: draft   (更新 2026-07-21)
+
+<span class="hb-k">## 機能要件 (MoSCoW)</span>
+- [Must]   営業担当として商談を一覧表示したい（次アクション判断のため）
+- [Should] ステータスで絞り込みたい
+- [Could]  担当者でフィルタしたい
+- [Won't]  CSVエクスポート  <span class="hb-c">← 今サイクルは対象外（スコープ固定）</span>
+
+<span class="hb-k">## 非機能要件 (6観点)</span>
+- 性能:       一覧は500ms以内 (p95)
+- セキュリティ: 自分の担当商談のみ閲覧可（リソース単位の認可）
+- 可用性:      [対象外] 社内10名想定・停止許容
+- スケール/運用/コスト: [対象外] 現時点で要求なし
+
+<span class="hb-k">## 未解決（解消するまで approved にしない）</span>
+- <span class="hb-c">[要確認]</span> 論理削除した商談を一覧に出すか？ → 回答待ち</pre>
+      <div class="hb-cap">図: <code>[要確認]</code> が残る間は status=draft。ゼロになって初めて approved にする。</div>
+    </figure>
+
+    <h2 id="s-8">完了条件（チェックリスト）</h2>
+    <ul class="hb-chk">
+      <li>全機能がユーザーストーリー + MoSCoW で記述されている</li>
+      <li>非機能6観点すべてに記述がある（対象外も明記）</li>
+      <li><code>[要確認]</code> がゼロ件</li>
+      <li>スコープ外（Won't）が明記されている</li>
+      <li>日付がすべて絶対日付になっている</li>
+      <li>status = approved</li>
+    </ul>
+
+    <div class="hb-callout hb-gotcha"><b>落とし穴:</b> AIが生成した要件ドラフトは、一見すべて埋まっているように見える。だが埋まった項目の多くは「AIの仮定」であり、ユーザーが決めたものではない。<strong>埋まっている=合意済み、ではない。</strong>仮定は必ず<code>[要確認]</code>で可視化する。</div>
+</div>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500" role="img" aria-label="OPERATIONS">
+  <defs>
+    <linearGradient id="bg08" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1320"/><stop offset="1" stop-color="#10182b"/>
+    </linearGradient>
+    <radialGradient id="g08" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8aa0c0" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#5ee0c0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="t08" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8aa0c0"/><stop offset="1" stop-color="#5ee0c0"/>
+    </linearGradient>
+    <filter id="bl08"><feGaussianBlur stdDeviation="36"/></filter>
+  </defs>
+  <rect width="1200" height="500" fill="url(#bg08)"/>
+  <g filter="url(#bl08)"><circle cx="431" cy="234" r="259" fill="url(#g08)" opacity="0.3"/><circle cx="750" cy="330" r="133" fill="url(#g08)" opacity="0.4"/><circle cx="777" cy="157" r="258" fill="url(#g08)" opacity="0.5"/></g>
+  <g>
+        <line x1="640" y1="150" x2="640" y2="322" stroke="#8aa0c0" stroke-width="2" opacity="0.5"/>
+        <line x1="640" y1="322" x2="1000" y2="322" stroke="#8aa0c0" stroke-width="2" opacity="0.5"/>
+        <polyline points="665,286 725,236 785,262 845,192 905,224 965,170" fill="none" stroke="#5ee0c0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="665" cy="286" r="5.5" fill="#5ee0c0"/><circle cx="725" cy="236" r="5.5" fill="#5ee0c0"/><circle cx="785" cy="262" r="5.5" fill="#5ee0c0"/><circle cx="845" cy="192" r="5.5" fill="#5ee0c0"/><circle cx="905" cy="224" r="5.5" fill="#5ee0c0"/><circle cx="965" cy="170" r="5.5" fill="#5ee0c0"/></g>
+  <text x="64" y="80" font-family="ui-monospace,Menlo,monospace" font-size="22" letter-spacing="6" fill="#5ee0c0" opacity="0.95">OPERATIONS</text>
+  <text x="56" y="456" font-family="-apple-system,Helvetica,sans-serif" font-weight="800" font-size="170" fill="url(#t08)" opacity="0.95">08</text>
+  <rect x="0" y="0" width="1200" height="500" fill="none" stroke="#232b3d" stroke-width="1"/>
+</svg>

@@ -1,0 +1,48 @@
+<!--meta {"title": "ドキュメント", "desc": "docs / tasks。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-glossary-docs">ドキュメント</h1>
+      <p class="lead">docs / tasks。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>ADR で設計判断を残すと決める</li>
+<li><code>docs/</code> と <code>z_docs/</code> の役割を切り分けて使う</li>
+<li>強制確認ルールで危険操作を止めると決める</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-glossary.html">↑ 章トップ</a> <a href="guide-glossary-infra.html">← テスト・インフラ</a> <a href="guide-glossary.html">章トップへ戻る →</a></p>
+</aside>
+<h3 id="glossary-docs"><a class="toclink" href="#glossary-docs">ドキュメント</a></h3>
+<h4 id="adr-architecture-decision-records"><a class="toclink" href="#adr-architecture-decision-records">ADR / Architecture Decision Records</a></h4>
+<p>「なぜそうしたか」を時系列で残す形式。<code>docs/adr/NNNN-&lt;slug&gt;.md</code>。詳細は <a href="guide-repo-docs-1.html#11-7-adr">11.7 ADR</a>。</p>
+<h4 id="docs-z_docs"><a class="toclink" href="#docs-z_docs"><code>docs/</code> と個人メモ (<code>z_docs/</code>)</a></h4>
+<ul>
+<li>docs/: チーム公式。レビュー必須</li>
+<li>z_docs/: 任意の作業メモ。公式成果物には含めない</li>
+</ul>
+<h4 id="mermaid"><a class="toclink" href="#mermaid">Mermaid</a></h4>
+<p>テキストで図を書く記法。本サイトでは最小構文を推奨（HTML ラベル禁止）。</p>
+<hr />
+<h3 id="ops-terms"><a class="toclink" href="#ops-terms">操作・運用</a></h3>
+<h4 id="force-confirm-rule"><a class="toclink" href="#force-confirm-rule">強制確認ルール (操作確認)</a></h4>
+<p>対象: <code>git add/commit/push/merge/rebase</code>、<code>docker exec</code>、<code>rm</code>、<code>mv</code>（重要）、<code>aws</code> 等。</p>
+<p>実行前に <code>[操作確認] コマンド: XXX を実行します。許可をお願いします。</code> と出力し、許可を待つ。</p>
+<hr />
+
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-setup.html">クイックスタート</a></li>
+  <li><a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-glossary-infra.html">← テスト・インフラ</a><span class="muted flow-pager__next">章内末尾 →</span></nav>" aria-label="前後の章"><a href="guide-design.html">← 設計</a><a class="flow-pager__next" href="guide-implement.html">実装 →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><span class="muted flow-pager__next">末尾 →</span></nav>
+  </article>
+</div>

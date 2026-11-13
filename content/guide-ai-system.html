@@ -1,0 +1,138 @@
+<!--meta {"title": "AIをシステムに組み込む", "desc": "API・構造化出力・RAG・エージェント・MCP・評価までの統合パターン。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-ai-system">AIをシステムに組み込む</h1>
+      <p class="lead">API・構造化出力・RAG・エージェント・MCP・評価までの統合パターン。</p>
+    </header>
+    <div class="flow-body">
+
+<p class="wiki-lead">自社のプロダクトや社内システムに AI（LLM）を機能として組み込むための設計ガイド。開発作業での AI 利用は<a href="guide-workflow.html">全体像</a>、業務プロセスへの導入は<a href="guide-ai-business.html">業務への組み込み</a>へ。</p>
+
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>API・構造化出力・RAG・エージェントの構成を決める</li>
+<li>MCP と評価の仕組みを設計に組み込むと決める</li>
+<li>コストと失敗パターンを先に確認する</li>
+</ul>
+<p class="page-brief__nav"><a href="index.html#playbook-hub">↑ 章トップ</a> <a href="guide-ai-business.html">← 業務への組み込み</a> <a href="guide-ai-cases.html">導入事例集 →</a></p>
+</aside>
+<h3 id="sys-patterns"><a class="toclink" href="#sys-patterns">統合パターン — 簡単な方から</a></h3>
+<p>下に行くほど自由度が上がり、設計・評価・運用コストも上がる。<strong>上のパターンで足りるなら下に行かない</strong>のが原則。</p>
+<table>
+<thead><tr><th>パターン</th><th>姿</th><th>典型ユース</th><th>難所</th></tr></thead>
+<tbody>
+<tr><td>1. 単発呼び出し</td><td>入力→プロンプト→出力</td><td>要約・分類・翻訳・抽出</td><td>プロンプトの安定化</td></tr>
+<tr><td>2. 構造化出力</td><td>JSON スキーマで型を保証</td><td>フォーム自動入力・データ変換</td><td>スキーマ設計・検証</td></tr>
+<tr><td>3. ツール使用</td><td>AI が関数・API を呼ぶ</td><td>検索して答える・操作を実行する</td><td>ツール定義の明確さ</td></tr>
+<tr><td>4. RAG</td><td>社内文書を検索して根拠付き回答</td><td>社内 QA・サポートボット</td><td>検索品質・文書整備</td></tr>
+<tr><td>5. エージェント</td><td>ループで自律的にタスク遂行</td><td>調査・複数ステップの処理</td><td>暴走防止・評価・コスト</td></tr>
+</tbody>
+</table>
+
+<h4 id="sys-api"><a class="toclink" href="#sys-api">基本形 — API 呼び出し</a></h4>
+<p>最小構成。これだけでパターン1・2は実装できる。</p>
+<pre><code class="language-text"># Python（Anthropic SDK の例）
+import anthropic
+
+client = anthropic.Anthropic()  # ANTHROPIC_API_KEY を環境変数で
+
+message = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=1024,
+    system="あなたは問い合わせ分類器。カテゴリ名のみ返す。",
+    messages=[{"role": "user", "content": ticket_text}],
+)
+print(message.content[0].text)
+</code></pre>
+<ul>
+<li><strong>system プロンプトに役割と出力形式</strong>、user に処理対象データ、と分離する</li>
+<li>モデルは「安い・速いモデルで試し、品質が足りなければ上げる」。分類・抽出は小型モデルで足りることが多い</li>
+<li>同じ前置き（長い指示・文書）を繰り返すならプロンプトキャッシュでコストを下げる</li>
+</ul>
+
+<h4 id="sys-structured"><a class="toclink" href="#sys-structured">構造化出力とツール使用</a></h4>
+<ul>
+<li>後段のプログラムで使う出力は<strong>必ずスキーマで縛る</strong>（JSON Schema / SDK の構造化出力機能）。自由文をパースしない</li>
+<li>ツール定義は「名前・説明・入力スキーマ」の説明文の質が精度を決める。<a href="guide-rules-skills-1.html#17-skills-guide">Skills 設計</a>と同じ要領で、いつ使うかを書く</li>
+<li>受け取った値は通常の入力バリデーションにかける。AI 出力は信頼境界の外側として扱う</li>
+</ul>
+
+<hr />
+<h3 id="sys-rag"><a class="toclink" href="#sys-rag">RAG — 社内知識に答えさせる</a></h3>
+<ol class="steps">
+<li><strong>文書整備</strong> — 正本を決め、古い文書を捨てる。RAG の品質は検索より先に文書で決まる</li>
+<li><strong>分割と埋め込み</strong> — 見出し単位などの意味のまとまりでチャンク化し、ベクトル DB に投入</li>
+<li><strong>検索</strong> — ベクトル検索 + キーワード検索の併用（ハイブリッド）を既定にする。リランキングは精度が足りない時に追加</li>
+<li><strong>生成</strong> — 取得チャンクを引用付きで渡し、「文書にない場合は無いと答える」を指示</li>
+<li><strong>評価</strong> — 想定質問 20〜50 件で「正しい文書を引けたか」「回答が正しいか」を分けて計測</li>
+</ol>
+<aside class="info-panel info-panel--tip">
+<h4 class="info-panel__title">先に「コンテキスト全載せ」を検討する</h4>
+<div class="info-panel__body">
+<p>対象文書が数十万トークンに収まるなら、ベクトル DB を建てずに長コンテキストへ直接渡す（＋キャッシュ）方が単純で精度も高いことが多い。RAG は文書量がコンテキストに収まらなくなってからでよい。具体的な構成例は<a href="memo-ai-reference-rag.html">RAG・実装参考</a>。</p>
+</div>
+</aside>
+
+<h3 id="sys-agent"><a class="toclink" href="#sys-agent">エージェント組み込み</a></h3>
+<ul>
+<li>構成は「モデル + ツール群 + ループ」。フレームワークを入れる前に、この最小構成で要件を満たすか確認する</li>
+<li><strong>権限は最小から</strong>: 読み取り専用ツールで始め、書き込み系は人間承認を挟む</li>
+<li>ステップ数・トークン・実行時間に上限を置く（暴走とコスト事故の防止）</li>
+<li>コーディングエージェントを CI から使うのも立派な組み込み。下のヘッドレス実行を参照</li>
+</ul>
+
+<h4 id="sys-headless"><a class="toclink" href="#sys-headless">ヘッドレス実行 — 既存パイプラインへの最短組み込み</a></h4>
+<pre><code class="language-bash"># CI で: 失敗テストの一次調査をコメント化
+claude -p "直近の CI 失敗ログを読み、原因仮説を3行で" --output-format json
+
+# 定期実行で: 週次の依存更新チェック
+codex exec "依存パッケージの脆弱性を調べ、更新 PR を作成"
+</code></pre>
+<p>API を直接叩くより先に、この形で「エージェントごと」組み込む方が早いケースが多い（社内ツール・運用自動化など）。</p>
+
+<h3 id="sys-mcp"><a class="toclink" href="#sys-mcp">MCP — 接続の標準化</a></h3>
+<ul>
+<li>MCP（Model Context Protocol）は AI と外部ツール・データ源をつなぐ共通規格。社内 API を MCP サーバとして1度実装すれば、Claude Code・Codex・Cursor のどれからも使える</li>
+<li>「各ツール用の連携を個別に作る」状態になったら MCP 化のサイン</li>
+<li>認証・権限は MCP サーバ側で制御する（AI 側に生のクレデンシャルを渡さない）。詳細は<a href="memo-ai-reference-tools.html">MCP・連携参考</a></li>
+</ul>
+
+<hr />
+<h3 id="sys-eval"><a class="toclink" href="#sys-eval">評価・監視 — 本番投入の条件</a></h3>
+<ol class="steps">
+<li><strong>評価セットを作る</strong> — 本番想定の入力 20 件以上＋期待される出力の判定基準。リリース前にスコア化</li>
+<li><strong>回帰として回す</strong> — プロンプト変更・モデル更新のたびに評価セットを再実行（プロンプトは Git 管理）</li>
+<li><strong>本番ログを取る</strong> — 入出力・レイテンシ・トークン数・ユーザーフィードバックを記録（個人情報のマスキングを忘れない）</li>
+<li><strong>ガードレール</strong> — 出力の検証（形式・禁止事項）を後段に置き、失敗時はフォールバック（定型応答・人間へエスカレーション）</li>
+</ol>
+
+<h3 id="sys-cost"><a class="toclink" href="#sys-cost">コスト設計の定石</a></h3>
+<ul>
+<li>処理を分解し、<strong>各ステップに必要十分な最小モデル</strong>を割り当てる（分類は小型、生成は中型、難所だけ大型）</li>
+<li>プロンプトキャッシュ・バッチ API で単価を下げる（バッチは非同期で良い処理に）</li>
+<li>トークン使用量をテナント・機能単位で計測し、上限を設定。「気づいたら高額」を防ぐ</li>
+</ul>
+
+<h3 id="sys-gotchas"><a class="toclink" href="#sys-gotchas">Gotchas</a></h3>
+<ul>
+<li>デモは1日でできるが本番品質は評価の仕組みで決まる。<strong>評価セットなしでのリリースはしない</strong></li>
+<li>ユーザー入力をそのままプロンプトに連結するとプロンプトインジェクションの入口になる。指示とデータを分離し、出力検証を置く</li>
+<li>モデルは更新・廃止される。モデル名は設定値に外出しし、評価セットで乗り換え試験ができる状態を保つ</li>
+<li>レイテンシ要件を最初に確認する。対話 UI はストリーミング前提で設計する</li>
+</ul>
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="memo-ai-reference-rag.html">RAG・実装参考</a></li>
+  <li><a href="memo-ai-reference-tools.html">MCP・連携参考</a></li>
+  <li><a href="guide-ai-cases.html#cases-system">システム組み込みの事例</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+    </div><nav class="flow-pager" aria-label="前後の章"><a href="guide-ai-business.html">← 業務への組み込み</a><a class="flow-pager__next" href="guide-ai-cases.html">導入事例集 →</a></nav>
+  </article>
+</div>

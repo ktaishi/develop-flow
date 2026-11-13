@@ -1,0 +1,43 @@
+<!--meta {"title": "設計概念", "desc": "ADR・境界。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-glossary-design">設計概念</h1>
+      <p class="lead">ADR・境界。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>レイヤ構成と依存逆転（DIP）の向きをまず押さえる</li>
+<li>値オブジェクト・純粋関数など設計語を実装前に確認する</li>
+<li>業務例外と技術例外を切り分けて扱うと決める</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-glossary.html">↑ 章トップ</a> <a href="guide-glossary-tdd.html">← 開発手法 / TDD</a> <a href="guide-glossary-quality.html">品質・運用 →</a></p>
+</aside>
+<h3 id="design-concepts"><a class="toclink" href="#design-concepts">設計概念</a></h3>
+<p class="wiki-lead">詳細は <a href="memo-dev-method.html#21-ddd-clean-arch">メモ — 開発手法</a>。AI 協働フロー本体とは別レイヤ。</p>
+<h4 id="interface-application-domain-infrastructure"><a class="toclink" href="#interface-application-domain-infrastructure">レイヤ構成 (Interface / Application / Domain / Infrastructure)</a></h4>
+<p>DDD でよく使う 4 層。Domain は他レイヤに依存しない。</p>
+<ul>
+<li>Interface: REST / GraphQL / CLI 等</li>
+<li>Application: ユースケース 運用</li>
+<li>Domain: 業務ロジック・エンティティ・<a href="#value-object">値オブジェクト</a></li>
+<li>Infrastructure: DB・外部 API 等</li>
+</ul>
+<h4 id="dip"><a class="toclink" href="#dip">依存逆転 / 依存性逆転原則 (DIP)</a></h4>
+<p>抽象 (<a href="#protocol-interface">Protocol / Interface</a>) に依存させ、Domain が Infrastructure に依存しないようにする。</p>
+<h3 id="design-vocab"><a class="toclink" href="#design-vocab">実装の語彙</a></h3>
+<h4 id="pure-function"><a class="toclink" href="#pure-function">Pure function</a></h4>
+<p>副作用なし。同じ入力 → 同じ出力。テスト・並列実行しやすい。</p>
+<h4 id="value-object"><a class="toclink" href="#value-object">値オブジェクト (Value Object)</a></h4>
+<p>アイデンティティを持たない不変オブジェクト。Python では <code>@dataclass(frozen=True)</code> が多い。</p>
+<h4 id="business-vs-technical-exception"><a class="toclink" href="#business-vs-technical-exception">業務例外 / 技術例外</a></h4>
+<p>業務ルール違反（WARNING）とインフラ起因（ERROR）を分離する方針。</p>
+<h4 id="protocol-interface"><a class="toclink" href="#protocol-interface">Protocol / Interface</a></h4>
+<p>抽象化の呼び名違い。Python は <code>typing.Protocol</code>、Java/TS は <code>implements</code>。</p>
+<hr />
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-glossary-tdd.html">← 開発手法 / TDD</a><a class="flow-pager__next" href="guide-glossary-quality.html">品質・運用 →</a></nav>" aria-label="前後の章"><a href="guide-design.html">← 設計</a><a class="flow-pager__next" href="guide-implement.html">実装 →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><span class="muted flow-pager__next">末尾 →</span></nav>
+  </article>
+</div>

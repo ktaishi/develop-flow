@@ -1,0 +1,7 @@
+public/
+node_modules/
+.vercel/
+.env*
+__pycache__/
+_to_delete/
+*.tgz

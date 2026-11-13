@@ -1,0 +1,238 @@
+<!--meta {"title": "AI利用開発フロー — AIと進める開発の路線図", "desc": "準備から運用まで8つの駅に、手順のガイドと考え方のハンドブックを並べた、AIコーディングエージェント時代の開発フロー集。", "kind": "home", "scripts": [], "reviewed": "2026-11-13"} -->
+<section class="home-hero" aria-labelledby="home-title">
+  <h1 id="home-title">AIと進める開発の路線図</h1>
+  <p>準備から運用まで、8つの駅を順にたどります。各駅には、手を動かすための「手順」と、判断の拠り所になる「本（ハンドブック）」を並べました。</p>
+</section>
+<ol class="route" aria-label="開発フローの8段階"><li><span class="route__name">準備</span><span class="route__what">ツールを入れて最初の1タスクを通す</span><a href="guide-setup.html"><i>手順</i>セットアップ</a><a href="principles.html" class="is-hb"><i>本</i>全体原則</a></li><li><span class="route__name">ルール整備</span><span class="route__what">AIに毎回読ませる約束事を置く</span><a href="guide-rules.html"><i>手順</i>ルール / Skills</a><a href="ai-collaboration.html" class="is-hb"><i>本</i>AIとの協働の実務</a></li><li><span class="route__name">要件</span><span class="route__what">何を作るかを検証できる形にする</span><a href="guide-workflow.html"><i>手順</i>全体像（Phase 地図）</a><a href="requirements.html" class="is-hb"><i>本</i>要件定義</a></li><li><span class="route__name">設計</span><span class="route__what">Plan を立て、決定を ADR に残す</span><a href="guide-design.html"><i>手順</i>Plan・設計</a><a href="design.html" class="is-hb"><i>本</i>設計</a><a href="tech-infra.html" class="is-hb"><i>本</i>技術選定・インフラ</a></li><li><span class="route__name">実装</span><span class="route__what">小さく作り、テストで囲む</span><a href="guide-implement.html"><i>手順</i>実装</a><a href="development.html" class="is-hb"><i>本</i>開発・実装（TDD）</a></li><li><span class="route__name">検証</span><span class="route__what">機械と人の目でレビューする</span><a href="guide-ship.html"><i>手順</i>PR・提出</a><a href="qa.html" class="is-hb"><i>本</i>テスト・レビュー・QA</a></li><li><span class="route__name">リリース</span><span class="route__what">CI/CD で安全に届ける</span><a href="guide-repo-cicd-1.html"><i>手順</i>CI/CD</a><a href="delivery.html" class="is-hb"><i>本</i>デプロイ・リリース</a></li><li><span class="route__name">運用</span><span class="route__what">エージェントを回し続け、学びを戻す</span><a href="guide-ops-orchestration.html"><i>手順</i>エージェント運用</a><a href="operations.html" class="is-hb"><i>本</i>運用・監視・保守</a><a href="security.html" class="is-hb"><i>本</i>セキュリティ</a></li></ol>
+<p class="route-legend">「手順」は Cursor / Claude Code / Codex での具体的な進め方、「本」はツールが変わっても残る考え方です。途中の駅から読み始めてもかまいません。</p>
+<aside class="home-news" aria-label="最近の更新">
+  <b>2026年11月の更新</b>
+  <span>GPT-4o / GPT-4.1 系の API 提供終了（2027-01-14）に合わせて既定モデルを見直し、Claude Code・Codex・Cursor の直近の変更と仕様駆動開発の広がりを整理しました。</span>
+  <a href="trends-2026.html">変更点を読む</a>
+</aside>
+<div class="flow-page">
+<!-- playbook-hub:start -->
+<article class="hub-landing playbook-hub" id="playbook-hub">
+  <div class="playbook-hub__inner">
+  <header class="playbook-hero">
+    <h2 class="playbook-hero__title" id="s-1">ガイドを選んで、自分用にまとめる</h2>
+    <p class="playbook-lead">下のリンクから順に読むか、4ステップのウィザードで章を選んで<strong>ガイドまとめ</strong>を自動生成できます。</p>
+    <p class="playbook-meta">初日だけ読みたい → <a href="guide-setup.html#0-beginner">セットアップガイド</a></p>
+  </header>
+
+  <h2 class="playbook-block-title" id="s-2">そのまま読む場合の順番</h2>
+  <section class="reading-route" aria-label="開発業務の読む順">
+    <p class="reading-route__eyebrow">開発業務</p>
+    <ol class="reading-route__list">
+      <li><a href="guide-rules-compare.html#17-compare"><strong>ルール設定</strong><span>毎回守る土台を決める</span></a></li>
+      <li><a href="guide-rules-skills-1.html#17-skills-guide"><strong>スキル設定</strong><span>長い手順を必要時だけ読む</span></a></li>
+      <li><a href="guide-workflow.html#dev-lifecycle-ai"><strong>開発フロー</strong><span>要件定義から PR までの AI 活用</span></a></li>
+      <li><a href="guide-ops-orchestration.html#18-orchestration"><strong>エージェント運用</strong><span>Plan・検証・委譲の基本</span></a></li>
+      <li><a href="guide-ops-orchestration.html#18-decompose-2026"><strong>分解と検証の分離</strong><span>切り出す単位・並列 3〜5・verifier 分離</span></a></li>
+    </ol>
+  </section>
+
+  <section class="reading-route reading-route--general" aria-label="一般業務の読む順">
+    <p class="reading-route__eyebrow">一般業務</p>
+    <ol class="reading-route__list">
+      <li><a href="memo-ai-tools.html#21-general-work-tools"><strong>ツール早見</strong><span>調査・要約・議事録向けに1本選ぶ</span></a></li>
+      <li><a href="guide-setup.html#1-general-ai-safety"><strong>安全運用</strong><span>機密・出典・人間レビュー</span></a></li>
+      <li><a href="memo-ai-tools.html#21-obsidian-knowledge"><strong>ナレッジの型</strong><span>テンプレ・claude-obsidian</span></a></li>
+      <li><a href="memo-ai-tools.html#21-chat-vs-workflow"><strong>4要素ワークフロー</strong><span>チャットと定期実行の分け方</span></a></li>
+      <li><a href="memo-ai-reference-rag.html"><strong>ナレッジ整理</strong><span>議事録・社内文書の蓄積</span></a></li>
+    </ol>
+  </section>
+  <section class="reading-route reading-route--adoption" aria-label="AI導入・組み込みの読む順">
+    <p class="reading-route__eyebrow">AI導入・組み込み</p>
+    <ol class="reading-route__list">
+      <li><a href="guide-ai-tools.html"><strong>ツール徹底比較</strong><span>Claude Code・Codex・Cursor の選び方</span></a></li>
+      <li><a href="guide-ai-business.html"><strong>業務への組み込み</strong><span>対象選定から定着までの5ステップ</span></a></li>
+      <li><a href="guide-ai-system.html"><strong>システムへの組み込み</strong><span>API・RAG・エージェントの統合パターン</span></a></li>
+      <li><a href="guide-ai-cases.html"><strong>導入事例集</strong><span>開発・業務・プロダクトの実例と学び</span></a></li>
+    </ol>
+  </section>
+
+  <h2 class="playbook-block-title" id="s-3">自分用にまとめる場合（4ステップ）</h2>
+  <section class="playbook-step playbook-intents" id="playbook-intents" aria-label="状況を選ぶ">
+    <h3 class="playbook-section-title" id="s-4"><span class="playbook-step-num">1</span> いまどれに近い？</h3>
+    <p class="playbook-hint">カードを1つ選ぶ。迷ったら「はじめて / 環境づくり」。</p>
+    <div class="intent-grid">
+      <button type="button" class="intent-card" data-intent="setup" data-cat="setup" aria-pressed="false">
+        <span class="intent-card__title">はじめて / 環境づくり</span>
+        <span class="intent-card__desc">AI ツール設定と、リポに置くルールの土台。</span>
+      </button>
+      <button type="button" class="intent-card" data-intent="task" data-cat="task" aria-pressed="false">
+        <span class="intent-card__title">開発タスクを進める</span>
+        <span class="intent-card__desc">要件定義から PR まで、規模に合わせて章を絞る。</span>
+      </button>
+      <button type="button" class="intent-card" data-intent="general-work" data-cat="general" aria-pressed="false">
+        <span class="intent-card__title">一般業務で AI を使う</span>
+        <span class="intent-card__desc">調査・要約・議事録・資料・ナレッジ整理の手順。</span>
+      </button>
+      <button type="button" class="intent-card" data-intent="rules" data-cat="rules" aria-pressed="false">
+        <span class="intent-card__title">ルール・Skills を整える</span>
+        <span class="intent-card__desc">rules/ · skills/ · tasks/ の配置・更新。</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="playbook-step playbook-context selection-board" id="playbook-context" aria-label="環境を調整" hidden>
+    <h3 class="playbook-section-title" id="s-5"><span class="playbook-step-num">2</span> 環境に合わせて調整</h3>
+    <p class="playbook-hint">章の一覧が自動で変わります。初期値のまま次へ進んでも構いません。</p>
+    <div class="playbook-panel">
+      <fieldset class="selection-board__lane">
+        <legend class="selection-board__legend">職種（複数選択可）</legend>
+        <div class="tile-grid">
+        <label class="tile-option"><input type="checkbox" name="ctx-role" value="product" /><span class="tile-option__label">プロダクト / 企画</span></label>
+        <label class="tile-option"><input type="checkbox" name="ctx-role" value="design" /><span class="tile-option__label">デザイン / UX</span></label>
+        <label class="tile-option"><input type="checkbox" name="ctx-role" value="engineering" checked /><span class="tile-option__label">開発 / 実装</span></label>
+        <label class="tile-option"><input type="checkbox" name="ctx-role" value="qa" /><span class="tile-option__label">QA / 品質</span></label>
+        <label class="tile-option"><input type="checkbox" name="ctx-role" value="infra" /><span class="tile-option__label">インフラ / SRE</span></label>
+        <label class="tile-option"><input type="checkbox" name="ctx-role" value="data" /><span class="tile-option__label">データ / 分析</span></label>
+        <label class="tile-option"><input type="checkbox" name="ctx-role" value="ops" /><span class="tile-option__label">運用 / サポート</span></label>
+        <label class="tile-option"><input type="checkbox" name="ctx-role" value="mgmt" /><span class="tile-option__label">管理 / リード</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="selection-board__lane">
+        <legend class="selection-board__legend">AI ツール（1本）</legend>
+        <div class="tile-grid">
+        <label class="tile-option"><input type="radio" name="ctx-tool" value="cursor" checked /><span class="tile-option__label">Cursor</span></label>
+        <label class="tile-option"><input type="radio" name="ctx-tool" value="claude" /><span class="tile-option__label">Claude Code</span></label>
+        <label class="tile-option"><input type="radio" name="ctx-tool" value="codex" /><span class="tile-option__label">Codex</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="selection-board__lane">
+        <legend class="selection-board__legend">リポジトリ</legend>
+        <div class="tile-grid">
+        <label class="tile-option"><input type="radio" name="ctx-repo" value="new" /><span class="tile-option__label">新規リポ</span></label>
+        <label class="tile-option"><input type="radio" name="ctx-repo" value="existing" checked /><span class="tile-option__label">既存リポ</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="selection-board__lane" hidden id="ctx-group-taskSize">
+        <legend class="selection-board__legend">タスク規模</legend>
+        <div class="tile-grid">
+        <label class="tile-option"><input type="radio" name="ctx-taskSize" value="small" /><span class="tile-option__label">1日以内</span></label>
+        <label class="tile-option"><input type="radio" name="ctx-taskSize" value="medium" checked /><span class="tile-option__label">中規模（数日）</span></label>
+        <label class="tile-option"><input type="radio" name="ctx-taskSize" value="large" /><span class="tile-option__label">大規模（1週間+）</span></label>
+        </div>
+      </fieldset>
+    </div>
+  </section>
+
+  <section class="playbook-step playbook-modules" id="playbook-modules" aria-label="章を確認" hidden>
+    <h3 class="playbook-section-title" id="s-6"><span class="playbook-step-num">3</span> 入れるガイドの章</h3>
+    <p class="playbook-hint" id="playbook-modules-hint">チェックを外した章は出力に含まれません。初回はそのまま「まとめを作成」で OK。</p>
+    <div class="playbook-panel playbook-panel--modules">
+    <ul class="playbook-module-list" id="playbook-module-list" aria-describedby="playbook-modules-hint"></ul>
+    </div>
+    <button type="button" class="playbook-cta primary" id="btn-generate-playbook">まとめを作成</button>
+  </section>
+
+  <section class="playbook-step playbook-result" id="playbook-result" aria-label="できあがったまとめ" hidden>
+    <h3 class="playbook-section-title" id="s-7"><span class="playbook-step-num">4</span> <span id="playbook-result-title">あなたのまとめ</span></h3>
+
+    <div class="playbook-output playbook-output--summary">
+      <h3 class="playbook-output__title" id="s-8">ガイドまとめ</h3>
+      <p class="playbook-hint">人が読んで進めるチェックリストです。各項目から<strong>手順ガイド</strong>へ飛べます。AI に貼る指示文ではありません。</p>
+      <p class="playbook-next-action" id="playbook-next-action" hidden></p>
+      <div id="playbook-checklist" class="playbook-checklist-root"></div>
+      <div class="playbook-output__foot">
+        <p class="playbook-output__label">ガイドまとめの出力</p>
+        <label for="playbook-share-url">共有 URL（同じチェックリストをチームで開く）</label>
+        <div class="playbook-share-row">
+          <input type="text" id="playbook-share-url" readonly aria-label="共有 URL" />
+          <button type="button" id="btn-copy-share-url">URL をコピー</button>
+        </div>
+        <div class="playbook-export-actions">
+          <button type="button" class="playbook-export-primary" id="btn-export-playbook-md">まとめ.md</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="playbook-output playbook-output--ai">
+      <h3 class="playbook-output__title" id="s-9">AI セットアップ指示</h3>
+      <p class="playbook-hint">Cursor / Claude 等のチャットに貼る<strong>別ファイル</strong>です。上のガイドまとめとは用途が違い、リポ内にルール · <code>tasks/</code> 等を<strong>作らせる</strong>ための長文指示です。</p>
+      <div class="playbook-export-actions">
+        <button type="button" id="btn-copy-ai-prompt">セットアップ指示をコピー</button>
+        <button type="button" id="btn-export-ai-prompt-md">AIセットアップ指示.md</button>
+      </div>
+      <details class="playbook-disclosure playbook-ai-prompt-preview">
+        <summary>セットアップ指示のプレビュー</summary>
+        <div class="playbook-ai-prompt-preview__body">
+          <textarea id="playbook-ai-prompt-text" readonly rows="16" spellcheck="false" aria-label="AI セットアップ指示"></textarea>
+        </div>
+      </details>
+      <details class="playbook-disclosure playbook-export-howto">
+        <summary>チャットに貼ったあとに起きること</summary>
+        <div class="playbook-export-howto__body">
+          <ol class="playbook-export-steps">
+            <li><strong>対象リポを IDE で開く</strong>（Cursor 推奨）。新規なら空ディレクトリで OK。</li>
+            <li>AI チャットを<strong>新規スレッド</strong>で開き、コピーした指示を<strong>そのまま貼り付けて送信</strong>。</li>
+            <li>AI が指示に従い、リポ内に<strong>ファイルを作成・追記</strong>（ルール · <code>tasks/</code> · <code>ONBOARDING.md</code> 等）。</li>
+            <li>AI から<strong>完了報告</strong>（作成/変更ファイル一覧 · 検証結果 · 要確認操作）が返る。</li>
+            <li><strong>あなたが diff を確認</strong> → 問題なければ git commit（<strong>AI は commit / push しない</strong>）。</li>
+          </ol>
+          <p class="playbook-subhead">既存のルール・設定への影響</p>
+          <table class="playbook-export-impact">
+            <thead>
+              <tr><th scope="col">状況</th><th scope="col">起きること</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>新規リポ</strong></td>
+                <td>サンプルルール · Plan テンプレを<strong>新規配置</strong>。上書きの心配なし。</td>
+              </tr>
+              <tr>
+                <td><strong>既存リポ · 同パスにファイルあり</strong></td>
+                <td>指示どおり<strong>上書きせず</strong>、差分提示 · 追記 · 統合案。確認待ちになる場合あり。</td>
+              </tr>
+              <tr>
+                <td><strong>既存 <code>.cursor/rules/</code> 等</strong></td>
+                <td>足りないルールを<strong>追加</strong>。既存ファイルの削除 · 一括置換はしない。</td>
+              </tr>
+              <tr>
+                <td><strong>進行中の <code>tasks/todo.md</code></strong></td>
+                <td>テンプレ全置換はしない。不足見出しの<strong>追記のみ</strong>。</td>
+              </tr>
+              <tr>
+                <td><strong>触らないもの</strong></td>
+                <td>アプリコード · <code>.env</code> 等 · git 履歴 · リモート / クラウド設定。</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="playbook-export-caution">既存ルールが充実しているリポでは、実行前にプレビューで<strong>追加されるファイル名</strong>を確認するのが安全です。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="playbook-output playbook-output--bundle">
+      <h3 class="playbook-output__title" id="s-10">全部入り ZIP</h3>
+      <p class="playbook-hint">ガイドまとめと AI セットアップ指示の<strong>両方</strong>、およびルールサンプル · <code>tasks/todo.md</code> · <code>ONBOARDING.md</code> を一括で落とします。</p>
+      <div class="playbook-export-actions">
+        <button type="button" id="btn-export-zip">ZIP をダウンロード</button>
+      </div>
+      <ul class="playbook-bundle-list">
+        <li><code>まとめ.md</code> — ガイドまとめ</li>
+        <li><code>AIセットアップ指示.md</code> — チャット用（上記と別物）</li>
+        <li><code>tasks/todo.md</code> · <code>ONBOARDING.md</code> · <code>rules/</code> サンプル</li>
+      </ul>
+    </div>
+  </section>
+
+
+    <details class="playbook-disclosure playbook-ref-fold">
+      <summary>参考リンク（メモ・用語集・ツール）</summary>
+      <ul class="playbook-ref-list">
+        <li><a href="memo-ai-tools.html#21-general-work-tools">一般業務ツール早見</a></li>
+        <li><a href="guide-setup.html#1-general-ai-safety">一般業務の安全運用</a></li>
+        <li><a href="guide-glossary.html">用語集</a></li>
+        <li><a href="memo-ai-tools.html">AI製品・ツール</a></li>
+        <li><a href="memo-ai-reference-rag.html">RAG・ナレッジ参考</a></li>
+        <li><a href="memo-dev-method.html">PRD・設計</a></li>
+        <li><a href="flow-rules-samples.html">設定サンプル</a></li>
+      </ul>
+    </details>
+  </div>
+</article>
+<!-- playbook-hub:end -->
+</div>

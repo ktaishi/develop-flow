@@ -1,0 +1,85 @@
+<!--meta {"title": "履歴・記録", "desc": "作業ログの残し方。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-ops-history">履歴・記録</h1>
+      <p class="lead">作業ログの残し方。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>履歴は Obsidian の <code>history/</code> に残すと決める</li>
+<li>機密は <code>[REDACTED]</code> でマスクして書く</li>
+<li>git log・docs・チャット履歴を使い分ける</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-ops.html">↑ 章トップ</a> <a href="guide-ops-harness.html">← ハーネスとマルチエージェント</a> <a href="guide-ops-pitfalls.html">AIの誤りと運用注意 →</a></p>
+</aside>
+<h3 id="15-history"><a class="toclink" href="#15-history">履歴・記録の残し方</a></h3><p>「誰が・何を・どの粒度で読むか」を決めると、履歴の残し方がブレない。正本の置き場所は <a href="guide-repo-docs-1.html#11-6-docs-z-docs">リポジトリ — docs / 作業履歴</a> を参照。</p>
+<div class="mermaid">
+flowchart TD
+    PR[PR / merge commit] --> Git[Git log]
+    Docs[docs/ 公式] --> Onboard[新メンバー onboarding]
+    ADR[docs/adr/] --> Onboard
+    Zdocs[z_docs/history/ 任意] --> Self[個人振り返り]
+    Chat[チャット履歴] --> Handoff[引き継ぎ]
+    Git --> Handoff
+    Docs --> Handoff
+</div>
+<p>下表は記録の置き場所と粒度の早見。</p>
+<table>
+<thead>
+<tr><th>記録の種類</th><th>粒度</th><th>誰が読むか</th><th>正式な記録性</th></tr>
+</thead>
+<tbody>
+<tr><td>Git log</td><td>コミット単位</td><td>レビュアー・将来の自分</td><td>高</td></tr>
+<tr><td>docs/</td><td>機能単位</td><td>チーム全体</td><td>最高（公式）</td></tr>
+<tr><td>docs/adr/</td><td>意思決定単位</td><td>設計レビュアー</td><td>高</td></tr>
+<tr><td>z_docs/history/</td><td>セッション単位</td><td>本人</td><td>任意</td></tr>
+<tr><td>チャット</td><td>1 チャット = 1 タスク</td><td>引き継ぎ先</td><td>補助</td></tr>
+</tbody>
+</table>
+<h4 id="git-log"><a class="toclink" href="#git-log">Git log</a></h4>
+<p>TDD 採用チームは <code>[RED]</code> / <code>[GREEN]</code> / <code>[REFACTOR]</code> プレフィックスを使うと読みやすい。</p>
+<pre><code class="language-text">* [REVIEW] address review comment: handle null in &lt;field&gt;
+* [REFACTOR] extract _&lt;helper&gt; to private method
+* [GREEN] implement &lt;usecase&gt;
+* [RED] add failing tests for &lt;usecase&gt;
+* docs: add docs/&lt;feature&gt;/ design docs + ADR-NNNN
+* [PLAN] refine task breakdown before implementation
+* feat: &lt;user-visible summary&gt;  (merge commit)
+</code></pre>
+<h4 id="docs"><a class="toclink" href="#docs">docs/ (公式)</a></h4>
+<ul>
+<li>要件・設計・DB・技術選定・テスト計画・ログ・デプロイが揃う</li>
+<li>重要な意思決定は docs/adr/ に切り出す</li>
+<li>共有したい知見は z_docs から docs/ へ昇格させる</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-docs-readme">
+<h4 class="info-panel__title" id="scenario-docs-readme">新メンバーのドキュメント読書順</h4>
+<div class="info-panel__body"><p>新メンバーは <code>docs/README.md</code> → <code>docs/architecture.md</code> → 対象機能の <code>docs/&lt;feature&gt;/01_requirements.md</code> の順で読める状態にする。重要判断は <code>docs/adr/</code> に切り出す。</p></div>
+</aside>
+<h3 id="15-history-sources"><a class="toclink" href="#15-history-sources">履歴の置き場</a></h3>
+<h4 id="z_docshistory"><a class="toclink" href="#z_docshistory">作業履歴（Obsidian 正本 · z_docs 任意）</a></h4>
+<p class="wiki-lead">詳細・判断フロー: <a href="guide-repo-docs-1.html#11-6-docs-z-docs">リポジトリ — docs / 作業履歴</a></p>
+<ul>
+<li>必要なときだけ、フェーズ別意思決定を時系列で残す</li>
+<li>後から自分で振り返りたいときの補助</li>
+<li>共有したい知見だけ docs/ や PR に昇格すればよい</li>
+</ul>
+<h4 id="chat-history"><a class="toclink" href="#chat-history">チャット履歴</a></h4>
+<ul>
+<li>各フェーズの冒頭で「フェーズN: 目的」を宣言</li>
+<li>長くなったら新規チャット。<code>@Past Chats</code> で必要分だけ引き継ぐ（<a href="guide-ops-orchestration.html#18-context">4章 会話の文脈管理</a>）</li>
+<li>引き継ぎ時、後任者が PR と履歴を読めば理解できる状態にする</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-past-chats-1">
+<h4 class="info-panel__title" id="scenario-past-chats-1">長いチャットは新規スレッドに引き継ぐ</h4>
+<div class="info-panel__body"><p>長いチャットは新規を開き <code>@Past Chats</code> で 1 件だけ引き継ぐ。冒頭に「Phase 4: PDF 生成ロジック実装」と書き、後任者が PR #482 と Git log だけで追える粒度にする。</p></div>
+</aside>
+<hr />
+<hr />
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-ops-harness.html">← ハーネスとマルチエージェント</a><a class="flow-pager__next" href="guide-ops-pitfalls.html">AIの誤りと運用注意 →</a></nav>" aria-label="前後の章"><a href="guide-implement.html">← 実装</a><a class="flow-pager__next" href="guide-repo.html">リポジトリ →</a></nav>" aria-label="前後の章"><a href="guide-implement.html">← 実装</a><a class="flow-pager__next" href="guide-repo.html">リポジトリ →</a></nav>" aria-label="前後の章"><a href="guide-workflow.html">← 全体像</a><a class="flow-pager__next" href="guide-glossary.html">用語集 →</a></nav>
+  </article>
+</div>

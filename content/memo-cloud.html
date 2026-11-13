@@ -1,0 +1,480 @@
+<!--meta {"title": "メモ — クラウド", "desc": "選定の流れ: 制約（既存契約・SLA）→ カテゴリごとに候補 2 つまで → 開発スタック選定手順 で ADR / tech_decisions に残す。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<header class="memo-page-head">
+    <h1>クラウド</h1>
+    <p>プロダクト運用に必要なクラウド・SaaS を<strong>カテゴリ別</strong>に整理した参考メモ。ハイパースケーラ（AWS / GCP / Azure）、PaaS / BaaS、監視、品質レビューまで。</p>
+  </header>
+  <div class="memo-content">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>役割（公開・DB・監視…）から逆引きでサービスを選ぶ</li>
+<li>迷ったらカテゴリ早見表で代表サービスに当たりを付ける</li>
+<li>個別の使い方は各サービスの公式 Docs を正とする</li>
+</ul>
+<p class="page-brief__nav"><a href="memo-ai-tools.html">↑ メモ目次</a> <a href="memo-ai-tools.html">← AIツール</a> <a href="memo-ai-reference-rag.html">RAG 参考 →</a></p>
+</aside>
+<h3 id="21-infra"><a class="toclink" href="#21-infra">クラウド・プロダクト運用</a></h3>
+
+<h4 id="21-infra-categories"><a class="toclink" href="#21-infra-categories">カテゴリ早見表</a></h4>
+  <p>アプリを公開・運用すると、サーバー・DB・ログ・デプロイなど<strong>役割の違うサービス</strong>を組み合わせる必要がある。下表は役割ごとの代表例を並べた地図。Vercel のような単体 SaaS も AWS 上のマネージド DB も、同じ役割なら同じ行。</p>
+  <table>
+    <thead>
+      <tr><th>カテゴリ</th><th>役割</th><th>代表サービス</th><th>詳細</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ハイパースケーラ</td><td>IaaS / 基盤クラウド・GPU・エンタープライズ統合</td><td>AWS, GCP, Azure</td><td><a href="#21-infra-hyperscalers">§ HS</a></td></tr>
+      <tr><td>PaaS / BaaS / FaaS</td><td>アプリ稼働・Auth・DB・エッジを一体提供</td><td>Vercel, Cloudflare, Firebase, Supabase</td><td><a href="#21-infra-paas-baas">§ PaaS</a></td></tr>
+      <tr><td>データ・検索</td><td>RDB・Vector・オブジェクトストレージ</td><td>Neon, pgvector, Pinecone</td><td><a href="#21-infra-data">§ データ</a></td></tr>
+      <tr><td>デリバリー</td><td>構成管理・CI/CD・デプロイ自動化</td><td>Terraform, GitHub Actions</td><td><a href="#21-infra-delivery">§ デリバリー</a></td></tr>
+      <tr><td>監視・オブザーバビリティ</td><td>ログ・メトリクス・トレース・エラー集約</td><td>Datadog, Sentry</td><td><a href="#21-infra-observability">§ 監視</a></td></tr>
+      <tr><td>品質・レビュー</td><td>PR レビュー・静的解析・セキュリティスキャン</td><td>CodeRabbit, CodeQL</td><td><a href="#21-infra-quality">§ 品質</a></td></tr>
+    </tbody>
+  </table>
+  <p class="wiki-lead">選定の流れ: 制約（既存契約・SLA）→ カテゴリごとに候補 2 つまで → <a href="memo-stack.html#21-stack-flow">開発スタック選定手順</a> で ADR / tech_decisions に残す。</p>
+
+  <h4 id="21-infra-hyperscalers"><a class="toclink" href="#21-infra-hyperscalers">ハイパースケーラ（AWS / GCP / Azure）</a></h4>
+  <p>世界規模でシェアの大きいクラウド基盤は <strong>AWS・GCP・Azure</strong> の 3 社（通称 <strong>Big 3</strong>）。自社でサーバーを買う代わりに、ネット経由で借りる「<strong>基盤レイヤ</strong>」を提供する。</p>
+  <ul>
+    <li><strong>誰が</strong> — インフラ担当・バックエンド／ML エンジニア。スタートアップから大企業まで、本番アプリや AI 基盤をクラウドで動かすチーム。</li>
+    <li><strong>目的</strong> — 仮想サーバー（IaaS）・コンテナ・DB・GPU/TPU・ストレージを必要な分だけ借り、拡張・バックアップ・可用性をクラウド側に任せる。</li>
+    <li><strong>使い方</strong> — いずれか 1 社を選び、Terraform 等で環境をコード化して構築する。4 位以降は <a href="#21-infra-other-hyperscalers">その他 HS</a>。Vercel や Supabase のような <strong>PaaS / BaaS</strong> は別カテゴリ（アプリ公開まで一括で提供）。</li>
+  </ul>
+
+  <h5 id="21-infra-overview"><a class="toclink" href="#21-infra-overview">Big 3 比較（2026年）</a></h5>
+  <table>
+    <thead>
+      <tr><th>観点</th><th>AWS</th><th>GCP</th><th>Azure</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>AI/ML 強み</td><td>SageMaker・広範な GPU 選択肢</td><td>TPU 8t/8i・JAX/PyTorch 最適化</td><td>Azure OpenAI・AI Foundry</td></tr>
+      <tr><td>LLM 推論</td><td>Amazon Bedrock</td><td>Vertex AI</td><td>Azure OpenAI Service</td></tr>
+      <tr><td>サーバーレス</td><td>Lambda</td><td>Cloud Run / Functions</td><td>Azure Functions / Container Apps</td></tr>
+      <tr><td>向く用途</td><td>汎用・大規模 ML</td><td>TPU 学習・Google 連携</td><td>Microsoft 365 / Entra 連携</td></tr>
+      <tr><td>クラウドネイティブ監視</td><td>CloudWatch (+ Datadog 連携可)</td><td>Cloud Monitoring / Logging</td><td>Azure Monitor</td></tr>
+    </tbody>
+  </table>
+    <table>
+    <thead>
+      <tr><th></th><th>AWS</th><th>GCP</th><th>Azure</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>コスト最適化</td><td>Reserved Instances・Spot Training（SageMaker）</td><td>Committed Use Discounts・Preemptible VMs</td><td>Reserved Capacity・Spot VMs</td></tr>
+      <tr><td>最適化ツール</td><td>Compute Optimizer</td><td>Cloud Recommender</td><td>Azure Advisor・Cost Management</td></tr>
+      <tr><td>コンテナ基盤</td><td>EKS / ECS / Fargate</td><td>GKE / Cloud Run</td><td>AKS / Container Apps</td></tr>
+    </tbody>
+  </table>
+
+  <h5 id="21-aws"><a class="toclink" href="#21-aws">AWS</a></h5>
+  <h5 id="21-aws-guides"><a class="toclink" href="#21-aws-guides">ガイド</a></h5>
+  <table>
+    <thead>
+      <tr><th>ドキュメント</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="lambda-api-guide.html">Lambda API設計ガイド</a></td>
+        <td>画面 API は Lambda で始め、重い処理は SQS + Worker へ。実行時間・ECS/Batch への逃がし方針</td>
+      </tr>
+      <tr>
+        <td><a href="guide-repo-directory.html#11-1-directory">11章 リポジトリ構成</a></td>
+        <td>S3/MinIO・CI/CD（OIDC）・Terraform/CDK 方針・RAG 導入の判断</td>
+      </tr>
+    </tbody>
+  </table>
+  <h5 id="21-aws-services"><a class="toclink" href="#21-aws-services">主要サービス（本サイト内）</a></h5>
+  <ul>
+    <li><a href="#21-infra-sagemaker">SageMaker</a> — ML 構築・学習・デプロイ</li>
+    <li><a href="#21-infra-bedrock">Amazon Bedrock</a> — 基盤モデルへの統一 API</li>
+    <li><a href="#21-infra-aws-general">Lambda / ECS / RDS / SQS</a> — 汎用アプリ基盤（詳細は 11章）</li>
+    <li><a href="guide-repo-cicd-1.html#11-5-cicd">CI/CD（AWS）</a> — GitHub Actions + OIDC デプロイ</li>
+  </ul>
+  <h5 id="21-infra-sagemaker"><a class="toclink" href="#21-infra-sagemaker">SageMaker</a></h5>
+  <p>AWS が提供する <strong>機械学習（ML）の構築・学習・デプロイ</strong>をまとめて扱うマネージドサービス。</p>
+  <ul>
+    <li><strong>誰が</strong> — ML エンジニア、データサイエンティスト。自前 GPU サーバーを持たずにモデルを作りたいチーム。</li>
+    <li><strong>目的</strong> — ノートブックで実験 → 大量データで学習 → 推論 API として本番公開、まで AWS 上で一貫して行う。</li>
+    <li><strong>使い方</strong> — SageMaker Studio で開発し、学習ジョブを <strong>Spot Training</strong>（空き GPU を安く借りる）で回してコストを抑える。成果物はエンドポイントとして公開する。</li>
+  </ul>
+  <h5 id="21-infra-bedrock"><a class="toclink" href="#21-infra-bedrock">Amazon Bedrock</a></h5>
+  <p>複数社の <strong>基盤モデル（LLM）</strong> に、AWS 上の同じ API 経由でアクセスするサービス。</p>
+  <ul>
+    <li><strong>誰が</strong> — アプリ開発者・AI 機能担当。自前 GPU を立てず ChatGPT 的な機能を組み込みたい人。</li>
+    <li><strong>目的</strong> — Claude・Titan・Llama・Mistral などを切り替えやすく使い、推論・RAG・エージェントを AWS 内で完結させる。</li>
+    <li><strong>使い方</strong> — Bedrock API をアプリから呼ぶ。<strong>Bedrock Agents</strong> で外部ツール（DB 検索・API 呼び出し）付きエージェントも構築できる。</li>
+  </ul>
+  <h5 id="21-infra-aws-general"><a class="toclink" href="#21-infra-aws-general">Lambda / ECS / RDS / SQS（汎用）</a></h5>
+  <p>本リポジトリで想定している <strong>汎用 Web / API アプリ</strong> の AWS 構成パターン。</p>
+  <ul>
+    <li><strong>誰が</strong> — バックエンドエンジニア、インフラ担当。画面付きサービスを AWS で運用するチーム。</li>
+    <li><strong>目的</strong> — 役割ごとに適したマネージドサービスを組み合わせ、運用負荷を下げる。</li>
+    <li><strong>使い方</strong>
+      <ul>
+        <li><strong>Lambda</strong> — 画面から呼ぶ API（短時間で終わる処理）</li>
+        <li><strong>S3</strong> — 画像・PDF 等のファイル保存（ローカル開発は MinIO で代替）</li>
+        <li><strong>SQS</strong> — メール送信など時間のかかる処理を非同期化</li>
+        <li><strong>ECS</strong> — 常時起動が必要なワーカー（SQS からジョブを処理）</li>
+        <li><strong>RDS</strong> — ユーザー・注文などのリレーショナル DB</li>
+      </ul>
+    </li>
+  </ul>
+  <p class="wiki-lead">設計・CI/CD・認証情報の扱いは <a href="guide-repo-directory.html#11-1-directory">11章</a> と <a href="lambda-api-guide.html">Lambda API 設計ガイド</a> が正式な手順。</p>
+
+  <h5 id="21-gcp"><a class="toclink" href="#21-gcp">GCP</a></h5>
+  <h5 id="21-infra-vertex"><a class="toclink" href="#21-infra-vertex">Vertex AI</a></h5>
+  <p>Google Cloud 上の <strong>AI / ML 統合プラットフォーム</strong>。モデル API・学習・検索を 1 か所で扱う。</p>
+  <ul>
+    <li><strong>誰が</strong> — GCP を使う ML エンジニア、AI 機能を組み込むアプリ開発者。Google 連携（Workspace 等）があるチーム。</li>
+    <li><strong>目的</strong> — Gemini・Claude（Anthropic 提携）・Llama などのモデルを API で使い、必要なら自前データで学習・RAG 用ベクトル検索まで GCP 内で完結させる。</li>
+    <li><strong>使い方</strong> — Vertex AI コンソールまたは API からモデルを呼ぶ。カスタム学習は Vertex AI Training、RAG 検索は <strong>Vertex AI Vector Search</strong> を使う。</li>
+  </ul>
+  <h5 id="21-infra-tpu"><a class="toclink" href="#21-infra-tpu">AI Hypercomputer と TPU 8t / 8i</a></h5>
+  <p>Google が提供する <strong>AI 専用チップ（TPU）</strong> と、それを使いやすくする統合ソフトウェアスタック。</p>
+  <ul>
+    <li><strong>誰が</strong> — 大規模モデルを学習・推論する ML エンジニア。GPU より TPU 最適化を活かしたいチーム。</li>
+    <li><strong>目的</strong> — 学習コストと推論レイテンシを下げ、JAX / PyTorch / vLLM など主要フレームワークで動かす。</li>
+    <li><strong>使い方</strong> — Google Cloud Next ’26（2026-04）で第 8 世代 TPU が発表。<strong>TPU 8t</strong> は大規模学習向け、<strong>TPU 8i</strong> は推論・エージェント向けの 2 系統。<strong>AI Hypercomputer</strong> は JAX・PyTorch・vLLM を含む統合スタック。Cloud 提供は 2026 後半〜（公式ロードマップ要確認）。</li>
+  </ul>
+  <h5 id="21-infra-gcp-run"><a class="toclink" href="#21-infra-gcp-run">Cloud Run</a></h5>
+  <p>コンテナ（Docker イメージ）を <strong>サーバーレス</strong> で動かす GCP のサービス。</p>
+  <ul>
+    <li><strong>誰が</strong> — バックエンドエンジニア。サーバー管理なしで API を公開したい人。</li>
+    <li><strong>目的</strong> — FastAPI 等の推論 API や Web バックエンドを、トラフィックに応じて自動スケールさせながらホスティングする。</li>
+    <li><strong>使い方</strong> — コンテナをビルドして Cloud Run にデプロイ。リクエストが来たときだけ課金。<a href="memo-dev-method.html#21-infra-serverless-ai">サーバーレス AI 推論</a> の代表例の一つ。</li>
+  </ul>
+
+  <h5 id="21-azure"><a class="toclink" href="#21-azure">Azure</a></h5>
+  <h5 id="21-infra-azure-openai"><a class="toclink" href="#21-infra-azure-openai">Azure OpenAI Service</a></h5>
+  <p>Microsoft Azure 上で <strong>GPT 系モデル</strong> を企業向けに提供する API サービス。</p>
+  <ul>
+    <li><strong>誰が</strong> — Microsoft 365 / Entra ID（旧 Azure AD）を既に使っている企業の開発チーム。</li>
+    <li><strong>目的</strong> — 社内 SSO と統合し、契約・リージョン・コンテンツフィルタを企業ポリシーに合わせて GPT 機能を使う。</li>
+    <li><strong>使い方</strong> — Azure ポータルでリソースを作成し、Entra ID 認証付き API をアプリから呼ぶ。OpenAI 直契約ではなく Azure 経由の請求・監査が必要なときに選ぶ。</li>
+  </ul>
+  <h5 id="21-infra-azure-foundry"><a class="toclink" href="#21-infra-azure-foundry">Azure AI Foundry</a></h5>
+  <p>Azure 上の <strong>AI 開発・評価・デプロイ</strong> を 1 つのコンソールで行う統合プラットフォーム。</p>
+  <ul>
+    <li><strong>誰が</strong> — Azure 中心の ML / AI 担当、PoC から本番まで Azure で完結させたいチーム。</li>
+    <li><strong>目的</strong> — モデル比較・プロンプト調整・RAG（Azure AI Search 連携）・エージェント構築を GUI と API で進める。</li>
+    <li><strong>使い方</strong> — Foundry ポータルでプロジェクトを作成。Claude 等は Model Catalog 経由。Container Apps・Service Bus・Key Vault と組み合わせて本番構成を組む。</li>
+  </ul>
+
+  <h5 id="21-infra-other-hyperscalers"><a class="toclink" href="#21-infra-other-hyperscalers">その他ハイパースケーラ（参考）</a></h5>
+  <p>Big 3 以外で、特定地域・既存契約で採用されるクラウドプロバイダ。</p>
+  <ul>
+    <li><strong>誰が</strong> — Oracle / 中国本土 / レガシー IBM 環境など、Big 3 以外の契約が既にある企業。</li>
+    <li><strong>目的</strong> — 既存 DB・地域要件・コスト条件に合わせて AWS/GCP/Azure の代替を検討する。</li>
+    <li><strong>使い方</strong> — 本リポジトリの AWS 想定フローの<strong>代替候補</strong>として知っておく程度でよい。詳細は下表を参照。</li>
+  </ul>
+  <table>
+    <thead>
+      <tr><th>プロバイダ</th><th>強み</th><th>AI / 開発メモ</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Oracle Cloud（OCI）</td><td>Oracle DB 統合・コスト</td><td>OCI Generative AI・GPU クラスタ。既存 Oracle 顧客向け</td></tr>
+      <tr><td>Alibaba Cloud</td><td>アジア・中国リージョン</td><td>通義（Qwen）・Model Studio。国内/越境要件で検討</td></tr>
+      <tr><td>IBM Cloud</td><td>エンタープライズ・Red Hat OpenShift</td><td>watsonx AI。レガシー統合が主用途</td></tr>
+      <tr><td>Tencent Cloud</td><td>中国本土</td><td>混元モデル。中国向けサービスのみ</td></tr>
+    </tbody>
+  </table>
+
+  <h4 id="21-infra-paas-baas"><a class="toclink" href="#21-infra-paas-baas">PaaS / BaaS / FaaS</a></h4>
+  <p>アプリを<strong>素早く公開・運用</strong>するレイヤ。AWS 等の上に載せることも、Vercel のように単体 SaaS で完結することもある。</p>
+  <ul>
+    <li><strong>誰が</strong> — フロント／フルスタック開発者。インフラを最小限にして MVP や Next.js アプリを早く出したい人。</li>
+    <li><strong>目的</strong> — ホスティング・Auth・DB・CDN をまとめて借り、デプロイとスケールをサービス側に任せる。</li>
+    <li><strong>使い方</strong> — 下表で 5 社を比較し、用途に合う 1 社を選ぶ（検証 2026-05-31）。</li>
+  </ul>
+  <table>
+    <thead>
+      <tr><th>観点</th><th>Vercel</th><th>Cloudflare</th><th>Supabase</th><th>Firebase</th><th>Neon</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>分類</td><td>フルスタック PaaS</td><td>エッジ / CDN + FaaS</td><td>BaaS（Postgres）</td><td>BaaS（NoSQL / GCP）</td><td>DBaaS（Postgres）</td></tr>
+      <tr><td>強み</td><td>Next.js 一体・プレビュー URL</td><td>CDN 前段・低レイテンシ</td><td>Auth + SQL + pgvector 一体</td><td>モバイル SDK・Realtime</td><td>ブランチング DB・スケールトゼロ</td></tr>
+      <tr><td>サーバーレス</td><td>Fluid Compute Functions</td><td>Workers</td><td>Edge Functions（Deno）</td><td>Cloud Functions</td><td>—（接続先 DB）</td></tr>
+      <tr><td>AI 連携</td><td>AI SDK・AI Gateway</td><td>Workers AI・AI Gateway</td><td>pgvector・Edge API</td><td>Firebase AI / Vertex</td><td>pgvector（拡張）</td></tr>
+      <tr><td>向く用途</td><td>Next.js 新規 Web</td><td>BFF・グローバル API 前段</td><td>Auth + Postgres MVP</td><td>モバイル・Realtime MVP</td><td>DB のみ（Auth 別）</td></tr>
+    </tbody>
+  </table>
+
+  <h5 id="21-vercel"><a class="toclink" href="#21-vercel">Vercel — フルスタック PaaS</a></h5>
+  <p class="wiki-lead"><strong>初めて Vercel でサイトを公開する</strong> — <a href="vercel-beginner-guide.html">Vercel 初心者ガイド</a>（アカウント・CLI・Claude Code / Codex で index.html 作成）</p>
+  <h5 id="21-infra-vercel-platform"><a class="toclink" href="#21-infra-vercel-platform">Next.js ホスティングと Fluid Compute</a></h5>
+  <p>Next.js アプリを <strong>デプロイ・プレビュー・本番運用</strong> する PaaS。</p>
+  <ul>
+    <li><strong>誰が</strong> — Next.js / React 開発者。Git push で自動デプロイしたいチーム。</li>
+    <li><strong>目的</strong> — フロントと API（Server Actions / Route Handlers）を同一プラットフォームでホストし、PR ごとにプレビュー URL を発行する。</li>
+    <li><strong>使い方</strong> — GitHub 連携でデプロイ。<strong>Fluid Compute</strong>（Node.js 24 既定・300s タイムアウト）で API Routes / Server Actions を運用。ISR も最適化済み。<a href="memo-stack.html#123-nextjs-react">開発スタック（Next.js）</a> のホスティング先として記載。</li>
+  </ul>
+  <h5 id="21-infra-vercel-ai"><a class="toclink" href="#21-infra-vercel-ai">Vercel AI SDK / AI Gateway</a></h5>
+  <p>Next.js 等から <strong>AI 機能（チャット・エージェント）</strong> を実装するための SDK と API ゲートウェイ。</p>
+  <ul>
+    <li><strong>誰が</strong> — AI 機能付き Web アプリを Vercel 上で作る開発者。</li>
+    <li><strong>目的</strong> — ストリーミング UI・ツール呼び出し・エージェントを型安全に実装し、複数 LLM プロバイダを 1 つの API にまとめる。</li>
+    <li><strong>使い方</strong> — AI SDK で UI とサーバー処理を書く。<strong>Vercel AI Gateway</strong> 経由で OpenAI / Anthropic 等を切り替え。Postgres は Marketplace 連携（<a href="#21-infra-neon">Neon</a> 等）。<a href="guide-rules-compare.html#17-compare">ルール/プラン</a> の AI SDK 参照と併用。</li>
+  </ul>
+
+  <h5 id="21-cloudflare"><a class="toclink" href="#21-cloudflare">Cloudflare — エッジ / CDN</a></h5>
+  <h6 id="21-infra-cf-workers"><a class="toclink" href="#21-infra-cf-workers">Workers と Workers AI</a></h6>
+  <p>Cloudflare の <strong>エッジ（CDN 近傍）で動くサーバーレス</strong> 実行環境。</p>
+  <ul>
+    <li><strong>誰が</strong> — グローバル向け API や BFF を低レイテンシで配信したい開発者。</li>
+    <li><strong>目的</strong> — ユーザーに近い場所でリクエスト処理・LLM 推論を行い、応答速度を上げる。</li>
+    <li><strong>使い方</strong> — <strong>Workers</strong> に JavaScript/TypeScript をデプロイ。<strong>Workers AI</strong> で推論をエッジ実行。<strong>Cloudflare AI Gateway</strong> は LLM プロキシ（キャッシュ・レート制限・オブザーバビリティ）。Vercel AI Gateway とは別製品。R2・D1・KV と組み合わせた軽量スタックも可能。<a href="memo-dev-method.html#21-infra-serverless-ai">サーバーレス AI 推論</a> の代表例の一つ。</li>
+  </ul>
+
+  <h5 id="21-supabase"><a class="toclink" href="#21-supabase">Supabase — BaaS（Postgres）</a></h5>
+  <p>PostgreSQL を中心に、Auth・Storage・Realtime・Edge Functions を <strong>一体提供</strong> する BaaS。</p>
+  <ul>
+    <li><strong>誰が</strong> — フルスタック開発者。SQL + 認証 + ファイル保存を 1 サービスで揃えたい MVP チーム。</li>
+    <li><strong>目的</strong> — バックエンドを自前構築せず、Postgres ベースでアプリのデータ・ユーザー管理を早く始める。</li>
+    <li><strong>使い方</strong> — ダッシュボードで DB・Auth を設定し、クライアント SDK または Edge Functions からアクセス。RAG 小〜中規模は pgvector を利用。</li>
+  </ul>
+  <table>
+    <thead>
+      <tr><th>機能</th><th>用途</th><th>AI 開発での位置づけ</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Auth</td><td>メール/OAuth 認証</td><td>ユーザー単位 RAG・履歴の分離</td></tr>
+      <tr><td>Postgres + pgvector</td><td>リレーショナル + ベクトル検索</td><td>小〜中規模 RAG（IVFFlat で〜100 万件目安）</td></tr>
+      <tr><td>Edge Functions</td><td>Deno サーバーレス</td><td>Webhook・軽量 API</td></tr>
+      <tr><td>Storage</td><td>オブジェクト</td><td>PDF 等の取り込み元</td></tr>
+    </tbody>
+  </table>
+  <p class="wiki-lead">大規模ベクトル検索は <a href="#21-infra-vector-db">Pinecone / Qdrant</a> も検討。pgvector 選定基準は <a href="memo-ai-reference-rag.html">RAG・ベクトルDB</a>。2026 年更新例: AI テーブルフィルター・Stripe 統合・public スキーマ非公開化。</p>
+
+  <h5 id="21-firebase"><a class="toclink" href="#21-firebase">Firebase — BaaS（Google / GCP）</a></h5>
+  <p>Google が提供する <strong>モバイル・Web 向け BaaS</strong>。GCP プロジェクトに紐づく。</p>
+  <ul>
+    <li><strong>誰が</strong> — モバイルアプリ開発者、Realtime 同期が必要な MVP チーム。</li>
+    <li><strong>目的</strong> — Auth・NoSQL（Firestore）・Storage・Hosting・Cloud Functions を SDK 中心で素早く組み合わせる。</li>
+    <li><strong>使い方</strong> — Firebase コンソールでプロジェクト作成。Supabase（Postgres）と対になる<strong>NoSQL + クライアント SDK 中心</strong>の選択肢。Gemini 連携は Firebase AI Logic / Vertex AI 経由。</li>
+  </ul>
+  <table>
+    <thead>
+      <tr><th>機能</th><th>用途</th><th>Supabase との違い</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Firebase Auth</td><td>メール/OAuth/匿名</td><td>同等。モバイル SDK が厚い</td></tr>
+      <tr><td>Firestore</td><td>ドキュメント DB・Realtime</td><td>Supabase は Postgres（SQL・JOIN）</td></tr>
+      <tr><td>Cloud Functions for Firebase</td><td>サーバーレス API</td><td>Supabase Edge Functions（Deno）に相当</td></tr>
+      <tr><td>Firebase AI Logic / Vertex AI</td><td>Gemini 連携</td><td>2025〜 Vertex 統合。RAG は自前 or Vertex AI Search</td></tr>
+    </tbody>
+  </table>
+  <p class="wiki-lead">向く: モバイル MVP・リアルタイム同期・スキーマレス。向かない: 複雑な SQL・トランザクション・pgvector を Postgres で一体運用したい（→ <a href="#21-supabase">Supabase</a> / <a href="#21-infra-neon">Neon</a>）。</p>
+
+  <h5 id="21-infra-neon"><a class="toclink" href="#21-infra-neon">Neon — サーバーレス Postgres</a></h5>
+  <p>ブランチング・スケールトゼロが特徴の <strong>マネージド PostgreSQL</strong>。</p>
+  <ul>
+    <li><strong>誰が</strong> — Auth / Storage は別サービスで持ち、<strong>DB だけ</strong> 借りたい開発者。Vercel + Next.js チーム。</li>
+    <li><strong>目的</strong> — PR ごとに DB ブランチを切り、使わないときは課金を抑える。pgvector で小〜中規模 RAG も可能。</li>
+    <li><strong>使い方</strong> — Vercel Marketplace 経由で Next.js プロジェクトと一体運用。Supabase と同等の DB 選択肢だが Auth / Storage は自前または他 SaaS で補う。</li>
+  </ul>
+
+  <h5 id="21-infra-other-paas"><a class="toclink" href="#21-infra-other-paas">その他 PaaS / BaaS（参考）</a></h5>
+  <p>PoC・個人開発・特定用途でよく名前が出るサービス。</p>
+  <ul>
+    <li><strong>誰が</strong> — Vercel / Supabase 以外を試したい開発者、Docker 1 本でデプロイしたい人。</li>
+    <li><strong>目的</strong> — 用途（Jamstack / コンテナ / MySQL / MongoDB 等）に合わせて代替 PaaS を選ぶ。</li>
+    <li><strong>使い方</strong> — 下表から候補を選び、各社ドキュメントを正式な手順として参照する。</li>
+  </ul>
+  <table>
+    <thead>
+      <tr><th>サービス</th><th>分類</th><th>向く用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Netlify</td><td>フロント PaaS</td><td>静的/Jamstack・Next.js（Vercel 代替）</td></tr>
+      <tr><td>Railway / Render / Fly.io</td><td>コンテナ PaaS</td><td>FastAPI・Go 等を手早く公開。Docker 1 本デプロイ</td></tr>
+      <tr><td>DigitalOcean App Platform</td><td>汎用 PaaS</td><td>シンプルなフルスタック・料金予測しやすい</td></tr>
+      <tr><td>PlanetScale</td><td>サーバーレス MySQL</td><td>Neon の MySQL 版。Vitess ベース</td></tr>
+      <tr><td>MongoDB Atlas</td><td>マネージド MongoDB</td><td>ドキュメント DB・Atlas Vector Search（RAG）</td></tr>
+      <tr><td>Upstash</td><td>サーバーレス Redis / Kafka</td><td>Vercel 連携・レート制限・キュー</td></tr>
+      <tr><td>Databricks</td><td>データ + ML プラットフォーム</td><td>Spark・Mosaic AI。エンタープライズ分析/ML</td></tr>
+    </tbody>
+  </table>
+
+  <h4 id="21-infra-data"><a class="toclink" href="#21-infra-data">データ・検索基盤</a></h4>
+  <p>RDB・Vector DB・オブジェクトストレージは、PaaS に含まれることもあるが、<strong>RAG 規模や JOIN 要件</strong>で独立して選ぶことが多い。</p>
+  <ul>
+    <li><strong>誰が</strong> — バックエンドエンジニア、RAG を組む AI 担当。</li>
+    <li><strong>目的</strong> — 構造化データ（ユーザー・注文）と非構造化検索（ベクトル）を、規模とクエリ要件に合わせて配置する。</li>
+    <li><strong>使い方</strong> — Postgres + pgvector か専用 Vector DB（Pinecone 等）かを分岐する。典型判断は下の Vector DB 表。</li>
+  </ul>
+
+  <h5 id="21-infra-vector-db"><a class="toclink" href="#21-infra-vector-db">マネージド Vector DB</a></h5>
+  <p>RAG（社内文書検索など）の <strong>類似度検索基盤</strong>。</p>
+  <ul>
+    <li><strong>誰が</strong> — RAG / 検索機能を実装する開発者。</li>
+    <li><strong>目的</strong> — 埋め込みベクトルを保存し、ユーザーの質問に近い文書チャンクを高速に取り出す。</li>
+    <li><strong>使い方</strong> — 既存 Postgres に pgvector を載せるか、専用 SaaS に切り出すかを下表で判断。実装詳細は <a href="memo-ai-reference-rag.html">RAG・ベクトルDB</a>。</li>
+  </ul>
+  <table>
+    <thead>
+      <tr><th>サービス</th><th>分類</th><th>向く規模・用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>pgvector（RDS / Supabase / Neon）</td><td>Postgres 拡張</td><td>〜100 万件・他テーブルと JOIN したい</td></tr>
+      <tr><td>Pinecone</td><td>専用 Vector DB SaaS</td><td>大規模・低レイテンシ・運用を委譲</td></tr>
+      <tr><td>Qdrant Cloud</td><td>専用 Vector DB SaaS</td><td>フィルタリング・ハイブリッド検索重視</td></tr>
+      <tr><td>Vertex AI Vector Search</td><td>GCP マネージド</td><td>Vertex / GCP データと一体</td></tr>
+      <tr><td>Azure AI Search</td><td>Azure マネージド</td><td>Azure AI Foundry RAG と一体</td></tr>
+      <tr><td>MongoDB Atlas Vector Search</td><td>マネージド MongoDB</td><td>Firestore / Firebase 代替のベクトル検索</td></tr>
+    </tbody>
+  </table>
+
+  <h4 id="21-infra-delivery"><a class="toclink" href="#21-infra-delivery">デリバリー（IaC・CI/CD）</a></h4>
+  <p>インフラ定義とデプロイを <strong>コード化し、自動検証</strong> するレイヤ。</p>
+  <ul>
+    <li><strong>誰が</strong> — インフラ担当、DevOps、全員が PR 経由でデプロイする開発チーム。</li>
+    <li><strong>目的</strong> — 手動クリック構築を避け、変更履歴・レビュー・ロールバック可能なパイプラインを維持する。</li>
+    <li><strong>使い方</strong> — Terraform / CDK でインフラを定義し、GitHub Actions でテスト → デプロイ。<a href="guide-repo-directory.html#11-1-directory">11章</a> が AWS 想定の正式な手順。</li>
+  </ul>
+
+  <h5 id="21-infra-iac"><a class="toclink" href="#21-infra-iac">Infrastructure as Code（IaC）</a></h5>
+  <p>サーバー・DB・ネットワーク等を <strong>コード（HCL / TypeScript 等）で宣言</strong> し、再現可能に管理する手法。</p>
+  <ul>
+    <li><strong>誰が</strong> — インフラ担当、フルスタック開発者（CDK / Pulumi を使う場合）。</li>
+    <li><strong>目的</strong> — 環境差分（dev / stg / prod）をコードで揃え、手作業ミスを減らす。</li>
+    <li><strong>使い方</strong> — <a href="guide-repo-directory.html#11-1-directory">11章</a> 方針どおり Terraform / CDK でコード化。手動リソース作成は避ける。</li>
+  </ul>
+  <table>
+    <thead>
+      <tr><th>ツール</th><th>特徴</th><th>向くチーム</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Terraform</td><td>マルチクラウド・HCL・状態管理</td><td>AWS + GCP 混在、モジュール資産化</td></tr>
+      <tr><td>AWS CDK</td><td>TypeScript/Python で AWS リソース定義</td><td>AWS 中心・型安全を重視</td></tr>
+      <tr><td>Pulumi</td><td>一般言語（TS/Python/Go）で IaC</td><td>アプリコードと同言語で infra を書きたい</td></tr>
+    </tbody>
+  </table>
+  <pre><code># Terraform で AWS + GCP を統一管理する例
+terraform {
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+    google = { source = "hashicorp/google", version = "~> 5.0" }
+  }
+}
+
+# AWS: SageMaker Endpoint
+resource "aws_sagemaker_endpoint" "ml_inference" {
+  name                 = "prod-ml-endpoint"
+  endpoint_config_name = aws_sagemaker_endpoint_configuration.main.name
+}
+
+# GCP: Cloud Run for serverless inference
+resource "google_cloud_run_service" "inference_api" {
+  name     = "inference-api"
+  location = "us-central1"
+  template {
+    spec {
+      containers {
+        image = "gcr.io/${var.project_id}/inference:latest"
+      }
+    }
+  }
+}</code></pre>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-scenario">
+<h4 class="info-panel__title" id="scenario-scenario">クラウド・プロダクト運用</h4>
+<div class="info-panel__body"><p>推論 API を AWS SageMaker + GCP Cloud Run に分ける場合、<code>infra/ml/</code> に Terraform を置き、<code>terraform plan</code> の diff を PR に添付してから apply する（apply 自体は操作確認後）。</p></div>
+</aside>
+
+  <h5 id="21-infra-gh-actions"><a class="toclink" href="#21-infra-gh-actions">CI/CD（GitHub Actions）</a></h5>
+  <p>GitHub 上で <strong>テスト・ビルド・デプロイ</strong> を自動化する CI/CD サービス。</p>
+  <ul>
+    <li><strong>誰が</strong> — 全開発者。AI が生成した PR も含め、マージ前に自動検証したいチーム。</li>
+    <li><strong>目的</strong> — lint・型チェック・テスト・セキュリティスキャンを PR ごとに走らせ、壊れたコードのマージを防ぐ。</li>
+    <li><strong>使い方</strong> — <code>.github/workflows/</code> に YAML を置く。AWS デプロイ手順は <a href="guide-repo-cicd-1.html#11-5-cicd">11章 CI/CD</a>、PR 前チェックは <a href="guide-ship.html#14-pr-check">PR前チェック</a>。</li>
+  </ul>
+  <pre><code>name: AI-generated PR Validation
+on: pull_request
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint & Type Check
+        run: npm run lint && npm run typecheck
+      - name: Test
+        run: npm test -- --coverage
+      - name: Security Scan
+        uses: github/codeql-action/analyze@v3</code></pre>
+  <aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-ai-pr">
+<h4 class="info-panel__title" id="scenario-ai-pr">AI 生成 PR の検証ワークフロー</h4>
+<div class="info-panel__body"><p>AI 生成 PR <code>feature/auto-fix-lint</code> では、上記 workflow を <code>.github/workflows/ai-pr-validate.yml</code> に置き、lint・typecheck・coverage 80% 未満で fail させる。人間レビューは CI green 後のみ依頼する。</p></div>
+</aside>
+  <h6 id="21-infra-copilot-coding-agent"><a class="toclink" href="#21-infra-copilot-coding-agent">GitHub Copilot Coding Agent</a></h6>
+  <p>GitHub Issue から <strong>AI が実装 PR を自動生成</strong> するエージェント機能。</p>
+  <ul>
+    <li><strong>誰が</strong> — GitHub 中心の開発チーム。Issue 駆動で AI に実装を任せたい人。</li>
+    <li><strong>目的</strong> — 「Issue 記述 → AI 実装 → CI 検証 → 人間レビュー → マージ」の流れを維持する（旧 Copilot Workspace は 2025-05-30 終了）。</li>
+    <li><strong>使い方</strong> — Issue に <code>@copilot</code> をメンション。生成 PR は GitHub Actions で lint / test を通してから人間がレビューする。</li>
+  </ul>
+
+  <h3 id="21-infra-ops"><a class="toclink" href="#21-infra-ops">運用・監視・品質</a></h3>
+  <h4 id="21-infra-observability"><a class="toclink" href="#21-infra-observability">監視・オブザーバビリティ</a></h4>
+  <p>本番運用で <strong>ログ・メトリクス・トレース・エラー</strong> を 1 系統に束ねるレイヤ。</p>
+  <ul>
+    <li><strong>誰が</strong> — SRE、バックエンド／フロント開発者、オンコール担当。</li>
+    <li><strong>目的</strong> — 障害の早期検知、原因特定（どのリクエストが遅い／落ちたか）を可能にする。</li>
+    <li><strong>使い方</strong> — OpenTelemetry（OTel）で計装し、Datadog 等 SaaS または CloudWatch 等クラウドネイティブに送る。<a href="memo-stack.html#21-stack-layers">開発スタック（観測レイヤ）</a> と併用。</li>
+  </ul>
+  <table>
+    <thead>
+      <tr><th>サービス</th><th>分類</th><th>強み</th><th>向く用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><a href="#21-infra-datadog">Datadog</a></td><td>統合オブザーバビリティ SaaS</td><td>APM・Logs・Metrics・RUM・Synthetics</td><td>マルチクラウド・既契約があるチーム</td></tr>
+      <tr><td><a href="#21-infra-sentry">Sentry</a></td><td>エラー / パフォーマンス</td><td>FE/BE 例外・Release Health・Session Replay</td><td>フロント中心・エラー可視化を最優先</td></tr>
+      <tr><td>CloudWatch / Azure Monitor / Cloud Monitoring</td><td>クラウドネイティブ</td><td>HS リソースと一体・追加契約不要</td><td>単一 HS・コスト最小</td></tr>
+      <tr><td>Prometheus + Grafana</td><td>OSS スタック</td><td>カスタム・オンプレ混在</td><td>K8s 自前運用・ベンダー非依存</td></tr>
+      <tr><td>Vercel Analytics / Speed Insights</td><td>PaaS 付帯</td><td>Web Vitals・デプロイ単位</td><td>Vercel ホストのみで足りるとき</td></tr>
+    </tbody>
+  </table>
+  <p class="wiki-lead">典型構成: OTel SDK → Collector → Datadog（BE）+ Sentry（FE 例外）。<code>trace_id</code> をフロント/バック/API Gateway で貫通させる（<a href="memo-stack.html#21-stack-criteria">選定 7 軸・運用・観測</a>）。</p>
+
+  <h5 id="21-infra-datadog"><a class="toclink" href="#21-infra-datadog">Datadog</a></h5>
+  <p>APM・ログ・メトリクス・インフラ監視を <strong>統合</strong> する SaaS。</p>
+  <ul>
+    <li><strong>誰が</strong> — SRE、バックエンド担当。マルチクラウドまたは Datadog 契約があるチーム。</li>
+    <li><strong>目的</strong> — アプリとインフラの状態を 1 ダッシュボードで見、アラート・SLO・オンコールまで一気通貫で運用する。</li>
+    <li><strong>使い方</strong> — OTel exporter または Datadog Agent で計装。AWS では CloudWatch と併用・代替のどちらもあり（<a href="guide-repo-directory.html#11-1-directory">11章</a> 運用表）。LLM Observability も提供。</li>
+  </ul>
+
+  <h5 id="21-infra-sentry"><a class="toclink" href="#21-infra-sentry">Sentry</a></h5>
+  <p>フロント・バックエンドの <strong>例外とパフォーマンス</strong> を集約するエラー監視 SaaS。</p>
+  <ul>
+    <li><strong>誰が</strong> — フロント中心の開発者。Next.js / React チーム。</li>
+    <li><strong>目的</strong> — ユーザー画面で起きた JS エラーや API 失敗を Release 単位で追い、デグレを早く見つける。</li>
+    <li><strong>使い方</strong> — <code>@sentry/nextjs</code> 等で SDK を組み込む。BE の構造化ログは CloudWatch / Datadog 側に残す分業も多い。</li>
+  </ul>
+
+  <h4 id="21-infra-quality"><a class="toclink" href="#21-infra-quality">品質・レビュー・セキュリティ</a></h4>
+  <p>CI/CD の <strong>上流・下流</strong> で品質を担保する SaaS。AI 生成コードが増えるほど有効。</p>
+  <ul>
+    <li><strong>誰が</strong> — 全開発者、レビュアー、セキュリティ担当。</li>
+    <li><strong>目的</strong> — 自動レビュー + 静的解析 + 人間レビューの 3 層で、マージ前の品質を上げる。</li>
+    <li><strong>使い方</strong> — GitHub Actions（<a href="#21-infra-gh-actions">CI</a>）と組み合わせ、下表のツールを PR フローに載せる。</li>
+  </ul>
+  <table>
+    <thead>
+      <tr><th>サービス</th><th>分類</th><th>役割</th><th>関連</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><a href="#21-infra-coderabbit">CodeRabbit</a></td><td>AI PR レビュー</td><td>PR 差分の自動コメント・サマリー</td><td><a href="guide-ship.html#14-pr-check">PR前チェック</a></td></tr>
+      <tr><td>Cursor Bugbot</td><td>AI PR レビュー（IDE 連携）</td><td>PR 上のバグ・セキュリティ指摘</td><td><a href="guide-rules-compare.html#17-compare">ルール/プラン</a></td></tr>
+      <tr><td>GitHub CodeQL</td><td>静的セキュリティ解析</td><td>PR / 定期スキャン（SAST）</td><td><a href="#21-infra-gh-actions">CI workflow</a></td></tr>
+      <tr><td>GitHub Copilot Coding Agent</td><td>Issue → PR 自動化</td><td>実装 PR 生成 + CI 待ち</td><td><a href="#21-infra-copilot-coding-agent">§ Copilot Agent</a></td></tr>
+    </tbody>
+  </table>
+
+  <h5 id="21-infra-coderabbit"><a class="toclink" href="#21-infra-coderabbit">CodeRabbit</a></h5>
+  <p>GitHub / GitLab の PR に <strong>AI レビューコメント</strong> を自動投稿する SaaS。</p>
+  <ul>
+    <li><strong>誰が</strong> — レビュー負荷が高い開発チーム。人間レビューの前処理として AI を使いたい人。</li>
+    <li><strong>目的</strong> — 差分サマリー・セキュリティ・テスト観点・スタイル指摘を PR 上に残し、人間が本質的な判断に集中する。</li>
+    <li><strong>使い方</strong> — リポに CodeRabbit を連携。Cursor Bugbot 等と併用も可。設定で「要約のみ」等ノイズを抑える。</li>
+  </ul>
+  <p class="wiki-lead">推奨フロー: AI 実装 → CI green（lint / test / CodeQL）→ CodeRabbit / Bugbot → 人間レビュー → マージ（<a href="guide-ship.html#14-pr-check">PR前チェック</a>）。</p>
+</div>
+</div>

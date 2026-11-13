@@ -1,0 +1,1129 @@
+{
+  "version": 1,
+  "intents": [
+    {
+      "id": "setup",
+      "title": "はじめて / 環境づくり",
+      "description": "AI ツール設定と、リポに置くルールの土台。",
+      "icon": "setup"
+    },
+    {
+      "id": "task",
+      "title": "開発タスクを進める",
+      "description": "要件定義から PR まで、規模に合わせて章を絞る。",
+      "icon": "task"
+    },
+    {
+      "id": "general-work",
+      "title": "一般業務で AI を使う",
+      "description": "調査・要約・議事録・資料・ナレッジ整理の手順。",
+      "icon": "general"
+    },
+    {
+      "id": "rules",
+      "title": "ルール・Skills を整える",
+      "description": "rules/ · skills/ · tasks/ の配置・更新。",
+      "icon": "rules"
+    }
+  ],
+  "contextOptions": [
+    {
+      "id": "product",
+      "label": "プロダクト / 企画",
+      "group": "role"
+    },
+    {
+      "id": "design",
+      "label": "デザイン / UX",
+      "group": "role"
+    },
+    {
+      "id": "engineering",
+      "label": "開発 / 実装",
+      "group": "role"
+    },
+    {
+      "id": "qa",
+      "label": "QA / 品質",
+      "group": "role"
+    },
+    {
+      "id": "infra",
+      "label": "インフラ / SRE",
+      "group": "role"
+    },
+    {
+      "id": "data",
+      "label": "データ / 分析",
+      "group": "role"
+    },
+    {
+      "id": "ops",
+      "label": "運用 / サポート",
+      "group": "role"
+    },
+    {
+      "id": "mgmt",
+      "label": "管理 / リード",
+      "group": "role"
+    },
+    {
+      "id": "cursor",
+      "label": "Cursor",
+      "group": "tool"
+    },
+    {
+      "id": "claude",
+      "label": "Claude Code",
+      "group": "tool"
+    },
+    {
+      "id": "codex",
+      "label": "Codex",
+      "group": "tool"
+    },
+    {
+      "id": "new",
+      "label": "新規リポ",
+      "group": "repo"
+    },
+    {
+      "id": "existing",
+      "label": "既存リポ",
+      "group": "repo"
+    },
+    {
+      "id": "small",
+      "label": "1日以内",
+      "group": "taskSize"
+    },
+    {
+      "id": "medium",
+      "label": "中規模（数日）",
+      "group": "taskSize"
+    },
+    {
+      "id": "large",
+      "label": "大規模（1週間+）",
+      "group": "taskSize"
+    }
+  ],
+  "modules": {
+    "mod-setup-intro": {
+      "id": "mod-setup-intro",
+      "title": "クイックスタート",
+      "summary": "3段フローと初日5ステップを体で覚える。",
+      "tasks": [
+        "ツールを1本決める",
+        "3段フロー（たたき台 → ルール → プラン → 小実装）を読む",
+        "1日以内の小タスクで Plan → 実装 → 検証を1回"
+      ],
+      "files": [
+        "tasks/todo.md"
+      ],
+      "done": "3段フローをテストまたは動作確認まで回せた",
+      "guide": "guide-setup.html#0-beginner",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 10
+    },
+    "mod-setup-tools": {
+      "id": "mod-setup-tools",
+      "title": "AIツール選定",
+      "summary": "Cursor / Claude Code / Codex から1本選びインストール。",
+      "tasks": [
+        "比較表でメインツールを1本決める（迷ったら Cursor）",
+        "インストールとログイン / API キー設定",
+        "データ利用・オプトアウトを確認"
+      ],
+      "files": [
+        ".cursor/rules/（後で配置）",
+        "CLAUDE.md / AGENTS.md"
+      ],
+      "done": "選んだツールでリポを開き1回 Agent が動いた",
+      "guide": "guide-setup.html#2-ai-selection",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 20
+    },
+    "mod-setup-policy": {
+      "id": "mod-setup-policy",
+      "title": "方針確認",
+      "summary": "docs vs rules の書き場所とリスク対策。",
+      "tasks": [
+        "よくあるリスク表を読む",
+        "仕様は docs/、毎回守ることは rules に書く原則を確認"
+      ],
+      "files": [
+        "docs/",
+        ".cursor/rules/"
+      ],
+      "done": "docs と rules の使い分けを説明できる",
+      "guide": "guide-setup.html#1-policy",
+      "ruleSlugs": [],
+      "optional": true,
+      "order": 15
+    },
+    "mod-setup-rules-plan": {
+      "id": "mod-setup-rules-plan",
+      "title": "ルール / プラン",
+      "summary": "Rules・Skills・Plan の役割を理解する。",
+      "tasks": [
+        "Rules / Skills / Plan 比較表を読む",
+        "Skills 実践ガイドで Skill 化のタイミングを確認",
+        "自分のメインツール章を1通り読む",
+        "禁止事項・テストコマンド・git 方針をメモ"
+      ],
+      "files": [
+        ".cursor/rules/*.mdc",
+        "tasks/todo.md",
+        "tasks/lessons.md"
+      ],
+      "done": "毎回守る Rules と今回の Plan の違いを説明できる",
+      "guide": "guide-rules-compare.html#17-compare",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 30
+    },
+    "mod-setup-rules-starter": {
+      "id": "mod-setup-rules-starter",
+      "title": "ルールサンプル配置",
+      "summary": "Starter セットをリポにコピーしてカスタマイズ。",
+      "tasks": [
+        "Starter セットからツール向けを選ぶ",
+        "リポにコピー（パスは下記）",
+        "プロジェクト名・テストコマンド・禁止 git 操作を3行以上書き換える"
+      ],
+      "files": [
+        ".cursor/rules/",
+        "CLAUDE.md / AGENTS.md",
+        "tasks/todo.md"
+      ],
+      "done": "ルールが1ファイル以上あり AI に読ませられる",
+      "guide": "flow-rules-samples.html#rules-samples-starter",
+      "ruleSlugs": [
+        "sample-00-project-mdc",
+        "sample-git-safety-mdc",
+        "sample-tasks-todo-md",
+        "sample-tasks-lessons-md",
+        "sample-claude-md",
+        "sample-agents-md"
+      ],
+      "optional": false,
+      "order": 40
+    },
+    "mod-skills-first": {
+      "id": "mod-skills-first",
+      "title": "Skill を1つ作る",
+      "summary": "pr-review 等を参考に初めて SKILL.md を置く。",
+      "tasks": [
+        "週2回以上の多段手順を1つ選ぶ",
+        "Skills 実践ガイドの手順に従い SKILL.md を配置",
+        "description を書き Agent で発火確認"
+      ],
+      "files": [
+        ".agents/skills/<name>/SKILL.md",
+        "AGENTS.md"
+      ],
+      "done": "1 Skill がリポにあり Agent が読み込んだ",
+      "guide": "guide-rules-skills-1.html#17-skills-guide",
+      "ruleSlugs": [
+        "sample-skill-pr-review",
+        "sample-agents-md"
+      ],
+      "optional": true,
+      "order": 45
+    },
+    "mod-setup-orchestration": {
+      "id": "mod-setup-orchestration",
+      "title": "エージェント運用",
+      "summary": "会話の切り方・調査の任せ方・検証の基本。",
+      "tasks": [
+        "6つの基本ルールを読む",
+        "小タスク1件を Plan → 実装 → 検証まで実行",
+        "指摘パターンを tasks/lessons.md に1行追記"
+      ],
+      "files": [
+        "tasks/todo.md",
+        "tasks/lessons.md"
+      ],
+      "done": "小タスク1件を検証まで完了",
+      "guide": "guide-ops-orchestration.html#18-orchestration",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 50
+    },
+    "mod-repo-structure": {
+      "id": "mod-repo-structure",
+      "title": "リポジトリ構成",
+      "summary": "フォルダ構成・gitignore・tasks/ の置き場。",
+      "tasks": [
+        "推奨ディレクトリ tree を確認",
+        "gitignore に secrets・生成物を追加",
+        "tasks/todo.md · tasks/lessons.md を用意"
+      ],
+      "files": [
+        "tasks/todo.md",
+        "tasks/lessons.md",
+        "docs/",
+        ".cursor/rules/"
+      ],
+      "done": "tasks/ と docs/ の置き場が決まった",
+      "guide": "guide-repo-directory.html#11-1-directory",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 25
+    },
+    "mod-quick-3step": {
+      "id": "mod-quick-3step",
+      "title": "3段フロー（小タスク）",
+      "summary": "1日以内のバグ修正・小変更向け最小手順。",
+      "tasks": [
+        "Plan を tasks/todo.md に3行で書く",
+        "AI にルール + Plan を渡して実装",
+        "テスト or curl で検証して PR"
+      ],
+      "files": [
+        "tasks/todo.md"
+      ],
+      "done": "検証済みの PR またはマージ",
+      "guide": "guide-setup.html#0-quick",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 10
+    },
+    "mod-orchestration-mini": {
+      "id": "mod-orchestration-mini",
+      "title": "運用ミニマム",
+      "summary": "Plan 先・検証必須の2ルールだけ守る。",
+      "tasks": [
+        "Plan なしで広く実装させない",
+        "完了報告前にテスト or ログ確認"
+      ],
+      "files": [
+        "tasks/lessons.md"
+      ],
+      "done": "上記2点を守って1タスク完了",
+      "guide": "guide-ops-orchestration.html#18-principles",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 20
+    },
+    "mod-workflow-overview": {
+      "id": "mod-workflow-overview",
+      "title": "全体フロー把握",
+      "summary": "Phase 0〜7 の地図とタスク規模別の選び方。",
+      "tasks": [
+        "Phase 早見表を読む",
+        "自分のタスクが3段のみ / Phase 2〜 / 要件定義からのどれか決める"
+      ],
+      "files": [],
+      "done": "使う Phase の範囲が決まった",
+      "guide": "guide-workflow.html#3-phase-map",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 5
+    },
+    "mod-req-align": {
+      "id": "mod-req-align",
+      "title": "要件すり合わせ",
+      "summary": "PdM・関係者と PRD を合意してから設計へ。",
+      "tasks": [
+        "PRD テンプレに Must / Won't / 制約を書く",
+        "関係者と Approved まで合意"
+      ],
+      "files": [
+        "docs/<feature>/"
+      ],
+      "done": "PRD が Approved",
+      "guide": "guide-workflow.html#0-5-requirements",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 30
+    },
+    "mod-phase1-rules": {
+      "id": "mod-phase1-rules",
+      "title": "Phase 1 規約整備",
+      "summary": "新規リポ向け rules 初版づくり。",
+      "tasks": [
+        "3ツール向け初版から自分のツール用をコピー",
+        "禁止事項・テストコマンド・git 方針を編集",
+        "git commit（ルールのみの PR でも可）"
+      ],
+      "files": [
+        ".cursor/rules/",
+        "CLAUDE.md / AGENTS.md"
+      ],
+      "done": "ルール初版がリポにコミットされた",
+      "guide": "guide-rules-phase1.html#phase-1",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 35
+    },
+    "mod-plan": {
+      "id": "mod-plan",
+      "title": "Phase 2 Plan",
+      "summary": "タスク分解・ADR・下書き PR。",
+      "tasks": [
+        "tasks/todo.md にタスク分解・完了条件を書く",
+        "必要なら ADR 1 本（docs/adr/）",
+        "Plan を合意（または自己レビュー）"
+      ],
+      "files": [
+        "tasks/todo.md",
+        "docs/adr/"
+      ],
+      "done": "tasks/todo.md に今回タスクの Plan がある",
+      "guide": "guide-design.html#phase-2-plan",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 40
+    },
+    "mod-design": {
+      "id": "mod-design",
+      "title": "Phase 3 要件設計",
+      "summary": "AI と docs を作る設計手順。",
+      "tasks": [
+        "docs に DB / API / 画面の骨子",
+        "AI と設計レビュー1回"
+      ],
+      "files": [
+        "docs/<feature>/"
+      ],
+      "done": "設計 docs の骨子が docs/ にある",
+      "guide": "guide-design.html#phase-3-design",
+      "ruleSlugs": [],
+      "optional": true,
+      "order": 50
+    },
+    "mod-implement-core": {
+      "id": "mod-implement-core",
+      "title": "Phase 4 コア実装",
+      "summary": "コアロジックの実装と検証。",
+      "tasks": [
+        "Plan と ADR を AI に渡して実装開始",
+        "プロジェクトのテストコマンドで検証"
+      ],
+      "files": [
+        "tasks/todo.md",
+        "実装対象ソース"
+      ],
+      "done": "コア層のテストまたは動作確認が通った",
+      "guide": "guide-implement.html#phase-4-core",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 60
+    },
+    "mod-implement-app": {
+      "id": "mod-implement-app",
+      "title": "Phase 5 アプリ実装",
+      "summary": "ユースケース層・API 境界の実装。",
+      "tasks": [
+        "Phase 4 のインターフェースに沿って実装",
+        "結合テスト or 手動確認"
+      ],
+      "files": [
+        "API / コントローラ / フロント境界"
+      ],
+      "done": "API / UI 境界の検証が通った",
+      "guide": "guide-implement.html#phase-5-app",
+      "ruleSlugs": [],
+      "optional": true,
+      "order": 70
+    },
+    "mod-crosscut": {
+      "id": "mod-crosscut",
+      "title": "Phase 6 共通作業",
+      "summary": "テスト・ログ・デプロイの共通作業。",
+      "tasks": [
+        "テスト・ログ・デプロイ手順を更新",
+        "rules に検証コマンドが最新か確認"
+      ],
+      "files": [
+        "CI 設定",
+        "デプロイ doc"
+      ],
+      "done": "CI または手動検証手順が docs/rules に書かれた",
+      "guide": "guide-implement.html#phase-6-crosscut",
+      "ruleSlugs": [],
+      "optional": true,
+      "order": 80
+    },
+    "mod-ship-pr": {
+      "id": "mod-ship-pr",
+      "title": "Phase 7 PR",
+      "summary": "PR 作成とレビューループ。",
+      "tasks": [
+        "PR 作成",
+        "レビューコメント対応",
+        "lessons に学びを1行"
+      ],
+      "files": [
+        "PR ブランチ"
+      ],
+      "done": "PR がレビュー可能な状態",
+      "guide": "guide-ship.html#phase-7-pr",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 90
+    },
+    "mod-pr-check": {
+      "id": "mod-pr-check",
+      "title": "PR前チェック",
+      "summary": "提出前9カテゴリチェックリスト。",
+      "tasks": [
+        "チェックリストを上から確認",
+        "未達があれば修正してから提出"
+      ],
+      "files": [],
+      "done": "9カテゴリすべて確認済み",
+      "guide": "guide-ship.html#14-pr-check",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 95
+    },
+    "mod-rules-deep": {
+      "id": "mod-rules-deep",
+      "title": "ルール設計（詳細）",
+      "summary": "Rules / Skills / Plan とプロンプト設計の深掘り。",
+      "tasks": [
+        "自分のツール章を全文読む",
+        "globs / alwaysApply の使い分けを決める",
+        "陳腐化しやすい箇所を docs へ移す"
+      ],
+      "files": [
+        ".cursor/rules/",
+        "tasks/todo.md"
+      ],
+      "done": "ルール構成をチームに説明できる",
+      "guide": "guide-rules-cursor.html#17-cursor",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 10
+    },
+    "mod-glossary": {
+      "id": "mod-glossary",
+      "title": "用語集（任意）",
+      "summary": "Plan / ADR / Phase など初見10語。",
+      "tasks": [
+        "初見向け10語を読む",
+        "分からない語だけ各節へ"
+      ],
+      "files": [],
+      "done": "Plan / Rules / Phase を説明できる",
+      "guide": "guide-glossary-beginner.html#beginner-top10",
+      "ruleSlugs": [],
+      "optional": true,
+      "order": 200
+    },
+    "mod-general-overview": {
+      "id": "mod-general-overview",
+      "title": "一般業務の入口",
+      "summary": "作業種別とツールを1つずつ決める。",
+      "tasks": [
+        "今回の作業を1つ決める（調査 / 要約 / 議事録 / 資料 / ナレッジ）",
+        "<a href=\"memo-ai-tools.html#21-general-work-tools\">一般業務ツール早見</a> で候補を1本選ぶ",
+        "機密・個人情報を入れない前提を確認する"
+      ],
+      "files": [],
+      "done": "作業種別とツールが決まった",
+      "guide": "memo-ai-tools.html#21-general-work-tools",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 5
+    },
+    "mod-general-research": {
+      "id": "mod-general-research",
+      "title": "調査・情報収集",
+      "summary": "Web 検索と社内資料の突合。出典を残す。",
+      "tasks": [
+        "調査目的と完了条件を1行で書く",
+        "Perplexity / Claude Web Search 等で一次情報を探す",
+        "社内文書・議事録と突合し、出典 URL をメモに残す"
+      ],
+      "files": [
+        "調査メモ.md"
+      ],
+      "done": "主張ごとに出典または根拠メモがある",
+      "guide": "memo-ai-tools.html#21-general-work-tools",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 10
+    },
+    "mod-general-summarize": {
+      "id": "mod-general-summarize",
+      "title": "要約・読み込み",
+      "summary": "長文資料を要点化。推測で数値を補わない。",
+      "tasks": [
+        "原文または許可された資料だけを入力する",
+        "要点・未確認点・次アクションの3ブロックで要約する",
+        "数値・固有名詞は原文と照合する"
+      ],
+      "files": [
+        "要約メモ.md"
+      ],
+      "done": "未確認点が明示され、人間が最終確認できる",
+      "guide": "memo-ai-tools.html#21-general-work-tools",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 20
+    },
+    "mod-general-meeting": {
+      "id": "mod-general-meeting",
+      "title": "議事録・すり合わせ",
+      "summary": "発言録ではなく決定事項と宿題に落とす。",
+      "tasks": [
+        "議題・参加者・決定事項・宿題・未決をテンプレに沿って整理",
+        "個人情報・未公開案件名は匿名化または社内ツールのみで処理",
+        "関係者が承認できる形で共有する"
+      ],
+      "files": [
+        "議事録.md"
+      ],
+      "done": "決定事項と宿題が担当者付きで残っている",
+      "guide": "guide-workflow.html#0-5-ai",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 30
+    },
+    "mod-general-docs": {
+      "id": "mod-general-docs",
+      "title": "資料・企画ドラフト",
+      "summary": "PRD / 提案書 / 説明資料の下書き。人間が承認する。",
+      "tasks": [
+        "読者・目的・Must / Won't を先に書く",
+        "AI は下書きのみ。断定表現は人間が確認する",
+        "承認前にファクトチェックと用語統一を行う"
+      ],
+      "files": [
+        "docs/",
+        "企画ドラフト.md"
+      ],
+      "done": "下書きがレビュー可能な状態",
+      "guide": "guide-workflow.html#0-5-requirements",
+      "ruleSlugs": [],
+      "optional": true,
+      "order": 40
+    },
+    "mod-general-knowledge": {
+      "id": "mod-general-knowledge",
+      "title": "ナレッジ整理",
+      "summary": "テンプレ・frontmatter・リンク。claude-obsidian はサンドボックス Vault。",
+      "tasks": [
+        "<a href=\"memo-ai-tools.html#21-obsidian-knowledge\">運用の型</a>（テンプレ・frontmatter・リンク）を確認",
+        "1テーマ1ノート（problem → solution）。機密は除外",
+        "自動 Wiki 化は <a href=\"memo-ai-tools.html#21-claude-obsidian\">claude-obsidian</a> を別 Vault で試す"
+      ],
+      "files": [
+        "Obsidian Vault/"
+      ],
+      "done": "検索できるノートが1件以上、または ingest で Wiki 1ページ生成",
+      "guide": "memo-ai-tools.html#21-obsidian-knowledge",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 50
+    },
+    "mod-general-automation": {
+      "id": "mod-general-automation",
+      "title": "定型作業の半自動化",
+      "summary": "ROLE / TOOLS / TRIGGER / OUTPUT で週2回以上の手順を1本。",
+      "tasks": [
+        "<a href=\"memo-ai-tools.html#21-chat-vs-workflow\">4要素</a> を1行ずつ書く",
+        "手動で1回実行し OUTPUT を確認する",
+        "送信・公開は人間確認を残す"
+      ],
+      "files": [
+        "SKILL.md",
+        "MCP 設定"
+      ],
+      "done": "手動実行で期待どおりの成果物が出た",
+      "guide": "memo-ai-tools.html#21-chat-vs-workflow",
+      "ruleSlugs": [],
+      "optional": true,
+      "order": 60
+    },
+    "mod-dev-scheduled-workflow": {
+      "id": "mod-dev-scheduled-workflow",
+      "title": "定期ワークフロー",
+      "summary": "CI digest 等を4要素で1本。マージ・push は人間。",
+      "tasks": [
+        "<a href=\"guide-ops-orchestration.html#18-dev-workflows\">4要素</a> を Rules · MCP · トリガー · 成果物に落とす",
+        "手動で1回実行し digest を確認する",
+        "週2回以上の手順だけスケジュールを有効化"
+      ],
+      "files": [
+        ".cursor/rules/",
+        "SKILL.md"
+      ],
+      "done": "手動実行で期待どおりの digest が出た",
+      "guide": "guide-ops-orchestration.html#18-dev-workflows",
+      "ruleSlugs": [],
+      "optional": true,
+      "order": 55
+    },
+    "mod-general-safety": {
+      "id": "mod-general-safety",
+      "title": "安全運用チェック",
+      "summary": "機密・個人情報・出典・人間レビューの最低ライン。",
+      "tasks": [
+        "<a href=\"guide-setup.html#1-general-ai-safety\">一般業務の安全原則</a> を読む",
+        "入力に機密・個人情報・未公開数値が無いか確認",
+        "外部共有前に人間が最終レビューする"
+      ],
+      "files": [],
+      "done": "安全チェック3項目をすべて確認した",
+      "guide": "guide-setup.html#1-general-ai-safety",
+      "ruleSlugs": [],
+      "optional": false,
+      "order": 70
+    }
+  },
+  "moduleOrder": [
+    "mod-workflow-overview",
+    "mod-general-overview",
+    "mod-setup-intro",
+    "mod-quick-3step",
+    "mod-rules-deep",
+    "mod-general-research",
+    "mod-setup-policy",
+    "mod-setup-tools",
+    "mod-orchestration-mini",
+    "mod-general-summarize",
+    "mod-repo-structure",
+    "mod-setup-rules-plan",
+    "mod-req-align",
+    "mod-general-meeting",
+    "mod-phase1-rules",
+    "mod-setup-rules-starter",
+    "mod-plan",
+    "mod-general-docs",
+    "mod-skills-first",
+    "mod-setup-orchestration",
+    "mod-design",
+    "mod-general-knowledge",
+    "mod-dev-scheduled-workflow",
+    "mod-implement-core",
+    "mod-general-automation",
+    "mod-implement-app",
+    "mod-general-safety",
+    "mod-crosscut",
+    "mod-ship-pr",
+    "mod-pr-check",
+    "mod-glossary"
+  ],
+  "tools": {
+    "cursor": "Cursor",
+    "claude": "Claude Code",
+    "codex": "Codex"
+  },
+  "ruleExports": {
+    "sample-00-project-mdc": {
+      "slug": "sample-00-project-mdc",
+      "title": "00-project.mdc",
+      "path": ".cursor/rules/00-project.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": true,
+      "starterOrder": 1,
+      "purpose": "毎セッションの土台。docs 正本・推測での API/DB 断定禁止。",
+      "body": "# 00-project.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-00-project-mdc を参照）\n"
+    },
+    "sample-10-domain-rules-mdc": {
+      "slug": "sample-10-domain-rules-mdc",
+      "title": "10-domain-rules.mdc",
+      "path": ".cursor/rules/10-domain-rules.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "金額・状態遷移・用語など業務の不変条件だけを書く。一般論や長い手順は他ファイルへ。",
+      "body": "# 10-domain-rules.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-10-domain-rules-mdc を参照）\n"
+    },
+    "sample-20-coding-style-mdc": {
+      "slug": "sample-20-coding-style-mdc",
+      "title": "20-coding-style.mdc",
+      "path": ".cursor/rules/20-coding-style.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "言語・フレームワーク固有のコーディング規約。globs で対象ファイルを限定する。",
+      "body": "# 20-coding-style.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-20-coding-style-mdc を参照）\n"
+    },
+    "sample-30-testing-mdc": {
+      "slug": "sample-30-testing-mdc",
+      "title": "30-testing.mdc",
+      "path": ".cursor/rules/30-testing.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "テストコマンド・カバレッジ方針・Docker 経由の実行方法を固定する。",
+      "body": "# 30-testing.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-30-testing-mdc を参照）\n"
+    },
+    "sample-40-logging-mdc": {
+      "slug": "sample-40-logging-mdc",
+      "title": "40-logging.mdc",
+      "path": ".cursor/rules/40-logging.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "ログレベル・構造化ログ・request_id の付け方を統一する。",
+      "body": "# 40-logging.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-40-logging-mdc を参照）\n"
+    },
+    "sample-50-documentation-mdc": {
+      "slug": "sample-50-documentation-mdc",
+      "title": "50-documentation.mdc",
+      "path": ".cursor/rules/50-documentation.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "docs/ や ADR の置き場・書式。仕様の正本を docs に置く方針を明示する。",
+      "body": "# 50-documentation.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-50-documentation-mdc を参照）\n"
+    },
+    "sample-60-ai-workflow-mdc": {
+      "slug": "sample-60-ai-workflow-mdc",
+      "title": "60-ai-workflow.mdc",
+      "path": ".cursor/rules/60-ai-workflow.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "AI 運用の入口。詳細手順は guide-ops.html と Skills に逃がす。",
+      "body": "# 60-ai-workflow.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-60-ai-workflow-mdc を参照）\n"
+    },
+    "sample-61-tdd-loop-mdc": {
+      "slug": "sample-61-tdd-loop-mdc",
+      "title": "61-tdd-loop.mdc",
+      "path": ".cursor/rules/61-tdd-loop.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Red → Green → Refactor の TDD ループと完了条件をエージェントに守らせる。",
+      "body": "# 61-tdd-loop.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-61-tdd-loop-mdc を参照）\n"
+    },
+    "sample-70-local-env-mdc": {
+      "slug": "sample-70-local-env-mdc",
+      "title": "70-local-env.mdc",
+      "path": ".cursor/rules/70-local-env.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Docker・ローカル DB・環境変数など開発環境の起動・検証手順。",
+      "body": "# 70-local-env.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-70-local-env-mdc を参照）\n"
+    },
+    "sample-git-safety-mdc": {
+      "slug": "sample-git-safety-mdc",
+      "title": "git-safety.mdc",
+      "path": ".cursor/rules/git-safety.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": true,
+      "starterOrder": 2,
+      "purpose": "git 操作は明示許可後のみ。",
+      "body": "# git-safety.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-git-safety-mdc を参照）\n"
+    },
+    "sample-api-errors-mdc": {
+      "slug": "sample-api-errors-mdc",
+      "title": "api-errors.mdc",
+      "path": ".cursor/rules/api-errors.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "API のエラーレスポンス形式と HTTP ステータスの対応を揃える。",
+      "body": "---\ndescription: API エラーレスポンスの形式と HTTP ステータスの対応\nglobs: src/**/*.{ts,py,go}\nalwaysApply: false\n---\n\n# API エラー\n\n## レスポンス形\n- クライアント向け: `{ \"error\": { \"code\": \"...\", \"message\": \"...\" } }`\n- ログ用 request_id はレスポンスヘッダ `X-Request-Id` に載せる\n\n## ステータス\n- 400: バリデーション\n- 401/403: 認証・認可\n- 404: リソース不存在\n- 409: 競合（在庫不足など）\n- 500: 未分類（スタックはログのみ）"
+    },
+    "sample-ui-list-mdc": {
+      "slug": "sample-ui-list-mdc",
+      "title": "ui-list.mdc",
+      "path": ".cursor/rules/ui-list.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "管理画面の一覧・テーブル UI を既存パターンに合わせて追加するときの指針。",
+      "body": "---\ndescription: 管理画面の一覧・テーブル UI を追加するとき\nglobs: apps/web/**/*.{tsx,ts}\nalwaysApply: false\n---\n\n# 一覧 UI\n\n- 既存の DataTable / List コンポーネントを先に @ してパターンを合わせる\n- 列定義・ソート・ページネーションは Storybook または既存画面と同型\n- マージ前: Storybook 表示 + `npm test`（プロジェクト標準）"
+    },
+    "sample-design-document-format-mdc": {
+      "slug": "sample-design-document-format-mdc",
+      "title": "design-document-format.mdc",
+      "path": "~/.cursor/rules/design-document-format.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "設計書 Markdown の見出し・必須セクションを全プロジェクトで共通化する。",
+      "body": "# design-document-format.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-design-document-format-mdc を参照）\n"
+    },
+    "sample-agents-md": {
+      "slug": "sample-agents-md",
+      "title": "AGENTS.md",
+      "path": "AGENTS.md",
+      "tools": [
+        "cursor",
+        "codex"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Codex（と Cursor 併用時）が最初に読む短い索引。ビルド・テスト・禁止事項への入口。",
+      "body": "# AGENTS.md\n\n（サンプル本文は flow-rules-samples.html#sample-agents-md を参照）\n"
+    },
+    "sample-agents-md-codex": {
+      "slug": "sample-agents-md-codex",
+      "title": "AGENTS.md（Codex 向け補足）",
+      "path": "AGENTS.md",
+      "tools": [
+        "codex"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Codex 専用の補足・検証コマンドを AGENTS.md に追記するときの例。",
+      "body": "# AGENTS.md（Codex 向け補足）\n\n（サンプル本文は flow-rules-samples.html#sample-agents-md-codex を参照）\n"
+    },
+    "sample-claude-md": {
+      "slug": "sample-claude-md",
+      "title": "CLAUDE.md",
+      "path": "CLAUDE.md",
+      "tools": [
+        "claude"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Claude Code がプロジェクト開始時に読む短いルール入口（目安 200 行以下）。",
+      "body": "# CLAUDE.md\n\n（サンプル本文は flow-rules-samples.html#sample-claude-md を参照）\n"
+    },
+    "sample-claude-local-md": {
+      "slug": "sample-claude-local-md",
+      "title": "CLAUDE.local.md",
+      "path": "CLAUDE.local.md",
+      "tools": [
+        "claude"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "個人だけのメモ（ショートカット・好み）。チームには共有しない。",
+      "body": "# CLAUDE.local.md（コミットしない）\n\n- 個人だけのプロジェクト固有メモ（ショートカット・好みのコマンド）\n- `.gitignore` に `CLAUDE.local.md` を追加\n- チーム共有は `CLAUDE.md` または `docs/` / `tasks/`"
+    },
+    "sample-claude-user-md": {
+      "slug": "sample-claude-user-md",
+      "title": "User CLAUDE.md",
+      "path": "~/.claude/CLAUDE.md",
+      "tools": [
+        "claude"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "全リポ共通の文体・言語・推測実装禁止など。業務ルールはリポ側へ。",
+      "body": "# ~/.claude/CLAUDE.md（User スコープ）\n\n- 全リポ共通の文体・言語・「推測で広く実装しない」等\n- プロジェクト固有の業務ルールはリポの `CLAUDE.md` / `.cursor/rules/` へ（重複禁止）\n- 3〜6 ヶ月ごとに棚卸し"
+    },
+    "sample-codex-agents-global": {
+      "slug": "sample-codex-agents-global",
+      "title": "Codex 個人 AGENTS.md",
+      "path": "~/.codex/AGENTS.md",
+      "tools": [
+        "codex"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Codex の個人グローバル設定。文体・確認の好みのみ（リポ AGENTS と重複禁止）。",
+      "body": "# ~/.codex/AGENTS.md\n\n- 個人グローバル: 文体・確認の好みのみ\n- リポの `AGENTS.md` と重複させない\n- 手順の詳細は `$HOME/.agents/skills/` へ"
+    },
+    "sample-claude-skills": {
+      "slug": "sample-claude-skills",
+      "title": "Claude Skill（SKILL.md）",
+      "path": ".claude/skills/<name>/SKILL.md",
+      "tools": [
+        "claude"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Claude Code 向けの多段手順。description でトリガーさせる。",
+      "body": "# Claude Skill（SKILL.md）\n\n（サンプル本文は flow-rules-samples.html#sample-claude-skills を参照）\n"
+    },
+    "sample-claude-hooks": {
+      "slug": "sample-claude-hooks",
+      "title": "Claude Hooks",
+      "path": ".claude/settings.json",
+      "tools": [
+        "claude"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Claude Code の Hooks（停止時テスト等）。任意だが品質安定に有効。",
+      "body": "# Claude Hooks\n\n（サンプル本文は flow-rules-samples.html#sample-claude-hooks を参照）\n"
+    },
+    "sample-codex-skills": {
+      "slug": "sample-codex-skills",
+      "title": "Codex Skill",
+      "path": ".agents/skills/<name>/SKILL.md",
+      "tools": [
+        "codex",
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Codex / Cursor 併用時の共有 Skills。長い手順はここに置く。",
+      "body": "# Codex Skill\n\n（サンプル本文は flow-rules-samples.html#sample-codex-skills を参照）\n"
+    },
+    "sample-codex-config-toml": {
+      "slug": "sample-codex-config-toml",
+      "title": "Codex config",
+      "path": ".codex/config.toml",
+      "tools": [
+        "codex"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Codex CLI の承認ポリシー等。リポまたはユーザーホームに置く。",
+      "body": "# Codex config\n\n（サンプル本文は flow-rules-samples.html#sample-codex-config-toml を参照）\n"
+    },
+    "sample-skill-pr-review": {
+      "slug": "sample-skill-pr-review",
+      "title": "Skill: pr-review",
+      "path": ".agents/skills/pr-review/SKILL.md",
+      "tools": [
+        "cursor",
+        "codex"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "PR レビュー手順を Skill 化した例。複数ツールで共有しやすい。",
+      "body": "# Skill: pr-review\n\n（サンプル本文は flow-rules-samples.html#sample-skill-pr-review を参照）\n"
+    },
+    "sample-command-review": {
+      "slug": "sample-command-review",
+      "title": "Command: review",
+      "path": ".cursor/commands/review.md",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Cursor の /review 用プロンプト。レビュー観点を固定する。",
+      "body": "# Command: review\n\n（サンプル本文は flow-rules-samples.html#sample-command-review を参照）\n"
+    },
+    "sample-command-plan": {
+      "slug": "sample-command-plan",
+      "title": "Command: plan",
+      "path": ".cursor/commands/plan.md",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Cursor の /plan 用。調査のみ・Plan 保存の指示をテンプレ化。",
+      "body": "# Command: plan\n\n（サンプル本文は flow-rules-samples.html#sample-command-plan を参照）\n"
+    },
+    "sample-command-investigate": {
+      "slug": "sample-command-investigate",
+      "title": "Command: investigate",
+      "path": ".cursor/commands/investigate.md",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "障害調査用コマンド。ログ・再現手順の観点を揃える。",
+      "body": "# Command: investigate\n\n（サンプル本文は flow-rules-samples.html#sample-command-investigate を参照）\n"
+    },
+    "sample-tasks-todo-md": {
+      "slug": "sample-tasks-todo-md",
+      "title": "tasks/todo.md",
+      "path": "tasks/todo.md",
+      "tools": [
+        "cursor",
+        "claude",
+        "codex"
+      ],
+      "starter": true,
+      "starterOrder": 3,
+      "purpose": "Plan 正本。Done when を書く。",
+      "body": "# tasks/todo.md\n\n（サンプル本文は flow-rules-samples.html#sample-tasks-todo-md を参照）\n"
+    },
+    "sample-tasks-lessons-md": {
+      "slug": "sample-tasks-lessons-md",
+      "title": "tasks/lessons.md",
+      "path": "tasks/lessons.md",
+      "tools": [
+        "cursor",
+        "claude",
+        "codex"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "指摘・修正パターンの蓄積。再発時はルールや ADR に昇格する。",
+      "body": "# tasks/lessons.md\n\n（サンプル本文は flow-rules-samples.html#sample-tasks-lessons-md を参照）\n"
+    },
+    "sample-cursor-plan-md": {
+      "slug": "sample-cursor-plan-md",
+      "title": "Cursor Plan 下書き",
+      "path": ".cursor/plans/YYYYMMDD-feature.md",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "Cursor Plan モードの保存先例。ワークスペース内の下書き Plan。",
+      "body": "# Cursor Plan 下書き\n\n（サンプル本文は flow-rules-samples.html#sample-cursor-plan-md を参照）\n"
+    },
+    "sample-agent-workflow-orchestration-mdc": {
+      "slug": "sample-agent-workflow-orchestration-mdc",
+      "title": "agent-workflow-orchestration.mdc",
+      "path": ".cursor/rules/agent-workflow-orchestration.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "AI_Doc 用。Plan・サブエージェント・検証・tasks 記録の運用正本。",
+      "body": "# agent-workflow-orchestration.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-agent-workflow-orchestration-mdc を参照）\n"
+    },
+    "sample-html-doc-site-mdc": {
+      "slug": "sample-html-doc-site-mdc",
+      "title": "html-doc-site.mdc",
+      "path": ".cursor/rules/html-doc-site.mdc",
+      "tools": [
+        "cursor"
+      ],
+      "starter": false,
+      "starterOrder": 0,
+      "purpose": "AI_Doc HTML サイト編集時の正本（scripts 再生成・Vercel 本番デプロイは許可不要）。",
+      "body": "# html-doc-site.mdc\n\n（サンプル本文は flow-rules-samples.html#sample-html-doc-site-mdc を参照）\n"
+    }
+  },
+  "templates": {
+    "todoMd": "# タスク Plan\n\n## 目的\n（1–2文）\n\n## チェックリスト\n- [ ] \n- [ ] \n- [ ] \n\n## Done when\n- \n\n## 触るファイル\n- \n\n## 参照\n- docs/\n- tasks/lessons.md（指摘があれば追記）\n",
+    "onboardingMd": "# チームオンボーディング — AI 駆動開発\n\n## メインツール\n- ツール: （Cursor / Claude Code / Codex）\n- インストール: \n\n## ルール配置\n- `.cursor/rules/` または `CLAUDE.md` / `AGENTS.md`\n- Plan 正本: `tasks/todo.md`\n- 指摘メモ: `tasks/lessons.md`\n\n## 初日の読む順序\n1. クイックスタート（3段フロー）\n2. AIツール初期設定\n3. ルールサンプルをコピー\n4. Skill を1つ（pr-review サンプル参照）\n5. エージェント運用（6つの基本）\n6. 小タスクで1回実践\n\n## 連絡・エスカレーション\n- レビュアー: \n- PdM: \n- ルール更新担当: \n\n## まとめ 共有 URL\n（このサイトの「ガイドを選んでまとめる」から生成した URL を貼る）\n",
+    "aiSetupPromptHeader": "# AI エージェント向け — リポセットアップ指示\n\n> **このファイルは `まとめ.md`（ガイドまとめ）とは別物です。** 人向けチェックリストではなく、あなた（AI）がリポ内にルール · Plan · 設定ファイルを **作成・配置する** ための実行指示です。\n\nあなたはこのリポジトリ（またはこれから作成するリポジトリ）の **AI 駆動開発環境** を、以下の **フェーズ一覧** に従って **最初から最後まで自律的にセットアップ** してください。Web 上の詳細手順は各フェーズの「詳細ガイド」リンクを参照すること。\n\n- **ユーザーの役割**: 最終確認と、git commit / push 等の明示許可のみ\n- **あなたの役割**: ファイル作成・ディレクトリ構成・ルール配置・Plan テンプレ配置まで実行\n- **完了報告**: 作成/変更したファイル一覧 · 各フェーズの検証結果 · 残タスク（あれば）",
+    "aiSetupConstraints": [
+      "作業開始前に、作成予定パスが既に存在するか確認する（存在する場合は下記「既存ファイルとの衝突」を適用）",
+      "Plan（tasks/todo.md）を読んでから実装に入る。推測で広い変更をしない",
+      "仕様の正本は docs/。毎回守る禁止事項・手順は rules（.cursor/rules/ 等）に書く",
+      "git add / commit / push / merge / rebase は **ユーザーの明示許可なしに実行しない**",
+      "docker exec / aws / 重要な rm / mv も **許可を待つ**",
+      "各フェーズ完了時にファイル存在確認またはテスト・curl 等で検証してから次へ",
+      "完了報告前に tasks/todo.md の該当チェックを [x] に更新する",
+      "指摘・ハマりどころは tasks/lessons.md に1行追記",
+      "秘密情報（API キー・トークン）をコードやルールに埋め込まない"
+    ],
+    "aiSetupExistingFilesPolicy": "## 既存ファイルとの衝突（必ず守る）\n\n配置前に **必ず** 対象パスを確認すること（`read_file` / ディレクトリ一覧）。**無条件の上書き・削除は禁止。**\n\n| 状況 | やること |\n| --- | --- |\n| パスにファイルが **ない** | プロンプト記載の内容で **新規作成** |\n| 同名ファイルあり · **空またはテンプレのみ** | 不足セクションを **追記**。既存の独自記述は残す |\n| 同名ファイルあり · **同等目的のルールが既にある** | **上書きしない**。差分と統合案を完了報告に書き、ユーザー確認を待つ |\n| ルールディレクトリに **既存ファイルが複数ある** | 本プロンプトのサンプルは **足りない分だけ追加**。既存ファイルの削除・リネーム禁止 |\n| `tasks/todo.md` 等 · **進行中の Plan がある** | テンプレ全置換禁止。見出し・チェック項目が足りなければ **末尾追記** のみ |\n\n**触らないもの:** アプリのビジネスコード · `.env` 等の秘密ファイル · git 履歴 · リモート / クラウド設定"
+  }
+}

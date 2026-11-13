@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500" role="img" aria-label="TESTING &amp; QA">
+  <defs>
+    <linearGradient id="bg06" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1320"/><stop offset="1" stop-color="#10182b"/>
+    </linearGradient>
+    <radialGradient id="g06" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#5ee0a0" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3fd0ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="t06" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5ee0a0"/><stop offset="1" stop-color="#3fd0ff"/>
+    </linearGradient>
+    <filter id="bl06"><feGaussianBlur stdDeviation="36"/></filter>
+  </defs>
+  <rect width="1200" height="500" fill="url(#bg06)"/>
+  <g filter="url(#bl06)"><circle cx="498" cy="220" r="137" fill="url(#g06)" opacity="0.3"/><circle cx="837" cy="317" r="122" fill="url(#g06)" opacity="0.4"/><circle cx="518" cy="101" r="198" fill="url(#g06)" opacity="0.5"/></g>
+  <g stroke="#3fd0ff" stroke-width="2.5" stroke-linejoin="round">
+      <polygon points="810,150 861,207 759,207" fill="url(#g06)" fill-opacity="0.30"/>
+      <polygon points="759,209 861,209 910,266 710,266" fill="url(#g06)" fill-opacity="0.20"/>
+      <polygon points="710,268 910,268 961,325 659,325" fill="url(#g06)" fill-opacity="0.12"/></g>
+  <text x="64" y="80" font-family="ui-monospace,Menlo,monospace" font-size="22" letter-spacing="6" fill="#3fd0ff" opacity="0.95">TESTING &amp; QA</text>
+  <text x="56" y="456" font-family="-apple-system,Helvetica,sans-serif" font-weight="800" font-size="170" fill="url(#t06)" opacity="0.95">06</text>
+  <rect x="0" y="0" width="1200" height="500" fill="none" stroke="#232b3d" stroke-width="1"/>
+</svg>

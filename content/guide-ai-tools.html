@@ -1,0 +1,181 @@
+<!--meta {"title": "ツール徹底比較 — Claude Code / Codex / Cursor", "desc": "3大コーディング AI の使い分け・主要機能・運用のコツ。", "kind": "flow", "scripts": [], "reviewed": "2026-11-13"} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-ai-tools">ツール徹底比較 — Claude Code / Codex / Cursor</h1>
+      <p class="lead">3大コーディング AI の使い分け・主要機能・運用のコツ。</p>
+<aside class="update-note"><b>2026-11 追記:</b> Cursor は 2026-08-14 に SpaceX 傘下となり、音声でのエージェント対話やアプリのデプロイまで範囲を広げた。Codex は CLI にエージェント コマンドセンターが入り、Claude Code は既定モデルが Claude Fable 5.2 になった。下の比較は選び方の軸として読み、個別機能は <a href="trends-2026.html">2026年11月のトレンド</a> と各公式 changelog で確認すること。</aside>
+
+    </header>
+    <div class="flow-body">
+
+<p class="wiki-lead">Claude Code・Codex・Cursor の「どれを・いつ・どう使うか」を1ページにまとめる。設定ファイルの書き方は<a href="guide-rules.html">ルール / Skills</a>、コピペ用サンプルは<a href="flow-rules-samples.html">設定サンプル</a>を参照。</p>
+
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>Cursor / Claude Code / Codex の強みで使い分けを決める</li>
+<li>主要機能と料金を比較して主軸ツールを1本選ぶ</li>
+<li>併用パターンとつまずきどころを先に把握する</li>
+</ul>
+<p class="page-brief__nav"><a href="index.html#playbook-hub">↑ 章トップ</a> <a href="guide-glossary.html">← 用語集</a> <a href="guide-ai-business.html">業務への組み込み →</a></p>
+</aside>
+<h3 id="tools-compare"><a class="toclink" href="#tools-compare">3ツール比較 — まずこの表</a></h3>
+<table>
+<thead><tr><th></th><th>Claude Code</th><th>Codex</th><th>Cursor</th></tr></thead>
+<tbody>
+<tr><td>形態</td><td>CLI（ターミナル）+ IDE 拡張 + Web</td><td>CLI + IDE 拡張 + クラウド（Web）</td><td>IDE（VS Code フォーク）</td></tr>
+<tr><td>提供元</td><td>Anthropic</td><td>OpenAI</td><td>Anysphere</td></tr>
+<tr><td>得意領域</td><td>自律エージェント作業・長手順の委譲・スクリプト連携</td><td>並列クラウド実行・PR 単位の非同期タスク</td><td>エディタ内の高速な書き換え・Tab 補完・対話的開発</td></tr>
+<tr><td>ルールファイル</td><td><code>CLAUDE.md</code></td><td><code>AGENTS.md</code></td><td><code>.cursor/rules/*.mdc</code></td></tr>
+<tr><td>長い手順の分離</td><td><code>.claude/skills/</code>（SKILL.md）</td><td><code>.agents/skills/</code>（SKILL.md）</td><td>Rules の <code>description</code> 起動で代替</td></tr>
+<tr><td>自動化フック</td><td>Hooks（イベント駆動でコマンド強制実行）</td><td>—（CI 側で代替）</td><td>—（拡張・CI 側で代替）</td></tr>
+<tr><td>ヘッドレス実行</td><td><code>claude -p</code> / Agent SDK</td><td><code>codex exec</code></td><td>Background Agents / CLI</td></tr>
+<tr><td>外部ツール接続</td><td>MCP（クライアント・サーバ両対応）</td><td>MCP 対応</td><td>MCP 対応</td></tr>
+</tbody>
+</table>
+
+<h4 id="tools-choose"><a class="toclink" href="#tools-choose">選び方のデフォルト</a></h4>
+<p>迷ったら次の使い分けから始める。1本に絞るなら、エディタ中心の人は Cursor、ターミナル中心の人は Claude Code。</p>
+<ol class="steps">
+<li><strong>日常のコーディング・小さい修正</strong> → Cursor（Tab + Agent）。編集→確認のループが最速</li>
+<li><strong>調査・リファクタ・複数ファイルにまたがる作業の委譲</strong> → Claude Code。Plan を立てさせて承認→実行</li>
+<li><strong>並列で複数タスクを投げて後で PR を回収</strong> → Codex クラウド。レビューは人間が必ず行う</li>
+<li><strong>CI・定期実行への組み込み</strong> → <code>claude -p</code> または <code>codex exec</code>（<a href="guide-ai-system.html#sys-headless">システム組み込み</a>参照）</li>
+</ol>
+
+<aside class="info-panel info-panel--tip">
+<h4 class="info-panel__title">2本併用が現実解</h4>
+<div class="info-panel__body">
+<p>多くのチームは「IDE 1本（Cursor）+ エージェント 1本（Claude Code または Codex）」で運用している。ルールは <code>AGENTS.md</code> を正本にして <code>CLAUDE.md</code> からシンボリックリンク（または冒頭で参照）し、二重管理を避ける。</p>
+</div>
+</aside>
+
+<hr />
+<h3 id="tools-claude-code"><a class="toclink" href="#tools-claude-code">Claude Code</a></h3>
+<p>ターミナルで動くコーディングエージェント。ファイル編集・コマンド実行・Git 操作までを一気通貫で任せられる。</p>
+
+<h4 id="claude-code-start"><a class="toclink" href="#claude-code-start">最短セットアップ</a></h4>
+<pre><code class="language-bash"># インストール（npm 経由）
+npm install -g @anthropic-ai/claude-code
+
+# リポジトリで起動
+cd your-project
+claude
+
+# 初回に /init で CLAUDE.md の雛形を生成
+&gt; /init
+</code></pre>
+
+<h4 id="claude-code-core"><a class="toclink" href="#claude-code-core">押さえる機能 6つ</a></h4>
+<table>
+<thead><tr><th>機能</th><th>何ができるか</th><th>使いどころ</th></tr></thead>
+<tbody>
+<tr><td><code>CLAUDE.md</code></td><td>セッション開始時に必ず読まれる指示書</td><td>規約・ビルドコマンド・禁止事項。短く保つ</td></tr>
+<tr><td>Plan モード</td><td>編集せず計画だけ提示、承認後に実行</td><td>大きい変更の前。Shift+Tab で切替</td></tr>
+<tr><td>Skills</td><td><code>.claude/skills/&lt;name&gt;/SKILL.md</code>。必要時だけ読まれる長手順</td><td>リリース手順・調査手順など反復作業</td></tr>
+<tr><td>Hooks</td><td>ツール実行前後にコマンドを強制実行</td><td>編集後 lint、危険コマンドのブロック</td></tr>
+<tr><td>サブエージェント</td><td>調査などを別コンテキストに委譲</td><td>大規模探索でメイン文脈を汚さない</td></tr>
+<tr><td>MCP</td><td>外部ツール（DB・ブラウザ・社内 API）接続</td><td><code>claude mcp add</code> で登録</td></tr>
+</tbody>
+</table>
+
+<h4 id="claude-code-bp"><a class="toclink" href="#claude-code-bp">運用のコツ</a></h4>
+<ul>
+<li><strong>Explore → Plan → Code → Commit</strong> の順を守らせる。いきなり書かせると手戻りが増える</li>
+<li>許可プロンプトが多い場合は <code>.claude/settings.json</code> の <code>permissions.allow</code> に読み取り系コマンドを足す</li>
+<li>長セッションで迷走したら <code>/clear</code> で文脈を切る。直前の要約を貼り直す方が速い</li>
+<li>CI への組み込みは <code>claude -p "プロンプト"</code>（ヘッドレス）。<a href="guide-ai-system.html#sys-headless">システム組み込み</a>に例</li>
+</ul>
+
+<hr />
+<h3 id="tools-codex"><a class="toclink" href="#tools-codex">Codex</a></h3>
+<p>OpenAI のコーディングエージェント。ローカル CLI とクラウド実行（Web から並列にタスクを投げ、PR で回収）の2形態が柱。</p>
+
+<h4 id="codex-start"><a class="toclink" href="#codex-start">最短セットアップ</a></h4>
+<pre><code class="language-bash"># インストール
+npm install -g @openai/codex
+
+# リポジトリで起動（ChatGPT アカウントでサインイン）
+cd your-project
+codex
+
+# 非対話実行（CI・スクリプト向け）
+codex exec "failing test を修正して"
+</code></pre>
+
+<h4 id="codex-core"><a class="toclink" href="#codex-core">押さえる機能 5つ</a></h4>
+<table>
+<thead><tr><th>機能</th><th>何ができるか</th><th>使いどころ</th></tr></thead>
+<tbody>
+<tr><td><code>AGENTS.md</code></td><td>作業ディレクトリに近いものが優先される指示書</td><td>モノレポはサブディレクトリにも置く</td></tr>
+<tr><td>承認モード</td><td>Read Only / Auto / Full Access</td><td>初手は Auto。サンドボックス外は確認させる</td></tr>
+<tr><td>クラウド実行</td><td>Web からタスクを並列投入、結果は PR</td><td>独立した小タスクの一括処理</td></tr>
+<tr><td><code>config.toml</code></td><td>モデル・サンドボックス等の設定（<code>~/.codex/</code>）</td><td>プロジェクト上書きは trusted のみ</td></tr>
+<tr><td>コードレビュー</td><td>GitHub 連携で PR を自動レビュー</td><td>人間レビューの前段に置く</td></tr>
+</tbody>
+</table>
+
+<h4 id="codex-bp"><a class="toclink" href="#codex-bp">運用のコツ</a></h4>
+<ul>
+<li>クラウド実行は<strong>タスクを小さく独立に切る</strong>ほど成功率が上がる。「テスト追加」「型エラー解消」など1PR=1目的</li>
+<li>環境構築スクリプト（setup script）を整備すると、クラウド側でテストが回り精度が上がる</li>
+<li>並列で出た PR はまとめて人間がレビュー。<a href="guide-ship.html">PR・提出</a>のチェックリストを適用</li>
+</ul>
+
+<hr />
+<h3 id="tools-cursor"><a class="toclink" href="#tools-cursor">Cursor</a></h3>
+<p>VS Code をベースにした AI ネイティブ IDE。補完（Tab）・チャット・エージェントがエディタに統合されている。</p>
+
+<h4 id="cursor-core"><a class="toclink" href="#cursor-core">押さえる機能 5つ</a></h4>
+<table>
+<thead><tr><th>機能</th><th>何ができるか</th><th>使いどころ</th></tr></thead>
+<tbody>
+<tr><td>Tab</td><td>マルチ行・編集予測つきの補完</td><td>常時。最も使用頻度が高い</td></tr>
+<tr><td>Agent</td><td>複数ファイル編集・コマンド実行</td><td>機能追加・リファクタの主力</td></tr>
+<tr><td>Plan モード</td><td>実装前にタスク分解と計画を作る</td><td>中規模以上の変更（<a href="guide-rules-compare.html#17-compare">Rules/Skills/Plan</a>）</td></tr>
+<tr><td>Rules（<code>.mdc</code>）</td><td><code>alwaysApply</code> / <code>globs</code> / <code>description</code> で適用条件を制御</td><td>規約は alwaysApply、領域別は globs</td></tr>
+<tr><td>Background Agent</td><td>リモート環境で非同期実行</td><td>長時間タスクの並列化</td></tr>
+</tbody>
+</table>
+
+<h4 id="cursor-bp"><a class="toclink" href="#cursor-bp">運用のコツ</a></h4>
+<ul>
+<li>Rules は<strong>1ファイル1関心事</strong>で分割し、<code>alwaysApply: true</code> は本当に毎回必要なものだけに絞る（コンテキスト節約）</li>
+<li>大きい変更は Plan モードで計画を確認してから実行。計画の修正はコードの修正より安い</li>
+<li>差分は必ずレビューしてから受け入れる。「全部 Accept」を習慣にしない</li>
+</ul>
+
+<hr />
+<h3 id="tools-combo"><a class="toclink" href="#tools-combo">組み合わせ運用パターン</a></h3>
+<table>
+<thead><tr><th>パターン</th><th>構成</th><th>向くチーム</th></tr></thead>
+<tbody>
+<tr><td>IDE 主体</td><td>Cursor で開発、複雑な委譲だけ Claude Code</td><td>フロントエンド中心・対話的に進めたい</td></tr>
+<tr><td>エージェント主体</td><td>Claude Code で開発、エディタは任意</td><td>バックエンド・インフラ・CLI に慣れたチーム</td></tr>
+<tr><td>並列回収型</td><td>日中は Cursor / Claude Code、定型タスクは Codex クラウドへ一括投入</td><td>小タスクが溜まりやすいチーム</td></tr>
+<tr><td>レビュー強化型</td><td>開発は任意 + PR レビューを Codex / CI の AI レビューで前段化</td><td>レビュアー不足のチーム</td></tr>
+</tbody>
+</table>
+
+<h3 id="tools-gotchas"><a class="toclink" href="#tools-gotchas">Gotchas（共通の落とし穴）</a></h3>
+<ul>
+<li>ルールファイルの肥大化はすべてのツールで性能を下げる。<strong>毎回必要な指示だけ常駐</strong>させ、長い手順は Skills / description 起動に逃がす</li>
+<li>ツールごとにルールを別管理すると必ず乖離する。正本を1つ決めて他は参照にする</li>
+<li>「動いた」と「正しい」は別。エージェントの自己申告を信じず、テスト・lint・実行確認で検証する（<a href="guide-ops.html">運用</a>）</li>
+<li>料金・モデル・機能名は変化が速い。最新は各公式 changelog を確認し、本ページは「型」として読む</li>
+</ul>
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-rules.html">ルール / Skills の書き方</a></li>
+  <li><a href="flow-rules-samples.html">設定サンプル（コピペ用）</a></li>
+  <li><a href="guide-ai-cases.html">導入事例集</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+    </div><nav class="flow-pager" aria-label="前後の章"><a href="guide-glossary.html">← 用語集</a><a class="flow-pager__next" href="guide-ai-business.html">業務への組み込み →</a></nav>
+  </article>
+</div>

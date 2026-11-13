@@ -1,0 +1,100 @@
+<!--meta {"title": "デプロイ・リリース", "desc": "CI/CDで検証を機械化、段階的デプロイ、本番初回は人間承認、expand-contractマイグレーション、ロールバック、リリース後検証。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Chapter 07</div>
+    <h1>🚀 デプロイ・リリース</h1>
+    <p class="hb-lead">CI/CDで検証を機械化し、段階的に本番へ届ける。本番初回は必ず人間が承認する。デプロイ成功 ≠ 完了 — リリース後検証まで終えて完了。</p>
+    <img class="hb-hero-img" src="/assets/handbook/delivery.svg" alt="デプロイ・リリースのイメージ">
+
+    <h2 id="s-1">CI = ローカル検証の機械化</h2>
+    <p>CIで回す検証は、ローカルでも同じコマンドで叩けること。差があると「ローカルは通るのにCIで落ちる」が頻発する。内容: <strong>lint / format / 型チェック / テスト / SCA / シークレットスキャン</strong>。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">.github/workflows/ci.yml</div>
+<pre>name: ci
+on: [pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run verify   <span class="hb-c"># ローカルと同じ: lint + typecheck + test</span></pre>
+      <div class="hb-cap">図: CIは <code>npm run verify</code> を呼ぶだけ。検証の中身はローカルと共有する。</div>
+    </figure>
+
+    <h2 id="s-2">ブランチ戦略とパイプライン</h2>
+    <p><strong>トランクベース + 短命ブランチ + PR必須</strong>。PRごとに preview 環境を自動デプロイし、レビューと動作確認を同じ場所で行う。</p>
+    <figure>
+      <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant Dev as 開発者
+  participant CI as CI
+  participant Prev as preview環境
+  participant Rev as レビュアー
+  participant Prod as production
+  Dev->>CI: PRをpush
+  CI->>CI: lint/型/テスト/スキャン
+  alt 検証失敗
+    CI-->>Dev: 赤 → 修正
+  else 通過
+    CI->>Prev: preview自動デプロイ
+    Prev->>Rev: URLで動作確認
+    Rev->>CI: スモークテスト + 承認
+    CI->>Prod: 本番デプロイ(初回は人間承認)
+    Prod->>Prod: リリース後検証
+  end
+      </pre>
+      <figcaption>図: PR → CI検証 → preview → 承認 → 本番 → リリース後検証の流れ。</figcaption>
+    </figure>
+
+    <h2 id="s-3">段階的デプロイと本番承認</h2>
+    <ul>
+      <li><strong>preview / staging に先にデプロイ</strong>し、スモークテストを通してから本番へ。</li>
+      <li><strong>初回の本番デプロイは必ず人間の明示承認</strong>。自走ループ中でも勝手に本番公開しない（previewは承認不要）。</li>
+      <li>金曜夜・深夜のデプロイは原則回避（障害時に対応できる時間に出す）。</li>
+    </ul>
+
+    <h2 id="s-4">DBマイグレーションは expand-contract</h2>
+    <p>後方互換を保つため、スキーマ変更を3段階に分ける。新旧コードが同時に動く瞬間（デプロイ中）でも壊れない。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  E["① Expand<br/>新カラム追加<br/>(旧コードも動く)"] --> M["② Migrate<br/>両対応コードをデプロイ<br/>データ移行"]
+  M --> C["③ Contract<br/>旧カラム削除<br/>(全コードが新を使う)"]
+      </pre>
+      <figcaption>図: 追加 → 移行 → 削除。各段で後方互換が保たれる。</figcaption>
+    </figure>
+    <figure class="hb-snippet">
+      <div class="hb-fname">例: 列 rename を後方互換で（name → full_name）</div>
+<pre><span class="hb-c">-- ① Expand: 新列を追加（NULL許容。旧コードは name を使い続ける）</span>
+ALTER TABLE users ADD COLUMN full_name text;
+
+<span class="hb-c">-- ② Migrate: 両対応コードをデプロイ後、既存データを移す</span>
+UPDATE users SET full_name = name WHERE full_name IS NULL;
+
+<span class="hb-c">-- ③ Contract: 全コードが full_name に切替わってから旧列を削除</span>
+ALTER TABLE users DROP COLUMN name;</pre>
+      <div class="hb-cap">図: ①②③を<strong>別々のデプロイ</strong>に分ける。1回で rename すると旧コードが即壊れる。</div>
+    </figure>
+
+    <h2 id="s-5">ロールバックを先に決めておく</h2>
+    <ul>
+      <li><strong>ロールバック手順を事前に文書化</strong>する。出してから考えない。</li>
+      <li><strong>トリガー条件</strong>（エラーレートN%超、p99レイテンシ超過、主要動線の失敗 等）を事前に決め、該当したら<strong>調査より先に戻す</strong>。</li>
+    </ul>
+
+    <h2 id="s-6">デプロイ前チェックリスト</h2>
+    <ul class="hb-chk">
+      <li>QA合格（テスト全件グリーン・high指摘ゼロ）</li>
+      <li>CIグリーン</li>
+      <li>マイグレーションが後方互換（expand-contract）</li>
+      <li>環境変数の差分なし</li>
+      <li>ロールバック手順がある</li>
+    </ul>
+
+    <div class="hb-callout hb-danger"><b>厳守:</b> デプロイ成功 ≠ 完了。<strong>リリース後検証</strong>（ヘルスチェック・主要動線・エラーレート）まで終えて初めて完了とする（<a href="operations.html">08 運用・監視・保守</a>）。記録は <code>docs/05_deploy/release-YYYYMMDD.md</code> に残す。</div>
+
+    <div class="hb-callout hb-tip"><b>このサイトの実例:</b> 本ハンドブックは <code>vercel deploy</code> でpreview、<code>vercel deploy --prod</code> で本番という段階的デプロイの最小形をとっている。</div>
+</div>

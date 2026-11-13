@@ -1,0 +1,106 @@
+<!--meta {"title": "Skills 実践 — 判断と2026更新", "desc": "Rules 境界・Rule Type・アンチパターン。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-skills-3">Skills 実践 — 判断と2026更新</h1>
+      <p class="lead">Rules 境界・Rule Type・アンチパターン。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>短さと頻度で Rules/Skills を切る</li>
+<li>Rule Type を明示</li>
+<li>最小セット後に Hooks</li>
+</ul>
+<p class="page-brief__tasks">Rule Type をラベル — 完了: 境界が合意された</p>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-skills-2.html">← Skills 実践 — 配置と評価</a> <a href="guide-rules-bp.html">ベストプラクティス参照 →</a></p>
+</aside>
+<h3 id="17-skills-judge"><a class="toclink" href="#17-skills-judge">判断とアンチパターン</a></h3>
+<h4 id="17-rules-vs-skills"><a class="toclink" href="#17-rules-vs-skills">Rules / Skills / Commands の判断（公式 + 実務）</a></h4>
+<table>
+<thead><tr><th>種類</th><th>いつ</th><th>確実性</th></tr></thead>
+<tbody>
+<tr><td><strong>Rules</strong>（<code>.mdc</code>）</td><td>毎回の禁止・下限・<code>globs</code> 付き規約</td><td>常時（トークンコスト大）</td></tr>
+<tr><td><strong>Skills</strong></td><td>多段ワークフロー・ドメイン手順</td><td>関連時のみ自動（<code>description</code> 次第）</td></tr>
+<tr><td><strong>Commands</strong></td><td>毎日の 1 ショット定型</td><td>明示 <code>/</code> のみ</td></tr>
+<tr><td><strong>Hooks</strong>（Claude）</td><td>lint / 危険コマンド阻止など<strong>100% 必須</strong></td><td>決定的（Claude Code）</td></tr>
+</tbody>
+</table>
+<p>Claude Code では <code>CLAUDE.md</code> は<strong>助言</strong>（常に従うとは限らない）。<strong>100% 守らせる</strong>なら Hooks（<a href="https://code.claude.com/docs/en/best-practices">Anthropic BP</a> · コミュニティ検証）。Cursor は Rules + 検証コマンド（<code>/verify</code>）で近い運用。</p>
+
+
+<h4 id="17-hooks-cursor"><a class="toclink" href="#17-hooks-cursor">Hooks（Cursor）— 検証ループの自動化</a></h4>
+<p>出典: <a href="https://cursor.com/ja/blog/agent-best-practices">Cursor 公式 BP（2026-02）</a>。Rules は毎会話、Hooks は<strong>決定的な停止・再開</strong>に使う。</p>
+<table>
+<thead><tr><th>用途</th><th>設定</th><th>本リポ</th></tr></thead>
+<tbody>
+<tr><td>テスト green まで反復</td><td><code>.cursor/hooks.json</code> の <code>stop</code> hook</td><td><code>/verify</code> · <a href="guide-ops-orchestration.html#18-4-verify">完了前検証</a></td></tr>
+<tr><td>lint 必須</td><td>post-edit hook で lint 実行</td><td>Rules にコマンド列挙 + hook</td></tr>
+<tr><td>Partner 連携</td><td>Secrets / Observability MCP と組み合わせ</td><td><a href="memo-ai-reference-tools.html">MCP 参考</a></td></tr>
+</tbody>
+</table>
+<p>Skill 内 hook と混同しない — hook は<strong>エージェント停止時</strong>に必ず走る。長時間ループは <code>loop_count</code> 上限を設ける（公式 grind 例参照）。</p>
+<h4 id="17-skill-template"><a class="toclink" href="#17-skill-template">サンプル: Skills（SKILL.md + 任意 scripts/）</a></h4>
+<p>1 Skill ＝ 1 ディレクトリ（<code>SKILL.md</code> + 任意 <code>references/</code> / <code>scripts/</code>）。<code>description</code> は命令形でユースケースを書く（トリガー用）。共有は <code>.agents/skills/</code> 推奨。<code>pr-review</code> の例では、ワークフロー（test・PR description・migration・tasks/todo.md との整合確認）と出力（未完了はブロッカー報告）を frontmatter 付きで定義する。全文: <a href="flow-rules-samples.html#sample-skill-pr-review">pr-review サンプル</a> · <a href="guide-rules-skills-2.html#17-skills-frontmatter">フロントマター</a>。</p>
+<p><strong>scripts/run_checks.sh</strong>（任意・非対話）:</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: run_checks.sh [--quick]" >&2
+  exit 1
+}
+
+QUICK=0
+[[ "${1:-}" == "--quick" ]] &amp;&amp; QUICK=1
+[[ "${1:-}" == "--help" || "${1:-}" == "-h" ]] &amp;&amp; usage
+
+if [[ "$QUICK" -eq 1 ]]; then
+  make lint
+else
+  make test
+fi
+</code></pre>
+
+
+
+<h3 id="17-skills-2026"><a class="toclink" href="#17-skills-2026">2026 更新と運用</a></h3>
+<h4 id="17-rules-activation-2026"><a class="toclink" href="#17-rules-activation-2026">ルールの発火モードとポータビリティ（2026）</a></h4>
+<p>出典: <a href="https://cursor.com/docs/rules">Cursor Docs — Rules</a> · <a href="https://agents.md">AGENTS.md（Agentic AI Foundation / Linux Foundation）</a>。2026 の要点は「ルールを常時全部入れる」のをやめ、<strong>関連するときだけ読ませてトークンを節約する</strong>こと。</p>
+<table>
+<thead><tr><th>発火モード</th><th>frontmatter</th><th>発火条件</th><th>使う場面</th></tr></thead>
+<tbody>
+<tr><td>Always</td><td><code>alwaysApply: true</code></td><td>毎会話</td><td>言語・コミット規約など<strong>普遍で短い</strong>もの</td></tr>
+<tr><td>Auto-Attached</td><td><code>globs: ["**/*.tsx"]</code></td><td>該当ファイルが context に入ったとき</td><td>フレームワーク・レイヤ別規約</td></tr>
+<tr><td>Agent-Requested</td><td><code>description:</code> のみ</td><td>AI が関連と判断したとき</td><td>パスに紐づかない短い規約・チェック観点（手順全文は Skills へ）</td></tr>
+<tr><td>Manual</td><td>なし</td><td><code>@rule-name</code> で明示参照</td><td>重いが時々必要な参照</td></tr>
+</tbody>
+</table>
+<p><strong>常時 ON は最小限に</strong>。プロジェクトのスタックだけ <code>alwaysApply</code> にし、他は glob / description で条件ロードするとコンテキスト消費を大きく減らせる。</p>
+<h4 id="17-rules-antipatterns"><a class="toclink" href="#17-rules-antipatterns">避けるアンチパターン</a></h4>
+<ul>
+<li><strong><code>.cursorrules</code>（単一ファイル）は非推奨</strong>。Cursor Docs を正とし、<code>.cursor/rules/*.mdc</code> へ分割移行する</li>
+<li>1 ファイルに詰め込みすぎると中盤の指示が抜け落ちる。<strong>1 ファイル 1 関心・〜500 行以下</strong>に分割する</li>
+<li>スタイルガイド全文コピー → <strong>linter に任せる</strong>。コード重複 → canonical ファイルを<strong>参照</strong>する（コピーしない＝陳腐化しない）</li>
+<li>めったに使わない edge case は書かない。<strong>同じミスを 2 回見てから 1 条追加</strong>する</li>
+<li id="17-rules-prune-hook">AI が指示なしで既に守れている行は<strong>削除する</strong>（動くルールだけ残す）。逆に<strong>必ず守らせたい事項は hook で強制</strong>する（<code>PreToolUse</code> 等）— 書いたルールは「お願い」、hook は「保証」</li>
+</ul>
+<h4 id="17-agents-md-portability"><a class="toclink" href="#17-agents-md-portability">AGENTS.md と .mdc の使い分け</a></h4>
+<table>
+<thead><tr><th></th><th>AGENTS.md</th><th>.cursor/rules/*.mdc</th></tr></thead>
+<tbody>
+<tr><td>役割</td><td>ツール横断のポータブル基盤</td><td>Cursor 固有のスコープ制御</td></tr>
+<tr><td>対応ツール</td><td>Codex · Claude Code · Copilot · Cursor ほか</td><td>Cursor のみ</td></tr>
+<tr><td>スコープ</td><td>置いた階層（nested = 暗黙の glob）</td><td><code>globs</code> / <code>description</code> / 4 モード</td></tr>
+<tr><td>frontmatter</td><td>なし（常に適用）</td><td>あり</td></tr>
+</tbody>
+</table>
+<p>迷ったら <strong>root に AGENTS.md（普遍規約・コマンド・テスト gate・セキュリティ境界）から始め</strong>、Cursor 固有のスコープが要るときだけ <code>.mdc</code> を足す。monorepo はサブディレクトリに <code>AGENTS.md</code> を置くとそのサブツリーだけに適用される。テンプレ: <a href="guide-rules-skills-2.html#17-rules-template">Rules サンプル</a> · 判断: <a href="#17-rules-vs-skills">Rules / Skills / Commands</a> · 実行環境側: <a href="guide-ops-harness.html#18-harness-2026">ハーネスと文脈エンジニアリング</a>。</p>
+
+<h4 id="17-context-explorer"><a class="toclink" href="#17-context-explorer">Cursor 3 — context explorer でルールのコストを測る</a></h4>
+<p><strong>未確認の速報扱い</strong>。出典は <a href="https://x.com/cursor_ai">Cursor 公式 X（@cursor_ai）</a> で、正式仕様は Cursor Docs / changelog を正とする。context explorer は、エージェントのコンテキスト使用量を <strong>system prompt・tool 定義・rules・skills</strong> 等に分解して可視化する機能として紹介されている。どのルールが常時 ON でトークンを食っているかを<strong>実測</strong>し、<code>alwaysApply</code> を削って <code>globs</code> / <code>description</code> に移す判断に使う。</p>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-skills-2.html">← Skills 実践 — 配置と評価</a><a class="flow-pager__next" href="guide-rules-bp.html">ベストプラクティス参照 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

@@ -1,0 +1,63 @@
+<!--meta {"title": "ハンドブック（全10章）", "desc": "AIエージェント/コーディングアシスタントを前提とした開発の全工程ガイド。土台→ライフサイクル→運用→横断の4部構成、1章1ページで深掘り。図解・シーケンス図つき。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Engineering Handbook</div>
+    <h1>AI開発ベストプラクティス</h1>
+    <p class="hb-lead">AIエージェント／コーディングアシスタントを前提とした開発の全工程ガイド。<strong>土台 → ライフサイクル → 運用 → 横断</strong>の4部構成で、各章を独立した1ページとして深掘り。図解・シーケンス図・チェックリストで「やること」と「落とし穴」を整理しています。</p>
+    <div class="hb-tags">
+      <span class="hb-tag">全10章 / 4部構成</span>
+      <span class="hb-tag">Mermaid図解</span>
+      <span class="hb-tag">6フェーズ・ライフサイクル準拠</span>
+      <span class="hb-tag">更新 2026-06-13</span>
+    </div>
+
+    <h2 style="border:none" id="s-1">第I部 ― 土台</h2>
+    <div class="hb-cards-grid">
+      <a class="hb-ch-card" href="principles.html"><img src="/assets/handbook/principles.svg" alt=""><div class="hb-body"><span class="hb-n">00</span><h3 id="s-2">🧭 全体原則</h3><p>AI時代の4つの土台。レビュー前提・コンテキスト資産化・小さく検証・ガードレール。</p></div></a>
+      <a class="hb-ch-card" href="ai-collaboration.html"><img src="/assets/handbook/ai-collaboration.svg" alt=""><div class="hb-body"><span class="hb-n">01</span><h3 id="s-3">🤝 AIとの協働の実務</h3><p>コンテキスト設計・ルール・タスク分割・レビュー運用・委譲の境界。AI開発の中核。</p></div></a>
+    </div>
+
+    <h2 id="s-4">第II部 ― ライフサイクル</h2>
+    <div class="hb-cards-grid">
+      <a class="hb-ch-card" href="requirements.html"><img src="/assets/handbook/requirements.svg" alt=""><div class="hb-body"><span class="hb-n">02</span><h3 id="s-5">📋 要件定義</h3><p>MoSCoW・非機能6観点・[要確認]マーカー。AIに推測で埋めさせない承認ゲート。</p></div></a>
+      <a class="hb-ch-card" href="design.html"><img src="/assets/handbook/design.svg" alt=""><div class="hb-body"><span class="hb-n">03</span><h3 id="s-6">📐 設計</h3><p>データ・API・UI・アーキ設計＋セキュアバイデザイン。Mermaid管理とトレーサビリティ。</p></div></a>
+      <a class="hb-ch-card" href="tech-infra.html"><img src="/assets/handbook/tech-infra.svg" alt=""><div class="hb-body"><span class="hb-n">04</span><h3 id="s-7">🧩 技術選定・インフラ</h3><p>ADR・候補3つ・推奨1つ・無料枠後コスト。3層環境と秘密管理。</p></div></a>
+      <a class="hb-ch-card" href="development.html"><img src="/assets/handbook/development.svg" alt=""><div class="hb-body"><span class="hb-n">05</span><h3 id="s-8">⚙️ 開発・実装(TDD)</h3><p>TDD・コーディング規約・フロント/バック実装・セキュアコーディング。</p></div></a>
+      <a class="hb-ch-card" href="qa.html"><img src="/assets/handbook/qa.svg" alt=""><div class="hb-body"><span class="hb-n">06</span><h3 id="s-9">🧪 テスト・レビュー・QA</h3><p>テストピラミッド・弱めない・レビュー観点・QAゲート（high指摘ゼロ）。</p></div></a>
+      <a class="hb-ch-card" href="delivery.html"><img src="/assets/handbook/delivery.svg" alt=""><div class="hb-body"><span class="hb-n">07</span><h3 id="s-10">🚀 デプロイ・リリース</h3><p>CI/CD・段階デプロイ・本番初回は人間承認・expand-contract・ロールバック。</p></div></a>
+    </div>
+
+    <h2 id="s-11">第III部 ― 運用</h2>
+    <div class="hb-cards-grid">
+      <a class="hb-ch-card" href="operations.html"><img src="/assets/handbook/operations.svg" alt=""><div class="hb-body"><span class="hb-n">08</span><h3 id="s-12">🔧 運用・監視・保守</h3><p>3本柱・SLI/SLO・リリース後検証・インシデント対応・負債・依存更新。</p></div></a>
+    </div>
+
+    <h2 id="s-13">第IV部 ― 横断</h2>
+    <div class="hb-cards-grid">
+      <a class="hb-ch-card" href="security.html"><img src="/assets/handbook/security.svg" alt=""><div class="hb-body"><span class="hb-n">09</span><h3 id="s-14">🛡️ セキュリティ（横断）</h3><p>全フェーズを貫く。典型脆弱性・認証/認可分離・最小権限・LLMリスク・チェックリスト。</p></div></a>
+    </div>
+
+    <h2 id="s-15">この6フェーズで回す</h2>
+    <p class="hb-sub">第II部のライフサイクルは <code>0_dev</code> の6フェーズに沿って回します。土台（第I部）が全フェーズを支え、運用（第III部）が次サイクルへ繋ぎ、セキュリティ（第IV部）が全体を貫きます。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  R["📋 要件定義"] --> D["📐 設計"] --> TI["🧩 技術選定・インフラ"]
+  TI --> Dev["⚙️ 開発(TDD)"] --> QA["🧪 テスト/レビュー"] --> Dep["🚀 デプロイ"]
+  Dep --> Ops["🔧 運用・監視"]
+  Ops -. 次サイクル .-> R
+  classDef p fill:#151a26,stroke:#33405c,color:#e6e9f0;
+  class R,D,TI,Dev,QA,Dep,Ops p;
+      </pre>
+      <figcaption>図: 開発ライフサイクル。各フェーズゲートを満たさなければ次へ進まない。運用が次サイクルの起点になる。</figcaption>
+    </figure>
+
+    <h2 id="s-16">使い方 ― 読者別ガイド</h2>
+    <p class="hb-sub">立場によって最適な入口が違います。まず自分に近いものから。</p>
+    <div class="hb-grid hb-cols-3">
+      <div class="hb-card"><h4>👤 個人開発者</h4><a href="principles.html">00 全体原則</a> → <a href="ai-collaboration.html">01 AIとの協働</a> を読み、あとは着手中のフェーズへ。01のルール例を自分の <code>CLAUDE.md</code> に写すのが最短の効果。</div>
+      <div class="hb-card"><h4>👥 チーム / リード</h4><a href="ai-collaboration.html">01</a> のルール構成をチーム規約に採用し、<a href="qa.html">06 QA</a> と <a href="security.html">09 セキュリティ</a> をマージゲートに。各章末のチェックリストをPRテンプレへ。</div>
+      <div class="hb-card"><h4>🔎 逆引き（特定フェーズ）</h4>今のフェーズの章だけを開き、末尾の「完了条件」で自己点検。各章冒頭の「この章の内容」から目的の節へ直接飛べます。</div>
+    </div>
+
+    <div class="hb-callout hb-tip"><b>読み方:</b> 左サイドバーから各章へ。各章末の「次の章」で順に読み進められます。まずは <a href="principles.html">00 全体原則</a> と <a href="ai-collaboration.html">01 AIとの協働の実務</a> から。</div>
+</div>

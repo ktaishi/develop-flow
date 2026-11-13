@@ -1,0 +1,159 @@
+<!--meta {"title": "docs と履歴（2/2）", "desc": "Obsidian ログ。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-docs-2">docs と履歴（2/2）</h1>
+      <p class="lead">Obsidian ログ。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li><code>z_docs/</code> へは新規書き込みせず、履歴は正本側に残す</li>
+<li>設計を変える判断は ADR を1枚書いて理由を固定する</li>
+<li>ADR は連番命名し、ステータスで更新を追えるようにする</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-docs-1.html">← docs と履歴（1/2）</a> <a href="guide-repo-ai-1.html">AI設定（1/2） →</a></p>
+</aside>
+<h3 id="adr-basics"><a class="toclink" href="#adr-basics">ADR の基本</a></h3>
+<h4 id="docs-why"><a class="toclink" href="#docs-why">なぜ書くか</a></h4>
+<ul>
+<li>「なぜそうしたか」が忘れられない: 3ヶ月後の自分や新メンバーが「なぜRedisじゃなくてDynamoDB?」を追える</li>
+<li>同じ議論の再発を防ぐ: 「過去に同じ検討をしてこういう理由で却下した」と参照できる</li>
+<li>設計変更時の影響範囲が分かる: 関連ADRを辿ることで決定の連鎖が見える</li>
+<li>オンボーディングが楽: 新メンバーが ADR を読めば過去の判断が分かる</li>
+</ul>
+<h4 id="docs-when"><a class="toclink" href="#docs-when">いつ書くか (判断基準)</a></h4>
+<p>書く対象 (例):</p>
+<ul>
+<li>新規ライブラリ・フレームワーク採用</li>
+<li>DB選定・スキーマ設計の大きな変更</li>
+<li>認証方式・認可モデルの選定</li>
+<li>通信プロトコル選定 (REST / GraphQL / gRPC)</li>
+<li>アーキテクチャパターン選定 (モノリス / マイクロサービス)</li>
+<li>インフラ・クラウドサービス選定</li>
+<li>重要なライブラリの破壊的アップグレード</li>
+</ul>
+<p>書かない対象 (例):</p>
+<ul>
+<li>細かい命名規則 (<code><a href="flow-rules-samples.html#sample-20-coding-style-mdc">.cursor/rules/20-coding-style.mdc</a></code> で十分)</li>
+<li>個別関数の実装方針 (コードコメントで十分)</li>
+<li>一時的な調査 (必要なら z_docs/scratch/ の個人メモで十分)</li>
+</ul>
+<blockquote>
+<p>迷ったら書く。あとから「ADRにすべきだった」より「ADRがあって良かった」のほうが多い。</p>
+</blockquote>
+<h4 id="docs-naming"><a class="toclink" href="#docs-naming">配置・命名</a></h4>
+<ul>
+<li>ディレクトリ: <code>docs/adr/</code></li>
+<li>ファイル名: <code>NNNN-&lt;slug&gt;.md</code> (NNNN は連番、4桁ゼロ埋め)</li>
+<li>例: <code>0001-use-postgres.md</code> / <code>0002-adopt-fastapi.md</code> / <code>0003-replace-celery-with-sqs.md</code></li>
+<li>索引: <code>docs/adr/README.md</code> に一覧 (ステータス・タイトル・リンク)</li>
+</ul>
+<h3 id="adr-ops"><a class="toclink" href="#adr-ops">ADR の運用</a></h3>
+<h4 id="adr_1"><a class="toclink" href="#adr_1">ADR ステータス</a></h4>
+<ul>
+<li>Proposed: 提案中、レビュー待ち</li>
+<li>Accepted: 採用決定、現在の方針</li>
+<li>Deprecated: 非推奨だが特に置き換えなし</li>
+<li>Superseded by ADR-NNNN: 別のADRに置き換えられた (古いほうも残す)</li>
+</ul>
+<blockquote>
+<p>重要: ADR は 追記方式。既存ADRを書き換えるのではなく、新しいADRで上書き (Superseded) する。</p>
+</blockquote>
+<h4 id="docsadrtemplatemd"><a class="toclink" href="#docsadrtemplatemd"><code>docs/adr/template.md</code></a></h4>
+<pre><code class="language-markdown"># ADR-NNNN: &lt;タイトル&gt;
+
+- Date: YYYY-MM-DD
+- Status: Proposed | Accepted | Deprecated | Superseded by ADR-MMMM
+- Deciders: [氏名 / チーム]
+- Related: [関連ADR, Issue, PR]
+
+## Context (背景)
+
+なぜこの決定が必要なのか。
+- 解決したい問題
+- 制約 (技術的・組織的・予算的)
+- 関係するステークホルダー
+
+## Decision (決定)
+
+何を決めたか。具体的に。
+- 採用した選択肢
+- 採用した理由 (Context との対応)
+
+## Consequences (結果・影響)
+
+### Positive (良い結果)
+- 期待される効果
+- 解決される問題
+
+### Negative (悪い結果・トレードオフ)
+- 受け入れるコスト
+- 新たに発生する課題
+
+### Neutral (中立、副次的な影響)
+- 注意点
+- 周辺への影響
+
+## Alternatives Considered (検討した他案)
+
+### Option A: &lt;別案&gt;
+- 概要
+- メリット
+- デメリット
+- 採用しなかった理由
+
+### Option B: &lt;別案&gt;
+- ...
+
+## References (参考資料)
+
+- [公式ドキュメント](URL)
+- [比較記事](URL)
+- 関連Issue: #123
+</code></pre>
+<h4 id="adr_2"><a class="toclink" href="#adr_2">ADRの書き出しプロンプト</a></h4>
+<p>まずドラフトを素早く起こしたいときは <a href="adr-generator.html">ADR生成ツール</a> で Markdown 叩き台を作ってから、この章のテンプレートと照らして調整すると早い。</p>
+<pre><code class="language-text">新規ADRを起票します。
+
+【テーマ】
+[例: Redis を使うべきか、別の選択肢があるか]
+
+【現状】
+[なぜ検討が必要になったか、関連するコンテキスト]
+
+【作業】
+docs/adr/ に新規ADRファイルを作成してください。
+- 連番 NNNN は既存ADRの最大値+1
+- ファイル名: NNNN-&lt;slug&gt;.md (slug は英小文字+ハイフン)
+- フォーマットは docs/adr/template.md に従う
+- Status は Proposed として作成 (レビュー後に Accepted に変更する想定)
+
+検討した代替案を最低3つ挙げ、それぞれのメリット・デメリット・採用しなかった理由を書いてください。
+私が後で判断するための材料として、推測ではなく検証可能な事実に基づいて書いてください。
+</code></pre>
+<h4 id="adr_3"><a class="toclink" href="#adr_3">ADRに昇格すべきかの判断</a></h4>
+<p><code>docs/&lt;feature&gt;/04_tech_decisions.md</code> に書いた内容のうち、</p>
+<ul>
+<li>機能を超えてプロジェクト全体に影響する</li>
+<li>後から変更が困難 (DB変更、認証方式変更等)</li>
+<li>ステークホルダー間の議論があった</li>
+</ul>
+<p>ものは ADRに昇格 (新規ADR起票 + 04_tech_decisions.md から <code>docs/adr/NNNN-*.md</code> へリンク)。</p>
+<h4 id="docsadrreadmemd"><a class="toclink" href="#docsadrreadmemd"><code>docs/adr/README.md</code> の例</a></h4>
+<pre><code class="language-markdown"># Architecture Decision Records
+
+| ADR | Title | Status | Date |
+|---|---|---|---|
+| [0001](./0001-use-postgres.md) | Use PostgreSQL as primary DB | Accepted | 2026-04-01 |
+| [0002](./0002-adopt-fastapi.md) | Adopt FastAPI for backend | Accepted | 2026-04-05 |
+| [0003](./0003-replace-celery-with-sqs.md) | Replace Celery with AWS SQS | Proposed | 2026-05-10 |
+| [0004](./0004-tdd-as-team-standard.md) | TDD as team standard | Accepted | 2026-05-12 |
+
+新規ADR起票時はこの表に追記すること。
+</code></pre>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-docs-1.html">← docs と履歴（1/2）</a><a class="flow-pager__next" href="guide-repo-ai-1.html">AI設定（1/2） →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

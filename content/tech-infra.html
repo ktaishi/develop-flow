@@ -1,0 +1,107 @@
+<!--meta {"title": "技術選定・インフラ", "desc": "ADRで技術とインフラを選定。候補3つ・推奨1つ・無料枠後コスト。local/preview/prodの3層、環境変数で差分吸収、秘密管理。枯れた技術ほどAI生成が安定。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Chapter 04</div>
+    <h1>🧩 技術選定・インフラ</h1>
+    <p class="hb-lead">言語・フレームワークと、動かす環境を決める。ADRで判断を記録し、秘密情報を安全に扱う。枯れた技術ほどAI生成の品質が上がる。</p>
+    <img class="hb-hero-img" src="/assets/handbook/tech-infra.svg" alt="技術選定・インフラのイメージ">
+
+    <h2 id="s-1">AI時代の選定基準</h2>
+    <p>従来基準（成熟度・エコシステム・習熟）に加え、AI開発では<strong>「学習データの豊富さ」</strong>が新しい軸になる。広く使われ安定したAPIを持つ技術ほどAIの提案が正確。新しすぎる・ニッチすぎる技術は、古いAPIや存在しないメソッドを“それらしく”生成しやすい。奇抜な選定は支援効率を下げる。</p>
+
+    <h2 id="s-2">ADR — 決定を記録する</h2>
+    <p>技術・インフラの選定は <strong>ADR（Architecture Decision Record）</strong>として記録する。構成は固定: <strong>比較表 → 決定 → 受け入れたデメリット</strong>。候補は最大3つ、<strong>推奨を必ず1つ</strong>。選択肢を並べるだけで終わらせない。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  N["選定が必要な論点"] --> C["候補を最大3つに絞る"]
+  C --> T["比較表<br/>(評価軸で採点)"]
+  T --> R["推奨を1つ決定"]
+  R --> X["受け入れるデメリットを明記"]
+  X --> ADR["docs/03_infra/adr-NNN-*.md"]
+      </pre>
+      <figcaption>図: ADR作成の流れ。デメリットを「受け入れた」と明文化するのが肝。</figcaption>
+    </figure>
+
+    <h3 id="s-3">比較表の例</h3>
+    <table>
+      <tr><th>評価軸</th><th>Neon (推奨)</th><th>Supabase</th><th>自前PostgreSQL</th></tr>
+      <tr><td>運用負荷</td><td>低（マネージド）</td><td>低</td><td>高</td></tr>
+      <tr><td>無料枠後 月額</td><td>$19〜</td><td>$25〜</td><td>VPS $10〜+運用工数</td></tr>
+      <tr><td>ブランチDB</td><td>◎ ネイティブ</td><td>△</td><td>×</td></tr>
+      <tr><td>AI生成の相性</td><td>標準的なPostgres</td><td>独自RLS/SDK知識が必要</td><td>標準的</td></tr>
+    </table>
+
+    <h2 id="s-4">言語・フレームワークのデフォルト</h2>
+    <table>
+      <tr><th>用途</th><th>デフォルト</th><th>理由</th></tr>
+      <tr><td>Webフルスタック</td><td>TypeScript + Next.js</td><td>型がフロント/バックを貫通、情報量最大</td></tr>
+      <tr><td>API単体</td><td>Hono または FastAPI</td><td>軽量・型安全・ドキュメント自動生成</td></tr>
+      <tr><td>CLI</td><td>Python (uv)</td><td>依存解決が速く再現性が高い</td></tr>
+      <tr><td>並行処理</td><td>Go</td><td>並行モデルが単純で堅牢</td></tr>
+    </table>
+
+    <h2 id="s-5">環境は3層、差分は環境変数のみ</h2>
+    <p><strong>local / preview / production の3層</strong>をデフォルトとし、<strong>設定差分は環境変数のみ</strong>で吸収する。コードやインフラ定義を環境ごとに分岐させない（分岐は事故の温床）。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  Dev["👩‍💻 local<br/>Docker Compose"] -->|push| PR["🔀 Pull Request"]
+  PR --> Prev["🔎 preview<br/>PRごと自動デプロイ"]
+  Prev -->|スモークテスト + 承認| Prod["🚀 production"]
+      </pre>
+      <figcaption>図: 3層環境。コードは同一、差分は環境変数だけで吸収する。</figcaption>
+    </figure>
+
+    <h2 id="s-6">秘密情報をコミットしない</h2>
+    <table>
+      <tr><th>ファイル</th><th>内容</th><th>git</th></tr>
+      <tr><td><code>.env.example</code></td><td>キー名のみ（<code>DATABASE_URL=</code>）</td><td>コミットする</td></tr>
+      <tr><td><code>.env</code></td><td>実際の値</td><td><strong>gitignore</strong></td></tr>
+      <tr><td>本番の値</td><td>実際の値</td><td>プラットフォームのSecret管理</td></tr>
+    </table>
+    <figure class="hb-snippet">
+      <div class="hb-fname">.env.example（コミットする・キー名のみ）</div>
+<pre><span class="hb-c"># DB接続（実値は .env / プラットフォームのSecret）</span>
+DATABASE_URL=
+<span class="hb-c"># 外部API</span>
+STRIPE_SECRET_KEY=
+<span class="hb-c"># アプリ設定</span>
+NODE_ENV=development
+PORT=3000</pre>
+      <div class="hb-cap">図: 値は空。実値の <code>.env</code> は gitignore し、<strong>絶対にコミットしない</strong>。</div>
+    </figure>
+    <p>ローカルのミドルウェア（DB等）は <code>compose.yaml</code> で起動する。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">compose.yaml</div>
+<pre>services:
+  db:
+    image: postgres:16
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_PASSWORD: dev        <span class="hb-c"># ローカル専用のダミー値</span>
+    volumes: ["db-data:/var/lib/postgresql/data"]
+volumes:
+  db-data:</pre>
+      <div class="hb-cap">図: <code>docker compose up -d</code> でDB起動。アプリ本体はホストで動かす。</div>
+    </figure>
+
+    <h2 id="s-7">インフラの方針</h2>
+    <ul>
+      <li><strong>IaC化が理想</strong>（Terraform 等）。手動構築の場合も再現手順を必ず文書化する。</li>
+      <li>マネージド優先でコスト・運用負荷を下げる（Vercel + Neon / Upstash / Supabase 等）。</li>
+      <li><strong>Vercel利用時</strong>: Fluid Compute をデフォルト。DBは Marketplace（Neon / Upstash）か Supabase。</li>
+      <li><strong>Supabase利用時</strong>: RLS を有効化し、アプリ側認可だけに依存しない（多層防御）。</li>
+      <li>コストは<strong>無料枠終了後の月額</strong>を併記し、予算アラートを設定する（従量課金は関数実行・egressで跳ねやすい）。</li>
+    </ul>
+
+    <h2 id="s-8">完了条件（チェックリスト）</h2>
+    <ul class="hb-chk">
+      <li>主要な選定論点ごとにADR（比較表・推奨1つ・受け入れたデメリット）がある</li>
+      <li>候補が3つ以内に絞られている</li>
+      <li>local / preview / production の3層が定義され、差分が環境変数のみ</li>
+      <li><code>.env.example</code> がコミットされ、実値はコミットされていない</li>
+      <li>IaC または再現手順が文書化されている / STATUS.md 更新済み</li>
+    </ul>
+
+    <div class="hb-callout hb-gotcha"><b>落とし穴:</b> AIの知識にはカットオフがある。新しいFW・SDKでは古い書き方や廃止APIを提案しうる。新しめの技術は公式ドキュメント/移行ガイドを一次情報として併読させ、バージョンまで指定する。また生成したデプロイ設定に実値の秘密が直書きされることがある — シークレットスキャナをCIに入れて機械検出する。</div>
+</div>

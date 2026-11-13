@@ -1,0 +1,40 @@
+<!--meta {"title": "テスト・インフラ", "desc": "Docker・デプロイ。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-glossary-infra">テスト・インフラ</h1>
+      <p class="lead">Docker・デプロイ。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>testcontainers・モック / スタブの使い分けを実装前に確認する</li>
+<li>構造化ログと OpenTelemetry で観測性を先に決める</li>
+<li>Draft PR・機能フラグ・rollback でリリースを安全に回す</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-glossary.html">↑ 章トップ</a> <a href="guide-glossary-quality.html">← 品質・運用</a> <a href="guide-glossary-docs.html">ドキュメント →</a></p>
+</aside>
+<h3 id="test-infra"><a class="toclink" href="#test-infra">テスト・インフラ</a></h3>
+<h4 id="testcontainers"><a class="toclink" href="#testcontainers">testcontainers</a></h4>
+<p>テスト時に Docker で本物の DB 等を起動するライブラリ（<a href="https://testcontainers.com/">testcontainers.com</a>）。</p>
+<h4 id="mock-stub-fixture"><a class="toclink" href="#mock-stub-fixture">モック / スタブ / フィクスチャ</a></h4>
+<p>Mock = 呼び出し検証可能。Stub = 固定戻り値。Fixture = 前提条件の整備。</p>
+<h4 id="structured-logging"><a class="toclink" href="#structured-logging">構造化ログ (Structured Logging)</a></h4>
+<p>JSON 等の機械可読形式でログ出力。検索・集約しやすい。</p>
+<h4 id="opentelemetry"><a class="toclink" href="#opentelemetry">OpenTelemetry</a></h4>
+<p>分散トレース・メトリクス・ログのオープン標準（<a href="https://opentelemetry.io/">opentelemetry.io</a>）。</p>
+<h3 id="release-infra"><a class="toclink" href="#release-infra">リリース・運用基盤</a></h3>
+<h4 id="draft-pr"><a class="toclink" href="#draft-pr">下書き PR（Draft PR）</a></h4>
+<p>レビュー前の PR。早期に CI を回し、完成後 Ready for review に。</p>
+<h4 id="feature-flag"><a class="toclink" href="#feature-flag">機能フラグ (Feature Flag)</a></h4>
+<p>本番で機能 ON/OFF を動的切替。段階リリース・緊急 OFF に使う。</p>
+<h4 id="forward-rollback"><a class="toclink" href="#forward-rollback">マイグレーション (forward / rollback)</a></h4>
+<p>forward = 変更適用。rollback = 巻き戻し。両方向を staging で確認してから本番。</p>
+<h4 id="ci-green"><a class="toclink" href="#ci-green">CI green</a></h4>
+<p>CI の全チェック（ビルド・テスト・lint 等）が成功している状態。</p>
+<hr />
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-glossary-quality.html">← 品質・運用</a><a class="flow-pager__next" href="guide-glossary-docs.html">ドキュメント →</a></nav>" aria-label="前後の章"><a href="guide-design.html">← 設計</a><a class="flow-pager__next" href="guide-implement.html">実装 →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><span class="muted flow-pager__next">末尾 →</span></nav>
+  </article>
+</div>

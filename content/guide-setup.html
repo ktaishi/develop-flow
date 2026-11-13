@@ -1,0 +1,412 @@
+<!--meta {"title": "セットアップ", "desc": "初日5ステップ・3段フロー・AIツール。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-setup">セットアップ</h1>
+      <p class="lead">初日5ステップ・3段フロー・AIツール。</p>
+    </header>
+    <div class="flow-body">
+
+
+<h2 id="0-beginner">初めての人 — 5ステップで始める</h2>
+<ol class="steps">
+<li>
+  <strong>Step 1 — ツールを1本</strong>
+  <p><a href="guide-setup.html#2-ai-selection">Cursor / Claude Code / Codex</a> から1本。迷ったら Cursor。</p>
+</li>
+<li>
+  <strong>Step 2 — 3段フロー</strong>
+  <p><a href="#0-quick">たたき台 → ルール → プラン</a> の順。AI に仕様を推測させない。</p>
+</li>
+<li>
+  <strong>Step 3 — ルールを置く</strong>
+  <p><code>.cursor/rules/</code> または <code>CLAUDE.md</code>。<a href="flow-rules-samples.html">サンプル</a> をコピーし、テストコマンドと git 方針を書き換える。</p>
+</li>
+<li>
+  <strong>Step 4 — 小タスクで試す</strong>
+  <p>1日以内の修正1件で Plan → 実装 → 検証まで。</p>
+</li>
+<li>
+  <strong>Step 5 — 困ったら章を開く</strong>
+  <ul>
+    <li>PRD 合意 → <a href="guide-workflow.html#0-5-requirements">要件定義</a></li>
+    <li>新規リポ → <a href="guide-rules-phase1.html#phase-1">規約整備</a></li>
+    <li>大きい機能 → <a href="guide-workflow.html#3-phase-map">Phase 地図</a></li>
+  </ul>
+</li>
+</ol>
+
+<h3 id="0-quick"><a class="toclink" href="#0-quick">3段フロー（通常はこれだけ）</a></h3>
+<div class="mermaid">
+flowchart LR
+    B[1.たたき台] --> R[2.ルール]
+    R --> P[3.プランとADR]
+    P --> L[実装ループ]
+</div>
+<ol class="steps">
+<li>
+  <strong>たたき台</strong>
+  <ul>
+    <li>何を・なぜ・やらないこと（Won't）・制約を<strong>人間が書く</strong></li>
+    <li>AI に「だいたいこんな感じ」と推測させない</li>
+  </ul>
+  <blockquote class="cite-example">
+    <p><strong>Issue 1段落（汎用）</strong></p>
+    <p>注文完了時に購入者へ確認メールを送る。</p>
+    <ul>
+      <li><strong>Must</strong>: 既存のメール送信機能を使い、非同期（キュー）で送る。</li>
+      <li><strong>Won't</strong>: テンプレエディタ UI・HTML メールの新規デザインは作らない。</li>
+      <li><strong>制約</strong>: プロジェクトのテストコマンドで検証、本番デプロイは別 PR。</li>
+    </ul>
+  </blockquote>
+<!-- domain-scenarios-pruned-v1 -->
+</li>
+<li>
+  <strong>ルール</strong>
+  <p>たたき台から、AI が毎回守るルール案を作る。</p>
+  <ul>
+    <li>禁止事項・参照パス・検証手順を明文化する</li>
+    <li>配置例
+      <ul>
+        <li>Cursor: <code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code></li>
+        <li>Claude Code: <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code></li>
+        <li>Codex: <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code></li>
+      </ul>
+    </li>
+    <li>テンプレの丸写しは避ける</li>
+  </ul>
+</li>
+<li>
+  <strong>プランと ADR</strong>
+  <ul>
+    <li>タスク分解・リスク・完了条件を Plan に書く</li>
+    <li>設計の「なぜ」は <code>docs/adr/NNNN-タイトル.md</code> に1段落で残す（<a href="guide-repo-docs-1.html#11-7-adr">11.7 ADR</a> のテンプレに Context / Decision / Consequences を書く）</li>
+    <li>Cursor: Plan モード（<kbd>Shift</kbd>+<kbd>Tab</kbd>）→「Save to workspace」→ <code>.cursor/plans/</code></li>
+    <li>実装依頼時は <strong>ADR + Plan を先頭</strong>で読み込ませる</li>
+  </ul>
+  <blockquote class="cite-example">
+    <p><strong>tasks/todo.md</strong></p>
+    <ul>
+      <li><code>- [ ] メールテンプレ追加</code></li>
+      <li><code>- [ ] 送信ジョブ実装</code></li>
+      <li><code>- [ ] 結合テスト</code></li>
+    </ul>
+    <p><strong>Done when</strong>: <code>rspec spec/mailers/order_mailer_spec.rb</code> が green。</p>
+    <p><strong>リスク</strong>: 既存 Mailer との二重送信 → 送信前に idempotency キーを確認。</p>
+    <p><strong>ADR</strong>: ジョブキューに載せる理由を <code>docs/adr/0012-mail-via-queue.md</code> に1段落（<a href="guide-repo-docs-2.html#docsadrtemplatemd">テンプレ</a>参照）。</p>
+  </blockquote>
+</li>
+</ol>
+
+<h4 id="0-faq"><a class="toclink" href="#0-faq">よくあるつまずき</a></h4>
+<ul>
+<li><strong>Plan モードが見つからない</strong> — Cursor の Composer で <kbd>Shift</kbd>+<kbd>Tab</kbd> を切り替え。<a href="guide-rules-tools-intro.html#17-rules-skills">ルール/プラン</a> 参照。</li>
+<li><strong>ルールが効かない</strong> — ファイルパスと <code>alwaysApply</code> を確認。<a href="guide-rules-phase1.html#phase-1">Phase 1</a> · <a href="flow-rules-samples.html">サンプル</a>。</li>
+<li><strong>用語がわからない</strong> — <a href="guide-glossary-beginner.html#beginner-top10">用語集（初見10語）</a> から。</li>
+</ul>
+
+<h4 id="0-practices"><a class="toclink" href="#0-practices">ベストプラクティス早見</a></h4>
+<ul>
+<li><a href="guide-rules-tools-intro.html#17-rules-skills">Rules / Skills / Plan</a> — いつ Plan モードか、Skills をいつ足すか</li>
+<li><a href="guide-ops-orchestration.html#18-orchestration">エージェント運用</a> — 会話の管理・検証・別 AI への任せ方</li>
+<li><a href="guide-setup.html#2-ai-selection">AIツール</a> — Cursor / Claude Code / Codex の操作</li>
+</ul>
+
+<details class="section-fold" id="0-detail" open>
+<summary>詳細 — 完了条件 / 実装ループ / Phase 章</summary>
+
+<h4 id="0-done"><a class="toclink" href="#0-done">各段の完了条件</a></h4>
+<table>
+<thead><tr><th>段</th><th>Done の目安</th><th>置き場所の例</th></tr></thead>
+<tbody>
+<tr><td>1 たたき台</td><td>ゴール1文、Must / やらないこと（Won't）、影響範囲が書いてある</td><td><code>docs/&lt;feature&gt;/00_brief.md</code> または Issue</td></tr>
+<tr><td>2 ルール</td><td>推測禁止・既存パターン参照・危険操作・git 方針が入っている</td><td><code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code>、<code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code>、<code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code></td></tr>
+<tr><td>3 プラン</td><td>未決なし、1〜3日粒度のタスク、完了条件あり、ADR に「なぜ」</td><td><code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code>、<code>.cursor/plans/</code>、<code>docs/adr/</code></td></tr>
+</tbody>
+</table>
+
+<h4 id="0-loop"><a class="toclink" href="#0-loop">実装ループ（3段のあと）</a></h4>
+<div class="mermaid">
+flowchart LR
+    I[実装] --> V[検証]
+    V --> PR[PR]
+    PR --> U[ルール・ADR更新]
+</div>
+<ul>
+<li>実装 — セッション冒頭でルール + ADR + 関連 <code>docs/</code> を渡す（<a href="guide-ops-orchestration.html#18-orchestration">エージェント運用</a>）。</li>
+<li>検証 — テスト・lint・CI・手動確認のどれかで「動いた」と示す。</li>
+<li>PR — <a href="guide-ship.html#14-pr-check">PR前チェック</a> → レビュー（<a href="guide-ship.html#phase-7-pr">Phase 7</a>）。</li>
+<li>更新 — 指摘は <code><a href="flow-rules-samples.html#sample-tasks-lessons-md">tasks/lessons.md</a></code>、再発防止はルール / ADR へ。</li>
+</ul>
+
+<h4 id="0-escalate"><a class="toclink" href="#0-escalate">いつ詳細（Phase）を開くか</a></h4>
+<table>
+<thead><tr><th>こんな状況</th><th>開く章</th></tr></thead>
+<tbody>
+<tr><td>中規模以上の新機能。PdM / 関係者（SH）と合意が必要</td><td><a href="guide-workflow.html#0-5-requirements">要件定義</a>（PRD）</td></tr>
+<tr><td>小規模タスク。Issue 1枚でスコープ固定</td><td><a href="guide-design.html#phase-2-plan">Phase 2 Plan</a></td></tr>
+<tr><td>ルールがまだない / 古い</td><td><a href="guide-rules-phase1.html#phase-1">Phase 1</a>、<a href="guide-rules-compare.html#rules-plan">ルール/プラン</a></td></tr>
+<tr><td>DB・API・複数レイヤの設計</td><td><a href="guide-design.html#phase-3-design">Phase 3</a>（小規模は ADR + brief で可）</td></tr>
+<tr><td>ドメインが複雑・回帰リスク大</td><td><a href="guide-implement.html#phase-4-core">Phase 4 コア実装</a></td></tr>
+<tr><td>Docker / CI / インフラ</td><td><a href="guide-repo-directory.html#11-1-directory">リポジトリ</a>（折りたたみ内）</td></tr>
+<tr><td>時系列で全体像を追いたい</td><td><a href="guide-workflow.html#13-new-task">新規タスク</a> → <a href="guide-workflow.html#3-phase-map">全体フロー</a></td></tr>
+<tr><td>実装〜PR の手順</td><td><a href="guide-implement.html#phase-4-core">Phase 4–4</a>、<a href="guide-implement.html#phase-6-crosscut">Phase 6</a>、<a href="guide-ship.html#phase-7-pr">Phase 7</a></td></tr>
+</tbody>
+</table>
+</details>
+<hr />
+
+
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-setup.html#2-ai-selection">AIツール</a></li>
+  <li><a href="guide-glossary.html">用語集</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+<hr />
+<h3 id="2-ai-selection"><a class="toclink" href="#2-ai-selection">AIツール選定</a></h3>
+<p class="wiki-lead">各ツールの「向いている人 / 向いていない人」は比較表のあとに記載。</p>
+<p>メインで使うツールは 1 本に絞る。他は補助です。</p>
+<p>選ぶときは次の3点を見ます。</p>
+<ul>
+<li>エージェント能力（自律実行・並列・長時間）</li>
+<li>ルール制御（rules / Skills / Hooks）</li>
+<li>履歴の残り方（transcript・エクスポート）</li>
+</ul>
+
+<h4 id="2-ai-compare"><a class="toclink" href="#2-ai-compare">主要ツール比較</a></h4>
+<p>列ごとに比べて、自チームの作業に近い列をメイン候補にします。</p>
+<table>
+<thead>
+<tr><th></th><th>Cursor</th><th>Claude Code</th><th>OpenAI Codex</th><th>GitHub Copilot</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td>形態</td>
+  <td>AI IDE（VSCode ベース）</td>
+  <td>CLI・VS Code 拡張・JetBrains・Desktop アプリ・Web</td>
+  <td>CLI / IDE / クラウド</td>
+  <td>IDE 拡張 + GitHub ネイティブ</td>
+</tr>
+<tr>
+  <td>エージェント</td>
+  <td>Agent / Ask / Plan / Debug。Background・Cloud Agent</td>
+  <td>長時間自律 / MCP / 別の AI 担当</td>
+  <td>クラウドサンドボックス / GitHub PR 連携</td>
+  <td>Copilot Workspace / Cloud Agent</td>
+</tr>
+<tr>
+  <td>マルチファイル編集</td>
+  <td>Composer（<kbd>Cmd/Ctrl+I</kbd>）・Agent・worktree 並列</td>
+  <td>ファイル操作ツールで自律</td>
+  <td>サンドボックス内で並列編集</td>
+  <td>Workspace でリポ全体を計画</td>
+</tr>
+<tr>
+  <td>計画</td>
+  <td>Plan モード（<kbd>Shift</kbd>+<kbd>Tab</kbd>）→ <code>.cursor/plans/</code></td>
+  <td>チャット + <code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code></td>
+  <td>タスク記述 + <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code></td>
+  <td>Issue / Workspace 計画</td>
+</tr>
+<tr>
+  <td>ルール制御</td>
+  <td><code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/*.mdc</a></code> + <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> + <code>.cursor/skills/</code> · <code>.agents/skills/</code></td>
+  <td><code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> + Hooks + <code>.claude/skills/</code> + <code>.claude/agents/</code></td>
+  <td><code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> + <code>.agents/skills/</code></td>
+  <td><code>.github/copilot-instructions.md</code></td>
+</tr>
+<tr>
+  <td>履歴</td>
+  <td>ワークスペース自動保存 / エクスポート可</td>
+  <td>ローカル JSONL transcript</td>
+  <td><code>~/.codex/</code> セッション履歴</td>
+  <td>IDE 内チャット（エクスポート弱）</td>
+</tr>
+<tr>
+  <td>得意な場面</td>
+  <td>IDE 内日常開発、UI テスト、大規模リファクタ</td>
+  <td>複雑推論、長時間タスク、CI 連携</td>
+  <td>反復ワークフロー、GitHub PR 連携</td>
+  <td>GitHub エコシステム内の補助</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="2-ai-workflow"><a class="toclink" href="#2-ai-workflow">ワークフロー別の使い分け</a></h4>
+<p>作業内容から行を探し、「推奨ツール」列でメインを選びます。</p>
+<table>
+<thead><tr><th>作業</th><th>推奨ツール</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td>複雑な機能・設計あり</td><td>Cursor Plan → Agent</td><td>Plan で計画・承認 → Build。<code>.cursor/plans/</code> に保存</td></tr>
+<tr><td>日常の実装・デバッグ</td><td>Cursor Agent</td><td>diff レビュー → apply。ブラウザ・ターミナルで検証</td></tr>
+<tr><td>大規模リファクタ</td><td>Cursor 並列 Agent / Background</td><td>worktree 分離またはバックグラウンドで PR 化</td></tr>
+<tr><td>設計相談・仕様の壁打ち</td><td>Cursor Ask / Claude.ai</td><td>コードを変えない。たたき台・ADR の下書き</td></tr>
+<tr><td>長時間自律（CI 修正・移行等）</td><td>Claude Code</td><td>ターミナルで長時間自律。Hooks でガードレール</td></tr>
+<tr><td>ルーチン修正の並列処理</td><td>Codex Cloud / Cursor Background</td><td>依存更新・lint 修正等を複数 PR 化</td></tr>
+<tr><td>Tab 補完のみ</td><td>（どのツールでも副次的）</td><td>単独利用は避ける。履歴が残らずレビュー不能</td></tr>
+</tbody>
+</table>
+<p class="wiki-lead">スタック別の具体例は <a href="memo-stack.html">開発スタック（memo）</a> を参照。</p>
+<aside class="info-panel info-panel--prereq" role="complementary" aria-label="各ツールの手順">
+<h4 class="info-panel__title">セットアップ・作業手順の正本</h4>
+<div class="info-panel__body"><p>Cursor / Claude Code / Codex の<strong>初期設定・ワークフロー詳細</strong>は <a href="guide-rules-tools-intro.html#17-three-tools">ルール/プラン — 3ツール早見</a> に集約しています。本章は<strong>選定と比較</strong>に絞ります。</p></div>
+</aside>
+
+<h4 id="2-ai-visual-debug"><a class="toclink" href="#2-ai-visual-debug">ビジュアルデバッグ · Cloud Agent（2026）</a></h4>
+<p>出典: <a href="https://cursor.com/ja/blog/agent-best-practices">Cursor 公式 BP</a>。</p>
+<ul>
+<li><strong>画像</strong> — エラー UI のスクショを Agent に渡す。言語説明より速いことが多い</li>
+<li><strong>Browser サイドバー</strong> — デザインとコーディングを並行（モックと実装の照合）</li>
+<li><strong>Figma MCP</strong> — デザインファイルから実装（<a href="memo-ai-reference-tools.html">Tool Use 参考</a>）</li>
+<li><strong>Cloud Agent</strong> — <a href="https://cursor.com/agents">cursor.com/agents</a> · バックグラウンド PR · 席を外している間のリファクタ / テスト生成</li>
+</ul>
+<h4 id="2-ai-setup"><a class="toclink" href="#2-ai-setup">AIツール初期セットアップ</a></h4>
+<ul>
+<li>運用の芯を先に読む: <a href="guide-rules-compare.html#rules-plan">ルール/プラン</a> と <a href="guide-ops-orchestration.html#18-orchestration">エージェント運用</a> を Phase 前に通す</li>
+<li>メインで使うツールを先に決める: IDE 中心 → Cursor。CLI 中心 → Claude Code。GitHub 連携 → Codex</li>
+<li>ルールと個人設定を分ける: プロジェクト固有はリポ内（<code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> / <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> / <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code>）。個人共通はグローバル scope。重要判断は <code>docs/</code> または Obsidian 作業履歴に残す（<a href="guide-repo-docs-1.html#11-6-docs-z-docs">リポジトリ — docs / 作業履歴</a>）（<a href="guide-rules-phase1.html#phase-1">Phase 1</a>）</li>
+<li>履歴の残り方を初日に確認: transcript 保存場所・エクスポート可否・共有方法（<a href="guide-ops-history.html#15-history">17 履歴</a>）</li>
+<li>Claude Code メインなら: <a href="guide-rules-phase1.html#claude-setup-12">セットアップ 12 項</a> を Phase 1 前に通す</li>
+<li>利用中クラウドの CLI をホストに入れ認証済みに: <a href="guide-repo-docker-1.html#11-3-host-clis">11.3 ホスト CLI</a>（<code>gh</code> / <code>vercel</code> / <code>aws</code> 等）</li>
+</ul>
+<!-- guide-setup-general-safety:start -->
+<h3 id="1-general-ai-safety"><a class="toclink" href="#1-general-ai-safety">一般業務の AI 安全運用</a></h3>
+<p>開発の PR チェックとは別レーン。AI は<strong>下書き役</strong>として使い、外部共有前に人間が最終確認する。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>確認項目</th><th>やること</th><th>避けること</th></tr></thead>
+<tbody>
+<tr><td>入力</td><td>公開可能な範囲だけ渡す</td><td>契約書・個人情報・未公開数値の無断アップロード</td></tr>
+<tr><td>出典</td><td>主張ごとに URL または社内文書名を残す</td><td>出典なしの断定</td></tr>
+<tr><td>検証</td><td>一次情報・社内正本と突合</td><td>AI 出力のコピペ公開</td></tr>
+<tr><td>承認</td><td>関係者レビュー後に共有</td><td>AI 下書きのそのまま送付</td></tr>
+<tr><td>学習利用</td><td>各ツールの opt-out / Enterprise 設定を確認</td><td>機密案件を consumer プランへ</td></tr>
+</tbody>
+</table>
+</div>
+<p>ツール選定は <a href="memo-ai-tools.html#21-general-work-tools">一般業務ツール早見</a>。開発業務へ移るときは <a href="guide-rules.html#17-general-work-bridge">開発向け Rules / Skills</a> へ。</p>
+<!-- guide-setup-general-safety:end -->
+<h4 id="2-ai-data"><a class="toclink" href="#2-ai-data">データ利用・オプトアウト確認</a></h4>
+<blockquote>
+<p>NOTE: AI ツールは製品・プラン・設定により、プロンプト・コード断片・telemetry を外部送信することがある。</p>
+<p>実案件前に次を確認する。</p>
+<ul>
+<li>学習利用の opt-out</li>
+<li>telemetry の無効化</li>
+<li>保存期間・共有リンク</li>
+<li>組織ポリシー準拠</li>
+</ul>
+<p>機密案件では Privacy Mode / Enterprise 契約 / 社内許可済み経路のみ、を先に確定する。</p>
+</blockquote>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-saas">
+<h4 class="info-panel__title" id="scenario-saas">医療データを扱う SaaS</h4>
+<div class="info-panel__body"><p>医療データを扱う SaaS。セキュリティ担当 C が利用可否を判断。</p>
+<ul>
+<li>確認: Cursor Privacy Mode 有効、Enterprise 契約、telemetry off</li>
+<li>禁止: 本番 DB 接続文字列をプロンプトに貼らない</li>
+<li>記録: 判断を <code>docs/security/ai-tool-policy.md</code> に残す</li>
+</ul></div>
+</aside>
+
+<h4 id="2-ai-mcp"><a class="toclink" href="#2-ai-mcp">MCP 連携（補助）</a></h4>
+<p>ブラウザ・Obsidian・DB 等の外部データは MCP（Model Context Protocol）で接続します。Claude Code / Cursor 両方で使えます。</p>
+<p>製品別の例: <a href="memo-ai-tools.html#21-claudecode">Claude Code 補足</a>・<a href="memo-ai-tools.html#21-aitools">AI コーディングツール</a>。</p>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-b-obsidian-mcp">
+<h4 class="info-panel__title" id="scenario-b-obsidian-mcp">開発者 B が Obsidian MCP で作業ログを参照しながら実装</h4>
+<div class="info-panel__body"><p>開発者 B が Obsidian MCP で作業ログを参照しながら実装。</p>
+<ul>
+<li>接続: Obsidian MCP → Vault <code>03_Operations/history/</code></li>
+<li>用途: 過去の障害対応ログを AI が検索 → 同じミスを回避</li>
+<li>記録: セッション結果を Obsidian <code>03_Operations/history/YYYY-MM/</code> に追記（詳細: <a href="guide-repo-docs-1.html#11-6-docs-z-docs">リポジトリ — docs / 作業履歴</a>）</li>
+</ul></div>
+</aside>
+
+<hr />
+
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-setup.html">クイックスタート</a></li>
+  <li><a href="guide-rules-compare.html#17-compare">ルール/プラン</a></li>
+  <li><a href="flow-rules-samples.html">ルールサンプル</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+<hr />
+<span id="1-policy" class="redirect-anchor" aria-hidden="true"></span>
+<p>フロー・ルール・運用の記録は次の章にまとまっています。</p>
+<ul>
+<li><a href="guide-setup.html#0-quick">0章 3段フロー</a> — 日常の進め方</li>
+<li><a href="guide-rules-compare.html#rules-plan">3章</a> — ルールと Plan</li>
+<li><a href="guide-ops-orchestration.html#18-orchestration">4章</a> — エージェント運用</li>
+</ul>
+<p>仕様は <code>docs/</code>。作業履歴は Obsidian Vault 正本（<a href="guide-repo-docs-1.html#11-6-docs-z-docs">リポジトリ — docs / 作業履歴</a>）。</p>
+<h4 id="setup-risks"><a class="toclink" href="#setup-risks">リスクと対策</a></h4>
+<p>下の表は「何が起きるか → どう防ぐか」の対応表です。当てはまる行から確認してください。</p>
+<table>
+<thead>
+<tr>
+<th>リスク</th>
+<th>対策</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AIのドリフト（長セッションで制約を忘れる）</td>
+<td>Cursor: <code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> で <code>[alwaysApply](#alwaysapply)</code> な制約。Claude Code: <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> + Skills。Codex: <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> + <code>.agents/skills/</code>（Phase 1 参照）</td>
+</tr>
+<tr>
+<td>ドメインルール違反の実装</td>
+<td>ルール + テストの2段</td>
+</tr>
+<tr>
+<td>履歴ノイズで読めない</td>
+<td>1チャット=1タスク。フェーズ宣言。サマリ生成</td>
+</tr>
+<tr>
+<td>引き継ぎコスト高</td>
+<td><code>docs/</code> と PR に判断根拠を残す</td>
+</tr>
+<tr>
+<td>既存実装との不整合</td>
+<td>AIに既存パターンを必ず参照させる</td>
+</tr>
+<tr>
+<td>機密情報の流出</td>
+<td>プロジェクトポリシーでツール・モデルを選定</td>
+</tr>
+<tr>
+<td>実装の方向性ミス</td>
+<td>follow-up で粘らず 取り消す → Plan 具体化 → 再実行。差分を監視して早めに Stop</td>
+</tr>
+<tr>
+<td>コンテキスト汚染（長セッション）</td>
+<td>機能完了ごとに新規チャット。<code>@Past Chats</code> で引き継ぎ。調査は別の AI 担当（<a href="guide-ops-orchestration.html#18-context">4. 会話の文脈管理</a>）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+    <details class="archive-fold">
+<summary>2026年6月時点の X 上の話題（記録）</summary>
+<p class="archive-fold__note">当時の投稿の要点を記録として残しています。現在の状況は公式の Docs / changelog と <a href="trends-2026.html">2026年11月のトレンド</a> を確認してください。</p>
+<table>
+<thead><tr><th>出典</th><th>要点</th><th>この章</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/bcherny/status/2007179832300581177">@bcherny セットアップ</a></td><td>並列セッション · 共有 <code>CLAUDE.md</code> を git 管理 · 検証手段が品質を 2–3x 決める</td><td><a href="#2-ai-selection">ツール選定</a> · <a href="#0-quick">3段フロー</a></td></tr>
+<tr><td><a href="https://x.com/leerob/status/1929727742821413331">@leerob</a></td><td>半年前と比べエージェント実用性が跳ね上がった。高速テスト・型・lint で<strong>自己検証ループ</strong></td><td><a href="#0-quick">着手</a></td></tr>
+<tr><td><a href="https://x.com/NainsiDwiv50980/status/2056021997659017452">@NainsiDwiv50980</a></td><td>「賢い ChatGPT」扱いが罠 — ループ・Skills・構造化ワークフローで初めて本気が出る</td><td><a href="guide-rules-skills-1.html#17-skills-guide">Skills</a></td></tr>
+<tr><td><a href="https://x.com/weswinder/status/2063700289710964906">@weswinder</a></td><td>トークン無制限でない限り、テスト・確認に<strong>人間はループ内</strong>に要る</td><td><a href="#1-general-ai-safety">安全運用</a></td></tr>
+</tbody>
+</table>
+<p>横断: <a href="guide-rules-bp.html#17-bp-x">ルール章 X 要約</a> · <a href="memo-ai-tools.html#21-loop-engineering">Loop 早見</a></p>
+</details>
+</div><nav class="flow-pager" aria-label="前後の章"><a href="flow-rules-samples.html">← 設定サンプル</a><a class="flow-pager__next" href="guide-workflow.html">全体像 →</a></nav>
+  </article>
+</div>

@@ -1,0 +1,169 @@
+<!--meta {"title": "AIとの協働の実務", "desc": "コンテキスト設計・ルール(CLAUDE.md)・レビュー運用・タスク分割・どこまでAIに任せるか。AIエージェントと実際に協働するための実務。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Chapter 01</div>
+    <h1>🤝 AIとの協働の実務</h1>
+    <p class="hb-lead">「何を作るか」の前に「AIとどう作るか」。コンテキスト設計・ルール・タスク分割・レビュー運用・委譲の境界 — AI開発の生産性を決める中核の実務。</p>
+    <img class="hb-hero-img" src="/assets/handbook/ai-collaboration.svg" alt="AIとの協働のイメージ">
+
+    <h2 id="s-1">なぜ「協働の型」が成果を決めるのか</h2>
+    <p><a href="principles.html">00 全体原則</a>で述べた4つの土台を、日々の作業に落とすのがこの章。AIエージェントは強力だが、<strong>渡すコンテキスト・分割の粒度・レビューの仕組み</strong>が悪いと、速いだけで信用できない出力を量産する。逆にこの3点を整えるだけで、同じモデルでも成果物の質と速度が大きく変わる。</p>
+
+    <h2 id="s-2">理想形 — 薄いプロンプト / 厚いアーティファクト / 薄いスキル</h2>
+    <p class="hb-sub">どこに労力を注ぐか。この配分が協働の質をほぼ決める。</p>
+    <div class="hb-grid hb-cols-3">
+      <div class="hb-card"><h4>🪶 薄いプロンプト</h4><strong>毎回の指示は短くていい。</strong>プロンプトは揮発性 — 打った瞬間から消えていく。そこに長文を書き込むのは、残らないものへの投資。「今回やること」だけに絞る。</div>
+      <div class="hb-card"><h4>🧱 厚いアーティファクト＋コンテキスト</h4><strong>労力はリポジトリに残るものへ。</strong>コード・テスト・ルール・ADR・設計書は永続し、次回以降も効き続ける。厚くするならここ。</div>
+      <div class="hb-card"><h4>🪶 薄いスキル</h4><strong>スキル/ルールは1作業単位に絞る。</strong>肥大化させない。薄いからこそ組み合わせられ、必要な時だけ正確に発火する。</div>
+    </div>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  P["🪶 薄いプロンプト<br/>(揮発性・毎回消える)"] --> W["作業"]
+  S["🪶 薄いスキル<br/>(1作業単位・組合せ可能)"] --> W
+  A["🧱 厚いアーティファクト＋コンテキスト<br/>(永続・蓄積して効く)"] --> W
+  W --> R["成果物"]
+  R -->|学びを還元| A
+      </pre>
+      <figcaption>図: 薄い2つを支えるのが厚いコンテキスト。学びはプロンプトでなくアーティファクトへ還す。</figcaption>
+    </figure>
+    <p><strong>なぜこの配分か。</strong>同じ努力を注ぐなら、消えるものではなく<strong>蓄積するもの</strong>に置く。プロンプトを厚くすると、その知識はセッションと共に消え、次回また書き直すことになる。同じ内容をルールや設計書に書けば、以後は毎回自動で効く。<strong>プロンプトが厚くなってきたら、それは「アーティファクトに書くべきことがプロンプトに漏れている」サイン</strong>だと考える。</p>
+    <div class="hb-callout hb-tip"><b>運用の指針:</b> 同じ説明を2回プロンプトに書いたら、<strong>3回目を書く前にルールファイルへ移す</strong>。そこから先はプロンプトを薄いまま保てる。</div>
+
+    <h3 id="s-3">具体例: 薄いプロンプトが厚いコンテキストを効かせる</h3>
+    <figure class="hb-io">
+      <div class="hb-seg"><span class="hb-lbl hb-u">プロンプト（薄い一文）</span><pre>requirements.md の FR-01 を実装して。規約は .claude/rules に従う。</pre></div>
+      <div class="hb-seg"><span class="hb-lbl hb-a">AIの出力（コンテキストを解決して実装）</span><pre><span class="hb-c">// 要件(FR-01)とルール(レイヤー分離・論理削除・境界検証)を参照して生成</span>
+export async function listOrders(userId: string) {
+  return db.orders.findMany({
+    where: { userId, deletedAt: null },   <span class="hb-c">// ルール: 論理削除を除外</span>
+    include: { items: true },             <span class="hb-c">// ルール: N+1回避</span>
+  });
+}</pre></div>
+      <div class="hb-cap">図: 指示は一文。要件・規約という「厚いアーティファクト」がコードの正しさを担保する。</div>
+    </figure>
+
+    <h2 id="s-4">1. コンテキスト設計（最重要）</h2>
+    <p>AIの出力品質は、与えたコンテキストの質に比例する。毎回プロンプトに書き直すのではなく、<strong>恒久的な情報はファイルに資産化</strong>してAIが常に参照できるようにする。</p>
+    <div class="hb-grid hb-cols-2">
+      <div class="hb-card"><h4>ルールファイル（CLAUDE.md / .claude/rules）</h4>プロジェクト規約・フェーズ別ルール・禁止事項を置く。AIの「長期記憶」になる。1ファイル=1関心事で分割し肥大化を防ぐ。</div>
+      <div class="hb-card"><h4>ADR・設計書・STATUS</h4>「なぜこの技術か」「今どのフェーズか」を記録。AIが過去の判断を踏襲でき、毎回の説明が不要になる。</div>
+      <div class="hb-card"><h4>良いコンテキストの条件</h4>命令形・理由つき・落とし穴明示・デフォルト提示。AIが既に知る一般知識は書かず、プロジェクト固有に絞る。</div>
+      <div class="hb-card"><h4>渡しすぎない</h4>無関係な情報はノイズ。タスクに必要な範囲へ絞ると精度が上がる。広すぎる文脈は誤誘導を生む。</div>
+    </div>
+
+    <h3 id="s-5">ルールファイルの構成（実例）</h3>
+    <p>ルールは「<strong>司令塔の <code>CLAUDE.md</code></strong>」＋「<strong>フェーズ/関心事ごとに分割した <code>.claude/rules/*.md</code></strong>」の2層で持つ。1ファイルに全部書くと肥大化し、AIが該当箇所だけを参照しづらくなる。下のツリーが推奨配置。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">📁 リポジトリ配置</div>
+<pre>&lt;your-repo&gt;/
+├── CLAUDE.md                  <span class="hb-c">← 司令塔。@import で rules を束ねる</span>
+├── .claude/
+│   └── rules/
+│       ├── 00-common.md       <span class="hb-c">← 全フェーズ共通（日本語/絶対日付/秘密非コミット）</span>
+│       ├── 01-requirements.md
+│       ├── 02-design.md
+│       ├── 03-infra.md
+│       ├── 04-development.md
+│       ├── 05-testing.md
+│       └── 06-deploy.md
+└── docs/                      <span class="hb-c">← 成果物（ルールではなく各フェーズの出力）</span>
+    └── STATUS.md              <span class="hb-c">← 現在フェーズ / 完了条件 / 次アクション</span></pre>
+      <div class="hb-cap">図: ルール（<code>.claude/rules/</code>）と成果物（<code>docs/</code>）は混在させない。</div>
+    </figure>
+
+    <p><strong>司令塔 <code>CLAUDE.md</code></strong> は <code>@相対パス</code> で各ルールを取り込む。フェーズごとに分かれたまま、まとめて読み込める。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">CLAUDE.md</div>
+<pre><span class="hb-k"># &lt;プロジェクト名&gt; — 開発ルール司令塔</span>
+
+要件定義 → 設計 → インフラ → 開発(TDD) → テスト → デプロイ をループして進める。
+
+<span class="hb-k">## ルール（@import で読み込む）</span>
+- @.claude/rules/00-common.md
+- @.claude/rules/01-requirements.md
+- @.claude/rules/04-development.md
+- @.claude/rules/06-deploy.md
+
+<span class="hb-k">## フェーズゲート（厳守）</span>
+- 前フェーズの完了条件を満たす成果物がなければ次へ進まない。
+- 各フェーズ完了時に docs/STATUS.md を更新する。</pre>
+      <div class="hb-cap">図: 司令塔は薄く保ち、詳細は各ルールファイルへ委譲する。</div>
+    </figure>
+
+    <p>各ルールファイルは同じ骨格で書く。<strong>命令形・理由つき・落とし穴・完了条件</strong>を最小限で。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">.claude/rules/04-development.md</div>
+<pre><span class="hb-k"># ルール: 開発（TDD）</span>
+
+<span class="hb-k">## MUST</span>
+- Red-Green-Refactor で実装する。テストなしの実装コミットを作らない。
+- バグ修正は「再現テストを先に書く」ことから始める。
+- 秘密情報・接続文字列のハードコード禁止。必ず環境変数経由。
+
+<span class="hb-k">## Gotchas（落とし穴）</span>
+- 論理削除テーブルは全クエリに WHERE deleted_at IS NULL を付ける
+  <span class="hb-c">（AIは集計・JOINで削除済み行を巻き込みやすい）。</span>
+
+<span class="hb-k">## 完了条件</span>
+- [ ] 対象機能にテストがあり全件グリーン
+- [ ] lint / 型チェックが通る / STATUS.md 更新済み</pre>
+      <div class="hb-cap">図: 1ファイル=1フェーズ。<a href="development.html">05 開発・実装</a> のルール例。</div>
+    </figure>
+
+    <h4>良いルール文 vs 悪いルール文</h4>
+    <table>
+      <tr><th>観点</th><th>❌ 悪い</th><th>✅ 良い</th></tr>
+      <tr><td>命令形</td><td>削除は論理削除が望ましい。</td><td>論理削除（<code>deleted_at</code>）をデフォルトとする。物理削除は理由を明記。</td></tr>
+      <tr><td>理由つき</td><td>図は Mermaid で書くこと。</td><td>図は Mermaid で書く（画像は差分管理できずレビュー不能のため）。</td></tr>
+      <tr><td>検証可能</td><td>要件がしっかり書けたら次へ。</td><td><code>[要確認]</code> が0件かつ status=approved で次へ。</td></tr>
+    </table>
+
+    <div class="hb-callout hb-tip"><b>読み込みの優先順:</b> <code>~/.claude/CLAUDE.md</code>（全プロジェクト共通）→ <code>&lt;repo&gt;/CLAUDE.md</code> + <code>.claude/rules/</code>（リポジトリ固有）→ <code>.claude/settings.local.json</code>（コミットしない個人差分）の順に後勝ちで適用される。プロジェクト固有ルールは必ずリポジトリにコミットしてチームで共有する。</div>
+
+    <h2 id="s-6">2. タスク分割と委譲の境界</h2>
+    <p>大きな依頼を丸投げすると、巨大で検証不能な差分が返る。<strong>検証可能な単位に割り、1単位ずつ回す</strong>。下図はタスクの性質に応じた任せ方の判断。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart TD
+  Q{"タスクの性質は?"}
+  Q -->|"定型・明確・テスト可能"| A["広く任せる<br/>(実装一括 → 自動検証)"]
+  Q -->|"設計判断・トレードオフあり"| B["対話で詰める<br/>(選択肢を出させ人間が決定)"]
+  Q -->|"不可逆・高リスク (本番/課金/削除)"| C["人間が承認してから実行"]
+  A --> V["テスト/型/lintで検証"]
+  B --> V
+  C --> V
+      </pre>
+      <figcaption>図: タスクの性質で「任せる/対話する/承認する」を切り替える。</figcaption>
+    </figure>
+    <ul>
+      <li><strong>1コミット=1論理変更</strong>に収まる粒度へ割る。レビュー範囲が小さいほど不具合は見つかる。</li>
+      <li><strong>不可逆・外向き・課金の操作は人間承認</strong>を挟む（本番デプロイ・データ削除・外部送信）。</li>
+      <li>確信のない（なぜ直ったか説明できない）修正は採用しない。</li>
+    </ul>
+
+    <h2 id="s-7">3. レビュー運用 — 生成物をそのまま信じない</h2>
+    <p>AIは「動くが安全でない/仕様と違う」コードを書きうる。<strong>機械の検証（型・テスト・lint・スキャン）でガードレールを作り、人間は機械が見られない部分に集中</strong>する。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  C["📚 コンテキスト整備"] --> G["✍️ 小さく生成"]
+  G --> M["🛡️ 機械検証<br/>型/テスト/lint/スキャン"]
+  M -->|失敗| G
+  M -->|通過| H["👤 人間レビュー<br/>意図・設計・セキュリティ"]
+  H -->|学びを記録| C
+  H --> Mg["✅ マージ"]
+      </pre>
+      <figcaption>図: 生成→機械検証→人間レビュー→学びの記録、の協働ループ。</figcaption>
+    </figure>
+    <ul>
+      <li>人間レビューの観点は <strong>セキュリティ &gt; 正しさ &gt; 性能 &gt; テスト品質 &gt; 可読性</strong>（<a href="qa.html">06 テスト・レビュー・QA</a>）。</li>
+      <li>レビューで得た学び（守らせたい規約・繰り返す指摘）はルールファイルに還元し、次から自動で効かせる。</li>
+    </ul>
+
+    <h2 id="s-8">4. AIにレビューさせる</h2>
+    <p>AIは生成だけでなく検証の戦力でもある。差分に対して「認可漏れ・インジェクション・秘密混入・N+1はないか」を定型で問うと、人間が見落とす欠陥を拾える。<strong>生成役と批評役を分ける</strong>（別セッション/別エージェント）と質が上がる。</p>
+
+    <div class="hb-callout hb-gotcha"><b>落とし穴:</b> 「埋まっている＝合意済み」ではない。AIは空白を“もっともらしい仮定”で埋める。仮定は <code>[要確認]</code> 等で可視化し、承認するまで確定扱いしない（<a href="requirements.html">02 要件定義</a>）。</div>
+
+    <div class="hb-callout hb-ai"><b>核心:</b> AI支援開発の質は「生成力」ではなく「コンテキスト × 分割 × 検証の自動化度」で決まる。この3つへの投資が、そのまま安全に出せる速度の上限になる。</div>
+</div>

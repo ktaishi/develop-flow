@@ -1,0 +1,82 @@
+<!--meta {"title": "2026年11月のトレンドと、このガイドでの扱い", "desc": "GPT-6 系への世代交代と GPT-4o 系の API 終了、Claude Code・Codex・Cursor の直近の変更、仕様駆動開発と AGENTS.md / SKILL.md の定着を、ガイドのどこに反映したかと合わせて整理。", "kind": "handbook", "scripts": [], "reviewed": "2026-11-13"} -->
+<div class="hb">
+<p class="hb-eyebrow">2026-11-13 時点</p>
+<h1>2026年11月のトレンドと、このガイドでの扱い</h1>
+<p class="hb-lead">この半年で変わったのは、モデルの世代、エージェントの動かし方、そして「仕様とルールを先に置く」進め方の3つである。ここでは事実関係を出典つきで整理し、ガイドのどのページに反映したかを示す。</p>
+<div class="hb-callout hb-gotcha"><b>読み方:</b> 変化の速い領域なので、日付と出典を必ず確認すること。「二次情報」と書いた項目は公式ページを直接確認できていない。移行作業の前に、末尾の公式リンクで最新の内容を確かめてほしい。</div>
+
+<h2 id="models">1. モデルの世代交代 — GPT-4o 系は 2027-01-14 に API 終了</h2>
+<p>OpenAI は 2026-10-14 に、GPT-4o・GPT-4o mini・GPT-4.1・GPT-4.1 mini を <strong>2027-01-14 に API から削除する</strong>と通知した。推奨される移行先はいずれも <code>gpt-6-luna</code> である。<code>o4-mini</code> は 2026-10-23 に停止済みで、移行先は <code>gpt-5.6-terra</code> とされている。</p>
+<table>
+<thead><tr><th>モデル ID</th><th>位置づけ</th><th>このサイトでの扱い</th></tr></thead>
+<tbody>
+<tr><td><code>gpt-6-luna</code></td><td>低コスト・大量処理向け。GPT-4o 系の公式な移行先</td><td>「設定」の既定モデル</td></tr>
+<tr><td><code>gpt-6.1-terra</code> / <code>gpt-6.1-sol</code></td><td>中位 / 本番・コーディング向けの標準（二次情報）</td><td>選択可</td></tr>
+<tr><td><code>gpt-6-astra</code></td><td>最上位。難度の高いエージェント作業向け（二次情報）</td><td>選択可</td></tr>
+<tr><td><code>gpt-5.6-*</code> / <code>gpt-5.5</code></td><td>旧世代だが提供継続中</td><td>選択可</td></tr>
+<tr><td><code>gpt-4o</code> / <code>gpt-4o-mini</code> / <code>gpt-4.1</code> / <code>gpt-4.1-mini</code></td><td>2027-01-14 に API 終了</td><td>一覧から削除。保存済みの設定は <code>gpt-6-luna</code> に読み替え</td></tr>
+<tr><td><code>o4-mini</code> / <code>o3-pro</code></td><td>o4-mini は停止済み。o3 系は 2026-12-11 停止予定（二次情報）</td><td>一覧から削除</td></tr>
+</tbody>
+</table>
+<div class="hb-callout hb-tip"><b>自分のプロダクトでやること:</b> コード・設定・プロンプト管理ツールを <code>gpt-4o</code>、<code>gpt-4.1</code>、<code>o4-mini</code> で検索し、モデル ID を1か所の設定に寄せる。移行は ID の置換だけで終わらせず、実データでの回帰確認を挟む。二次情報では、GPT-6 上位モデルのツール呼び出しは Responses API が前提とされているため、Chat Completions でツールを使っている箇所は先に洗い出しておく。</div>
+
+<h2 id="claude-code">2. Claude Code — 権限まわりが「確認できないものは止める」方向へ</h2>
+<ul>
+<li><strong>既定モデルが Claude Fable 5.2 に</strong>（2.1.321）。Opus 4.8 の fast mode は 2026-11-30 に削除され、以後はエラーになる。速度が必要なら Opus 5.5 へ移る。</li>
+<li><strong>auto mode の分類器フォールバック廃止</strong>（2.1.319）。テレメトリや機能フラグを切った環境、LLM ゲートウェイ越しの環境では、サーバー側で確認できない呼び出しは「確認を求める」か「拒否」になる。<code>permissions.denyInsteadOfPrompting</code> で、止まったままの確認を拒否に置き換えられる。</li>
+<li><strong>作業ディレクトリ外への書き込みを止める設定</strong> <code>permissions.blockWritesOutsideWorkingDirectories</code> が追加された（2.1.314）。</li>
+<li><strong>サブエージェントの effort を個別に指定</strong>できる <code>CLAUDE_CODE_SUBAGENT_EFFORT</code> が追加され、<code>ultrathink</code> はそのターンを xhigh で実行するようになった（2.1.311〜2.1.316）。</li>
+<li><strong>MCP タスクがターミナルでバックグラウンド実行</strong>され、完了時に結果が報告される（2.1.319）。</li>
+<li>巨大な <code>CLAUDE.md</code> やルールファイルを冒頭だけ読んで上書きしてしまう不具合が修正された（2.1.312）。ルールファイルを肥大化させない運用の裏づけにもなる。</li>
+</ul>
+<p>反映先: <a href="guide-rules-claude.html">Claude Code 設定早見</a>、<a href="guide-ops-orchestration.html">エージェント運用</a>、<a href="security.html">セキュリティ（横断）</a>。</p>
+
+<h2 id="codex">3. Codex — 複数エージェントを束ねる画面が CLI に</h2>
+<ul>
+<li><strong>CLI 0.167.0（2026-11-06）</strong>で、<code>codex agents --no-daemon</code> から開く「エージェント コマンドセンター」が入り、未読の結果が印で分かるようになった。接続先バックエンドの切り替えも下書きを保ったまま行える。</li>
+<li>承認プロンプトを開いたまま、パッチの中身をその場で確認できる。</li>
+<li>既定のカタログモデルは GPT-6.1 Sol（0.161.0）。</li>
+<li>Codex デスクトップアプリは 2026-07-09 に ChatGPT デスクトップアプリへ統合された。ワークフローや MCP 設定をまとめて配布するプラグインの仕組みは 2026年3月から提供されている。</li>
+</ul>
+<p>反映先: <a href="guide-rules-codex.html">Codex 設定早見</a>、<a href="guide-ops-harness.html">ハーネスとマルチエージェント</a>。</p>
+
+<h2 id="cursor">4. Cursor — エディタの外へ広がる</h2>
+<ul>
+<li>SpaceX による Cursor（Anysphere）の買収が <strong>2026-08-14 に完了</strong>した。契約・データ取り扱いの確認先が変わっていないか、社内の利用規程を見直す機会になる。</li>
+<li><strong>Voice Chat with Agents（2026-11-06）</strong>: エージェントと音声で双方向に会話できる。従来の音声入力（ディクテーション）とは別機能。</li>
+<li><strong>Build Live Apps（2026-11-05）</strong>: データベースと認証つきのアプリを Cursor 上で作成・デプロイし、チームに共有できる。</li>
+<li>Auto モードは、リクエストごとにモデルを振り分ける Cursor Router が担う（2026-07-22）。iOS アプリとローカルエージェントの Remote Control、Agent SDK も提供されている。</li>
+</ul>
+<p>反映先: <a href="guide-rules-cursor.html">Cursor 設定早見</a>、<a href="guide-ai-tools.html">ツール徹底比較</a>。</p>
+
+<h2 id="practice">5. 進め方のトレンド — 仕様とルールを先に置く</h2>
+<div class="hb-grid hb-cols-2">
+<div class="hb-card"><h4>仕様駆動開発（SDD）</h4>意図 → 仕様 → 実装計画 → タスク分解の順に進め、コードはその後に書かせる。GitHub Spec Kit は <code>spec.md</code> / <code>plan.md</code> / <code>tasks.md</code> の3点で形式化した。本ガイドの Phase 2「Plan」と同じ考え方である。</div>
+<div class="hb-card"><h4>AGENTS.md と SKILL.md の定着</h4>リポジトリ調査では、エージェント向けコンテキストファイルのうち <code>AGENTS.md</code> が標準として広がっている。Skills は多くのリポジトリで1〜2個しか定義されておらず、数より質が効く。</div>
+<div class="hb-card"><h4>単体から複数エージェントへ</h4>Anthropic のレポートは、単一エージェントから協調するチームへの移行と、数時間〜数日単位の長時間タスクを主要な変化に挙げる。並列化するほど、タスク分解と検証の設計が成果を左右する。</div>
+<div class="hb-card"><h4>人の監督は減らない</h4>同レポートの紹介記事によれば、開発者は仕事の約60%で AI を使う一方、完全に任せているのは 0〜20% にとどまる。「レビュー前提の協働者」という本ガイドの原則は変わらない。</div>
+</div>
+<p>反映先: <a href="guide-design.html">Plan・設計</a>、<a href="guide-rules-compare.html">Rules / Skills / Plan の切り分け</a>、<a href="guide-rules-skills-3.html">Skills：判断と更新</a>、<a href="principles.html">全体原則</a>。</p>
+
+<h2 id="site-changes">6. このサイト自体の変更</h2>
+<ul class="hb-chk">
+<li>「AI利用開発フロー」（手順）と「AI開発ベストプラクティス」（考え方、全10章）を1つのサイトに統合し、ホームを8駅の路線図にした。</li>
+<li>全ページ検索（<kbd>⌘K</kbd> または <kbd>/</kbd>）、ページ内目次、ライト / ダーク切り替えを追加した。</li>
+<li>各ページの本文を Markdown でコピーできるようにし、エージェントが読める <a href="/llms.txt">llms.txt</a> を生成するようにした。</li>
+<li>「設定」のモデル一覧を GPT-6 系に更新し、終了予定・終了済みのモデルを外した。</li>
+</ul>
+
+<h2 id="sources">出典</h2>
+<ul class="src-list">
+<li>OpenAI: <a href="https://developers.openai.com/api/docs/deprecations">API Deprecations</a>（公式。移行前に必ず確認）</li>
+<li><a href="https://dev.to/importstatic/every-openai-model-shutdown-date-until-january-2027-and-what-replaces-it-1dfk">Every OpenAI model shutdown date until January 2027</a>（DEV Community）</li>
+<li><a href="https://www.secondtalent.com/resources/every-openai-model-explained-compared/">Every OpenAI Model Explained and Compared (Nov 2026)</a>（Second Talent、二次情報）</li>
+<li>Anthropic: <a href="https://code.claude.com/docs/en/changelog">Claude Code changelog</a>、<a href="https://releasebot.io/updates/anthropic/claude-code">Releasebot の Claude Code 更新一覧</a></li>
+<li><a href="https://dev.to/aicoding-guide/this-week-in-claude-code-codex-and-gemini-cli-week-of-november-8-2026-485k">This week in Claude Code, Codex and Gemini CLI（2026-11-08 週）</a>、<a href="https://dev.to/aicoding-guide/this-week-in-claude-code-codex-and-gemini-cli-week-of-november-1-2026-15pn">同（2026-11-01 週）</a></li>
+<li>OpenAI: <a href="https://developers.openai.com/codex/changelog">ChatGPT &amp; Codex changelog</a>、<a href="https://releasebot.io/updates/openai/codex">Releasebot の Codex 更新一覧</a>、<a href="https://en.wikipedia.org/wiki/OpenAI_Codex_(AI_agent)">Wikipedia: OpenAI Codex (AI agent)</a></li>
+<li>Cursor: <a href="https://cursor.com/changelog">Changelog</a>、<a href="https://releases.sh/cursor">releases.sh の Cursor 更新一覧</a>、<a href="https://en.wikipedia.org/wiki/Cursor_(company)">Wikipedia: Cursor (company)</a></li>
+<li>Anthropic: <a href="https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf">2026 Agentic Coding Trends Report</a>、紹介記事 <a href="https://www.danilchenko.dev/posts/agentic-coding-trends/">danilchenko.dev</a></li>
+<li><a href="https://developer.vonage.com/en/blog/beyond-vibe-coding-best-practices-2026">Beyond vibe coding: best practices 2026</a>（Vonage）</li>
+<li><a href="https://arxiv.org/html/2602.14690v2">エージェント向けコンテキストファイルの実態調査</a>（arXiv 2602.14690）</li>
+</ul>
+</div>

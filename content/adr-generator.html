@@ -1,0 +1,415 @@
+<!--meta {"title": "ADR生成ツール", "desc": "← リポジトリ — ADR", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<header class="page-header">
+      <h1>ADR生成ツール</h1>
+      <p>短い入力とタイル選択だけで、ADR の叩き台をそのまま貼れる Markdown に整える。既存ルールに沿って、最低3案の代替案と保存先ガイドまでまとめる。</p>
+    </header>
+
+    <p class="wiki-lead"><a href="guide-repo-docs-1.html#11-7-adr">← リポジトリ — ADR</a></p>
+    <div class="layout">
+      <section class="selection-column">
+        <div class="panel">
+          <div class="selection-board">
+            <fieldset class="board-lane">
+              <legend>基本情報</legend>
+              <div class="group-stack">
+                <div class="basic-fields-stack">
+                  <label class="text-label">
+                    <span>テーマ</span>
+                    <input id="topic" type="text" placeholder="例: PostgreSQL を主DBとして採用する">
+                  </label>
+                  <label class="text-label">
+                    <span>slug（任意）</span>
+                    <input id="slug" type="text" placeholder="未入力ならテーマから自動生成">
+                  </label>
+                  <div class="date-only-field">
+                    <input id="adr-date" type="date" aria-label="日付">
+                  </div>
+                </div>
+                <div class="subsection-block">
+                  <div class="subsection-heading">
+                    <span>ステータス</span>
+                    <span class="mini-tag">1つ選択</span>
+                  </div>
+                  <p class="subsection-copy">新規起票なら `Proposed` を初期値にする。</p>
+                  <div class="tile-grid four compact-tile-grid">
+                    <label class="tile-option">
+                      <input type="radio" name="status" value="Proposed" checked>
+                      <span>
+                        <span class="option-title">Proposed</span>
+                        <span class="option-desc">提案中</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="status" value="Accepted">
+                      <span>
+                        <span class="option-title">Accepted</span>
+                        <span class="option-desc">採用決定</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="status" value="Deprecated">
+                      <span>
+                        <span class="option-title">Deprecated</span>
+                        <span class="option-desc">非推奨</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="status" value="Superseded by ADR-MMMM">
+                      <span>
+                        <span class="option-title">Superseded</span>
+                        <span class="option-desc">別ADRへ置換</span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="board-lane">
+              <legend>判断の輪郭</legend>
+              <div class="group-stack">
+                <div class="subsection-block">
+                  <div class="subsection-heading">
+                    <span>判断の種類</span>
+                    <span class="mini-tag">1つ選択</span>
+                  </div>
+                  <p class="subsection-copy">固定候補はタイル、その他だけ自由入力で補う。</p>
+                  <div class="tile-grid four compact-tile-grid">
+                    <label class="tile-option">
+                      <input type="radio" name="decision-type" value="library" checked>
+                      <span>
+                        <span class="option-title">ライブラリ</span>
+                        <span class="option-desc">主要依存の採用・置換</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="decision-type" value="database">
+                      <span>
+                        <span class="option-title">DB / データ</span>
+                        <span class="option-desc">主DBやスキーマ変更</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="decision-type" value="auth">
+                      <span>
+                        <span class="option-title">認証 / 認可</span>
+                        <span class="option-desc">方式や権限モデル</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="decision-type" value="api">
+                      <span>
+                        <span class="option-title">通信 / API</span>
+                        <span class="option-desc">REST / GraphQL / gRPC</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="decision-type" value="architecture">
+                      <span>
+                        <span class="option-title">アーキテクチャ</span>
+                        <span class="option-desc">構成や境界の方針</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="decision-type" value="infra">
+                      <span>
+                        <span class="option-title">インフラ</span>
+                        <span class="option-desc">クラウドや実行基盤</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="decision-type" value="other">
+                      <span>
+                        <span class="option-title">その他</span>
+                        <span class="option-desc">独自分類</span>
+                      </span>
+                    </label>
+                  </div>
+                  <div class="inline-field" id="custom-type-field">
+                    <label for="custom-decision-type">その他の判断種類</label>
+                    <input id="custom-decision-type" type="text" placeholder="例: 運用ルール / チーム標準">
+                  </div>
+                </div>
+
+                <div class="subsection-block">
+                  <div class="subsection-heading">
+                    <span>影響範囲</span>
+                    <span class="mini-tag">複数選択</span>
+                  </div>
+                  <p class="subsection-copy">プロジェクト全体へ効く論点ほど ADR 化を強く推奨する。</p>
+                  <div class="tile-grid four compact-tile-grid">
+                    <label class="toggle-option">
+                      <input type="checkbox" name="impact" value="project" checked>
+                      <span>
+                        <span class="option-title">プロジェクト全体</span>
+                        <span class="option-desc">複数機能へ波及</span>
+                      </span>
+                    </label>
+                    <label class="toggle-option">
+                      <input type="checkbox" name="impact" value="data">
+                      <span>
+                        <span class="option-title">データ構造</span>
+                        <span class="option-desc">DB / 永続化へ影響</span>
+                      </span>
+                    </label>
+                    <label class="toggle-option">
+                      <input type="checkbox" name="impact" value="api">
+                      <span>
+                        <span class="option-title">API 契約</span>
+                        <span class="option-desc">外部境界や互換性</span>
+                      </span>
+                    </label>
+                    <label class="toggle-option">
+                      <input type="checkbox" name="impact" value="infra">
+                      <span>
+                        <span class="option-title">運用 / インフラ</span>
+                        <span class="option-desc">権限、監視、デプロイ</span>
+                      </span>
+                    </label>
+                    <label class="toggle-option">
+                      <input type="checkbox" name="impact" value="team">
+                      <span>
+                        <span class="option-title">チーム運用</span>
+                        <span class="option-desc">レビューや標準化</span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="subsection-block">
+                  <div class="subsection-heading">
+                    <span>重要度</span>
+                    <span class="mini-tag">1つ選択</span>
+                  </div>
+                  <p class="subsection-copy">変更困難さや後方影響の大きさで選ぶ。</p>
+                  <div class="tile-grid compact-tile-grid severity-compact">
+                    <label class="tile-option">
+                      <input type="radio" name="severity" value="high" checked>
+                      <span>
+                        <span class="option-title">高</span>
+                        <span class="option-desc">あとで変えにくい</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="severity" value="medium">
+                      <span>
+                        <span class="option-title">中</span>
+                        <span class="option-desc">設計判断として残したい</span>
+                      </span>
+                    </label>
+                    <label class="tile-option">
+                      <input type="radio" name="severity" value="low">
+                      <span>
+                        <span class="option-title">低</span>
+                        <span class="option-desc">局所的な変更</span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="board-lane">
+              <legend>背景と決定</legend>
+              <div class="group-stack">
+                <label class="text-label">
+                  <span>解決したい問題 / 背景</span>
+                  <textarea id="context-problem" placeholder="例: 既存DBでは全文検索要件と集計負荷が厳しく、運用負荷も高い。"></textarea>
+                </label>
+                <label class="text-label">
+                  <span>制約</span>
+                  <textarea id="constraints" placeholder="例: 少人数運用、コスト上限、既存チームの知識"></textarea>
+                </label>
+                <label class="text-label">
+                  <span>関係するステークホルダー</span>
+                  <textarea id="stakeholders" placeholder="例: 開発チーム、SRE、運用担当"></textarea>
+                </label>
+                <label class="text-label">
+                  <span>採用した選択肢</span>
+                  <input id="selected-option" type="text" placeholder="例: PostgreSQL + pgvector">
+                </label>
+                <label class="text-label">
+                  <span>決定の要約</span>
+                  <input id="decision-summary" type="text" placeholder="例: 主DBを PostgreSQL に統一する">
+                </label>
+                <label class="text-label">
+                  <span>採用理由</span>
+                  <textarea id="decision-reason" placeholder="例: 既存運用との整合、マネージド選択肢、検索拡張の取り回しが良い。"></textarea>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="board-lane">
+              <legend>結果と影響</legend>
+              <div class="field-help">良い結果、悪い結果、中立の影響を分けておく。</div>
+              <div class="input-grid">
+                <label class="text-label">
+                  <span>Positive</span>
+                  <textarea id="positive-effects" placeholder="例: 運用知見を集約できる&#10;例: バックアップ手順を一本化できる"></textarea>
+                </label>
+                <label class="text-label">
+                  <span>Negative</span>
+                  <textarea id="negative-effects" placeholder="例: 移行コストが発生する&#10;例: 初期性能検証が必要"></textarea>
+                </label>
+                <label class="text-label">
+                  <span>Neutral</span>
+                  <textarea id="neutral-effects" placeholder="例: 一部ジョブ設定の見直しが必要"></textarea>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="board-lane">
+              <legend>代替案</legend>
+              <div class="field-help">最低3案を必ず出す。未入力でも汎用候補で補完する。</div>
+              <div class="alt-card-grid">
+                <section class="alt-card" data-alt-index="0">
+                  <h3 id="s-1">代替案 1</h3>
+                  <div class="input-grid">
+                    <label class="text-label">
+                      <span>案名</span>
+                      <input type="text" id="alt-1-title" placeholder="例: 現状維持">
+                    </label>
+                    <label class="text-label">
+                      <span>概要</span>
+                      <input type="text" id="alt-1-summary" placeholder="例: 既存構成をそのまま使う">
+                    </label>
+                  </div>
+                  <div class="input-grid">
+                    <label class="text-label">
+                      <span>メリット</span>
+                      <textarea id="alt-1-pros" placeholder="例: 移行コストが小さい"></textarea>
+                    </label>
+                    <label class="text-label">
+                      <span>デメリット</span>
+                      <textarea id="alt-1-cons" placeholder="例: 課題が解消されにくい"></textarea>
+                    </label>
+                  </div>
+                  <label class="text-label">
+                    <span>採用しなかった理由</span>
+                    <textarea id="alt-1-reason" placeholder="例: 将来要件に耐えにくい"></textarea>
+                  </label>
+                </section>
+
+                <section class="alt-card" data-alt-index="1">
+                  <h3 id="s-2">代替案 2</h3>
+                  <div class="input-grid">
+                    <label class="text-label">
+                      <span>案名</span>
+                      <input type="text" id="alt-2-title" placeholder="例: 別サービス採用">
+                    </label>
+                    <label class="text-label">
+                      <span>概要</span>
+                      <input type="text" id="alt-2-summary" placeholder="例: 別の有力候補へ切り替える">
+                    </label>
+                  </div>
+                  <div class="input-grid">
+                    <label class="text-label">
+                      <span>メリット</span>
+                      <textarea id="alt-2-pros" placeholder="例: 特定機能が強い"></textarea>
+                    </label>
+                    <label class="text-label">
+                      <span>デメリット</span>
+                      <textarea id="alt-2-cons" placeholder="例: 学習コストやロックインが大きい"></textarea>
+                    </label>
+                  </div>
+                  <label class="text-label">
+                    <span>採用しなかった理由</span>
+                    <textarea id="alt-2-reason" placeholder="例: 既存運用と馴染みにくい"></textarea>
+                  </label>
+                </section>
+
+                <section class="alt-card" data-alt-index="2">
+                  <h3 id="s-3">代替案 3</h3>
+                  <div class="input-grid">
+                    <label class="text-label">
+                      <span>案名</span>
+                      <input type="text" id="alt-3-title" placeholder="例: 自前実装">
+                    </label>
+                    <label class="text-label">
+                      <span>概要</span>
+                      <input type="text" id="alt-3-summary" placeholder="例: ライブラリに頼らず自作する">
+                    </label>
+                  </div>
+                  <div class="input-grid">
+                    <label class="text-label">
+                      <span>メリット</span>
+                      <textarea id="alt-3-pros" placeholder="例: 完全に制御できる"></textarea>
+                    </label>
+                    <label class="text-label">
+                      <span>デメリット</span>
+                      <textarea id="alt-3-cons" placeholder="例: 実装・保守コストが高い"></textarea>
+                    </label>
+                  </div>
+                  <label class="text-label">
+                    <span>採用しなかった理由</span>
+                    <textarea id="alt-3-reason" placeholder="例: 現時点では過剰投資"></textarea>
+                  </label>
+                </section>
+              </div>
+            </fieldset>
+
+            <fieldset class="board-lane">
+              <legend>関連情報</legend>
+              <div class="group-stack">
+                <div class="input-grid">
+                  <label class="text-label">
+                    <span>Deciders</span>
+                    <input id="deciders" type="text" placeholder="例: Platform Team">
+                  </label>
+                  <label class="text-label">
+                    <span>Related</span>
+                    <input id="related" type="text" placeholder="例: Issue #123, PR #456">
+                  </label>
+                </div>
+                <label class="text-label">
+                  <span>参考資料</span>
+                  <textarea id="references" placeholder="1行に1件。例: https://www.postgresql.org/docs/current/&#10;例: 関連Issue: #123"></textarea>
+                </label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+      </section>
+
+      <section class="preview-stack">
+        <div class="rule-preview">
+          <h2 id="s-4">貼り付け用 ADR ドラフト</h2>
+          <div class="rule-output-shell rule-preview-output" id="rule-preview-output-shell">
+            <pre id="rule-preview-output"></pre>
+          </div>
+        </div>
+
+        <div class="preview-footer" id="preview-footer">
+          <div class="preview-footer-shell">
+            <div class="preview-cta">
+              <button type="button" id="generate-button" class="generate-button-primary">ADR を生成</button>
+              <span class="status-text" id="generation-status" role="status" aria-live="polite">ADR ドラフトは入力に合わせて自動更新される。<code>生成</code> でモーダルを開いてコピーできる。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-output-modal" id="rule-output-modal" hidden aria-hidden="true">
+          <div class="rule-output-modal-shell" role="dialog" aria-modal="true" aria-labelledby="rule-output-modal-title">
+            <div class="rule-output-modal-header">
+              <h3 id="rule-output-modal-title">貼り付け用 ADR ドラフト</h3>
+              <button type="button" id="close-rule-output" class="modal-close-button" aria-label="生成結果モーダルを閉じる">閉じる</button>
+            </div>
+            <div class="rule-output-modal-body">
+              <div class="rule-output-shell" id="rule-output-shell" hidden>
+                <button type="button" class="rule-output-copy" id="copy-rule-output" aria-label="生成結果をコピー">
+                  <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                    <path d="M0 6.75C0 5.784.784 5 1.75 5h7.5C10.216 5 11 5.784 11 6.75v7.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+                    <path d="M4.75 0A1.75 1.75 0 0 0 3 1.75v1a.75.75 0 0 0 1.5 0v-1a.25.25 0 0 1 .25-.25h7.5a.25.25 0 0 1 .25.25v7.5a.25.25 0 0 1-.25.25h-1a.75.75 0 0 0 0 1.5h1A1.75 1.75 0 0 0 14 9.25v-7.5A1.75 1.75 0 0 0 12.25 0Z"></path>
+                  </svg>
+                  <span id="copy-rule-output-label">コピー</span>
+                </button>
+                <pre id="rule-output"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+</div>

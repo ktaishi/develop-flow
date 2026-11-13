@@ -1,0 +1,253 @@
+<!--meta {"title": "Lambda API設計ガイド", "desc": "← クラウド比較（AWS ガイド） · リポジトリ構成", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<header class="memo-page-head">
+    <h1>Lambda API設計ガイド</h1>
+    <p>画面 API は Lambda で始めてよい。ただし「重い処理を同期で抱えない」が鉄則。処理時間・接続方式・トラフィック量で Lambda / ECS / Batch を切り分ける。</p>
+  </header>
+  <div class="memo-content">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>処理時間で同期 API かバックグラウンドかを先に分ける</li>
+<li>同期は10〜12分で切り、超える処理は非同期に回す</li>
+<li>用途別の候補から自分のケースに当てて選ぶ</li>
+</ul>
+<p class="page-brief__nav"><a href="memo-ai-tools.html">↑ メモ目次</a> <a href="vercel-beginner-guide.html">← Vercel 入門</a> <a href="memo-cloud.html">クラウド →</a></p>
+</aside>
+
+  <p class="wiki-lead"><a href="memo-cloud.html#21-aws-guides">← クラウド比較（AWS ガイド）</a> · <a href="guide-repo-directory.html#11-1-directory">リポジトリ構成</a></p>
+  <nav class="toc" aria-label="目次">
+    目次
+    <ul>
+      <li><a href="#summary">要約</a></li>
+      <li><a href="#time-limit">Lambda 実行時間の判断</a></li>
+      <li><a href="#sync-bg">同期API vs バックグラウンド</a></li>
+      <li><a href="#screen-api">画面APIの基本方針</a></li>
+      <li><a href="#async-pattern">重い処理の非同期パターン</a></li>
+      <li><a href="#compare-table">API 比較表（◯ / ✗）</a></li>
+      <li><a href="#architecture">段階別アーキテクチャ</a></li>
+    </ul>
+  </nav>
+
+  <section id="summary">
+    <h2 id="s-1">要約</h2>
+    <div class="lead">
+      <p>結論 — 画面 API の CRUD は Lambda で問題ないことが多い。重い処理だけ SQS → Worker へ逃がす。</p>
+    </div>
+    <ul>
+      <li>Lambda 上限は 900 秒（15 分）。安全ラインは 10〜12 分（p95/p99 で見る）。</li>
+      <li>画面 API でユーザー待ちは 30 秒超を避ける（理想は数秒）。</li>
+      <li>CRUD・Webhook・「受付だけ」の API → Lambda 向き。</li>
+      <li>長時間・常時接続・RDS 大量接続 → ECS / Batch 寄り。</li>
+      <li>定番パターン: <code>API Lambda</code> → <code>SQS</code> → <code>Worker（Lambda / ECS）</code></li>
+    </ul>
+    <aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-post-imports-lambda">
+<h4 class="info-panel__title" id="scenario-post-imports-lambda">POST /imports（Lambda）</h4>
+<div class="info-panel__body"><p><code>POST /imports</code>（Lambda）はファイルを S3 に置いて job_id を返すだけ（200ms）。<code>SQS</code> → Worker（Lambda 5分 or ECS 30分）が行パース。画面は <code>GET /jobs/{id}</code> をポーリング。</p></div>
+</aside>
+  </section>
+
+  <section id="time-limit">
+    <h2 id="s-2">Lambda 実行時間の判断</h2>
+    <p>次の表はバックグラウンド処理の目安です。</p>
+    <table>
+      <thead>
+        <tr><th>想定処理時間</th><th>判断</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>〜1 分</td><td>Lambda と相性がよい</td></tr>
+        <tr><td>1〜5 分</td><td>Lambda で OK なことが多い</td></tr>
+        <tr><td>5〜10 分</td><td>Lambda でも可（要注意）</td></tr>
+        <tr><td>10〜12 分</td><td>ECS / AWS Batch / Step Functions を検討</td></tr>
+        <tr><td>12〜15 分</td><td>Lambda は危険</td></tr>
+        <tr><td>15 分超</td><td>Lambda 単体は不可</td></tr>
+      </tbody>
+    </table>
+    <h3 id="s-3">10〜12 分で切る理由</h3>
+    <ul>
+      <li>データ量増・外部 API 遅延・DB 負荷で 15 分超えが起きやすい</li>
+      <li>タイムアウト時のリトライ・途中結果の扱いが面倒</li>
+      <li>p95 / p99・最大ケースで判断する（平均だけでは見落としやすい）</li>
+    </ul>
+    <p class="scenario-inline"><span class="scenario-inline__label">日次集計バッチの p99 が 11 分なら Lambda 継続は危険</span> — 日次集計バッチの p99 が 11 分なら Lambda 継続は危険。CloudWatch の Duration p99 を見て ECS RunTask へ移行し、ADR に「15 分上限回避」を残す。</p>
+
+  </section>
+
+  <section id="sync-bg">
+    <h2 id="s-4">同期 API vs バックグラウンド</h2>
+    <h3 id="s-5">画面で待たせる同期 API</h3>
+    <p>ユーザーがスピナーを見ている時間の目安です。</p>
+    <table>
+      <thead>
+        <tr><th>処理時間</th><th>推奨</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>〜3 秒</td><td>同期 API で OK</td></tr>
+        <tr><td>3〜10 秒</td><td>同期 API でも可</td></tr>
+        <tr><td>10〜30 秒</td><td>非同期ジョブ化を検討</td></tr>
+        <tr><td>30 秒超</td><td>SQS 等へ非同期化</td></tr>
+        <tr><td>数分以上</td><td>ECS / Batch / Step Functions</td></tr>
+      </tbody>
+    </table>
+    <h3 id="s-6">バックグラウンド（CSV 取込・集計・画像処理など）</h3>
+    <p>ユーザーは待たない処理。Lambda 15 分の枠内かどうかが論点になります。</p>
+    <table>
+      <thead>
+        <tr><th>処理時間</th><th>推奨</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>〜5 分</td><td>Lambda で OK</td></tr>
+        <tr><td>5〜10 分</td><td>Lambda でも可</td></tr>
+        <tr><td>10 分超</td><td>ECS Task / AWS Batch を検討</td></tr>
+        <tr><td>15 分超</td><td>ECS / AWS Batch 確定</td></tr>
+      </tbody>
+    </table>
+    <h3 id="s-7">分超の用途別候補</h3>
+    <table>
+      <thead>
+        <tr><th>用途</th><th>おすすめ</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>単発の重い処理</td><td>ECS RunTask</td></tr>
+        <tr><td>定期バッチ</td><td>EventBridge Scheduler → ECS RunTask</td></tr>
+        <tr><td>大量データ処理</td><td>AWS Batch</td></tr>
+        <tr><td>複数ステップ</td><td>Step Functions + ECS/Lambda</td></tr>
+        <tr><td>キュー処理</td><td>SQS → ECS Worker</td></tr>
+        <tr><td>長時間常駐ワーカー</td><td>ECS Service</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="screen-api">
+    <h2 id="s-8">画面 API の基本方針</h2>
+    <p>次のような REST は Lambda 向きの典型です。</p>
+    <ul>
+      <li><code>GET /me</code>、<code>GET /items</code>、<code>GET /items/{id}</code></li>
+      <li><code>POST /items</code>、<code>PATCH /items/{id}</code>、<code>DELETE /items/{id}</code></li>
+    </ul>
+    <h3 id="s-9">画面 API の時間目安</h3>
+    <table>
+      <thead>
+        <tr><th>処理時間</th><th>判断</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>〜1 秒</td><td>理想</td></tr>
+        <tr><td>1〜3 秒</td><td>普通に OK</td></tr>
+        <tr><td>3〜10 秒</td><td>やや重い。改善検討</td></tr>
+        <tr><td>10〜30 秒</td><td>非同期化を検討</td></tr>
+        <tr><td>30 秒超</td><td>画面 API として避けたい</td></tr>
+      </tbody>
+    </table>
+    <h3 id="s-10">Lambda で注意する点</h3>
+    <ul>
+      <li>RDS 中心 — 同時実行で接続が増える → RDS Proxy、接続再利用、同時実行上限</li>
+      <li>低遅延必須 — コールドスタートが効く → Provisioned Concurrency or コンテナ</li>
+      <li>WebSocket / SSE / AI ストリーミング — 常時接続は ECS が自然</li>
+    </ul>
+    <p class="scenario-inline"><span class="scenario-inline__label">まず N+1 とインデックスを直す</span> — まず N+1 とインデックスを直す。それでも 3 秒超ならキャッシュ（ElastiCache）または読み取り専用レプリカ。10 秒超なら同期 API として設計を見直す。</p>
+
+  </section>
+
+  <section id="async-pattern">
+    <h2 id="s-11">重い処理の非同期パターン</h2>
+    <p>「エクスポート」「一括更新」ボタンは、この形にすると Lambda 単体の限界を避けられます。</p>
+    <div class="mermaid-wrap">
+      <pre class="mermaid">
+flowchart LR
+  UI[画面] --> API[API Lambda 受付]
+  API --> DB1[(DB status=queued)]
+  API --> SQS[SQS]
+  SQS --> Worker[Worker Lambda/ECS]
+  Worker --> DB2[(DB status=done/failed)]
+  UI --> Poll[ポーリング or 通知]
+  Poll --> DB2
+      </pre>
+    </div>
+    <ol>
+      <li>API はジョブ受付だけ（<code>job_id</code> 発行）</li>
+      <li>DB に <code>status=queued</code> を保存</li>
+      <li>SQS にメッセージを積む</li>
+      <li>Worker が非同期処理</li>
+      <li>フロントはポーリング or 通知で結果確認</li>
+    </ol>
+    <pre>{
+  "job_id": "job_123",
+  "status": "queued"
+}</pre>
+    <aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-post-exports-lambda">
+<h4 class="info-panel__title" id="scenario-post-exports-lambda">POST /exports（Lambda）</h4>
+<div class="info-panel__body"><p><code>POST /exports</code>（Lambda）は S3 に CSV を置き <code>{"job_id":"exp_42","status":"queued"}</code> を返す。Worker が完了したら <code>GET /exports/exp_42</code> で <code>done</code> とダウンロード URL を返す。</p></div>
+</aside>
+  </section>
+
+  <section id="compare-table">
+    <h2 id="s-12">API 比較表（◯ / ✗）</h2>
+    <p>ざっくり分類用です。境界ケースは Phase 3 の設計 docs で ADR に残してください。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>API の種類</th>
+          <th>Lambda でよい</th>
+          <th>Lambda にしない方がよい</th>
+          <th>理由</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>GET /me</td><td class="mark-ok">◯</td><td class="mark-ng">✗</td><td>短時間・ステートレス</td></tr>
+        <tr><td>CRUD 全般</td><td class="mark-ok">◯</td><td class="mark-ng">✗</td><td>数秒以内なら十分</td></tr>
+        <tr><td>Webhook 受信</td><td class="mark-ok">◯</td><td class="mark-ng">✗</td><td>受付後に非同期化しやすい</td></tr>
+        <tr><td>CSV インポート受付</td><td class="mark-ok">◯</td><td class="mark-ng">✗</td><td>受付のみ Lambda、実処理は Worker</td></tr>
+        <tr><td>AI 処理の受付</td><td class="mark-ok">◯</td><td class="mark-ng">✗</td><td>推論本体は Worker へ</td></tr>
+        <tr><td>30 秒以上の同期 API</td><td class="mark-ng">✗</td><td class="mark-ok">◯</td><td>ユーザーを待たせすぎる</td></tr>
+        <tr><td>10 分以上の処理</td><td class="mark-ng">✗</td><td class="mark-ok">◯</td><td>Lambda 上限に近い</td></tr>
+        <tr><td>15 分超の処理</td><td class="mark-ng">✗</td><td class="mark-ok">◯</td><td>Lambda 単体では不可</td></tr>
+        <tr><td>大量 CSV 同期処理</td><td class="mark-ng">✗</td><td class="mark-ok">◯</td><td>データ量で時間が伸びる</td></tr>
+        <tr><td>RDS 大量接続 API</td><td class="mark-ng">✗</td><td class="mark-ok">◯</td><td>同時実行で接続数が増える</td></tr>
+        <tr><td>WebSocket / SSE</td><td class="mark-ng">✗</td><td class="mark-ok">◯</td><td>常時接続はコンテナ向き</td></tr>
+        <tr><td>Rails 本体 API</td><td class="mark-ng">✗</td><td class="mark-ok">◯</td><td>常時起動コンテナが自然</td></tr>
+        <tr><td>大規模 FastAPI</td><td class="mark-mid">△</td><td class="mark-mid">△</td><td>小〜中規模は Lambda 可、大規模は ECS</td></tr>
+      </tbody>
+    </table>
+    <h3 id="s-13">判断軸まとめ</h3>
+    <table>
+      <thead>
+        <tr><th>判断軸</th><th>Lambda でよい</th><th>Lambda にしない方がよい</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>処理時間</td><td>数秒以内</td><td>30 秒以上同期、10 分以上</td></tr>
+        <tr><td>状態</td><td>ステートレス</td><td>常時接続・長時間セッション</td></tr>
+        <tr><td>DB</td><td>DynamoDB 中心、軽い RDS</td><td>RDS 大量接続・複雑 TX</td></tr>
+        <tr><td>トラフィック</td><td>低〜中、スパイクあり</td><td>常時高トラフィック</td></tr>
+        <tr><td>開発段階</td><td>MVP / PoC / 管理画面</td><td>本格 SaaS 中核 API</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="architecture">
+    <h2 id="s-14">段階別アーキテクチャ</h2>
+    <h3 id="s-15">MVP / 初期プロダクト</h3>
+    <ul>
+      <li>画面 API の大半 → Lambda</li>
+      <li>重い処理 → SQS + Lambda Worker</li>
+      <li>15 分超 → ECS Task / AWS Batch</li>
+    </ul>
+    <aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-mvp-get-items">
+<h4 class="info-panel__title" id="scenario-mvp-get-items">MVP 初期: GET /items と</h4>
+<div class="info-panel__body"><p>MVP 初期: <code>GET /items</code> と Webhook 受信は Lambda、CSV 取込は SQS + Lambda Worker（5 分以内）。15 分超の月次集計だけ AWS Batch に逃がす。</p></div>
+</aside>
+    <h3 id="s-16">本格 SaaS / 業務システム</h3>
+    <ul>
+      <li>本体 API → ECS / Fargate</li>
+      <li>周辺処理 → Lambda</li>
+      <li>非同期処理 → SQS + Lambda/ECS Worker</li>
+    </ul>
+    <p class="scenario-inline"><span class="scenario-inline__label">スケール時のECS Fargate移行判断</span> — MAU 10 万で RDS 接続が逼迫したら本体 REST は ECS Fargate へ移行。Webhook・夜間バッチは Lambda のまま、15 分超処理のみ Batch に切り出す。</p>
+
+    <div class="callout">
+      <p>設計思想 — 画面 API は Lambda で始める。重い処理は同期で抱えない。</p>
+    </div>
+    <p class="scenario-inline"><span class="scenario-inline__label">Phase 2: 全部 Lambda + SQS Worker</span> — Phase 2: 全部 Lambda + SQS Worker。MAU 10万で RDS 接続が逼迫 → 本体 API だけ ECS Fargate、Webhook・バッチは Lambda のまま、15分超バッチだけ Batch。</p>
+
+  </section>
+  </div>
+</div>

@@ -1,0 +1,453 @@
+{
+  "name": "AI利用開発フロー",
+  "tagline": "AIと進める開発の手順と考え方",
+  "url": "https://develop-flow.vercel.app",
+  "repo": "https://github.com/ktaishi/develop-flow",
+  "updated": "2026-11-13",
+  "reviewedDefault": {
+    "flow": "2026-07-11",
+    "handbook": "2026-07-21",
+    "home": "2026-11-13"
+  },
+  "nav": [
+    {
+      "key": "intro",
+      "title": "はじめる",
+      "items": [
+        {
+          "slug": "index",
+          "label": "ホーム（路線図）"
+        },
+        {
+          "slug": "trends-2026",
+          "label": "2026年11月のトレンド",
+          "tag": "NEW"
+        },
+        {
+          "slug": "guide-setup",
+          "label": "セットアップ"
+        },
+        {
+          "slug": "guide-workflow",
+          "label": "全体像（Phase 地図）"
+        }
+      ]
+    },
+    {
+      "key": "principles",
+      "title": "原則と協働",
+      "items": [
+        {
+          "slug": "handbook",
+          "label": "ハンドブック目次"
+        },
+        {
+          "slug": "principles",
+          "label": "全体原則",
+          "tag": "本"
+        },
+        {
+          "slug": "ai-collaboration",
+          "label": "AIとの協働の実務",
+          "tag": "本"
+        }
+      ]
+    },
+    {
+      "key": "flow",
+      "title": "ルール / Skills",
+      "items": [
+        {
+          "slug": "guide-rules",
+          "label": "ルール / Skills",
+          "children": [
+            {
+              "slug": "guide-rules-tools-intro",
+              "label": "3ツール早見"
+            },
+            {
+              "slug": "guide-rules-compare",
+              "label": "Rules / Skills / Plan"
+            },
+            {
+              "slug": "guide-rules-cursor",
+              "label": "Cursor 設定早見"
+            },
+            {
+              "slug": "guide-rules-claude",
+              "label": "Claude Code 設定早見"
+            },
+            {
+              "slug": "guide-rules-codex",
+              "label": "Codex 設定早見"
+            },
+            {
+              "slug": "guide-rules-prompt",
+              "label": "プロンプト設計"
+            },
+            {
+              "slug": "guide-rules-skills-1",
+              "label": "Skills：設計と記述"
+            },
+            {
+              "slug": "guide-rules-skills-2",
+              "label": "Skills：配置と評価"
+            },
+            {
+              "slug": "guide-rules-skills-3",
+              "label": "Skills：判断と更新"
+            },
+            {
+              "slug": "guide-rules-phase1",
+              "label": "Phase 1 規約整備"
+            },
+            {
+              "slug": "guide-rules-bp",
+              "label": "ベストプラクティス参照"
+            }
+          ]
+        },
+        {
+          "slug": "flow-rules-samples",
+          "label": "設定サンプル（コピー用）"
+        }
+      ]
+    },
+    {
+      "key": "lifecycle",
+      "title": "ライフサイクル",
+      "items": [
+        {
+          "slug": "requirements",
+          "label": "要件定義",
+          "tag": "本"
+        },
+        {
+          "slug": "guide-design",
+          "label": "Plan・設計"
+        },
+        {
+          "slug": "design",
+          "label": "設計",
+          "tag": "本"
+        },
+        {
+          "slug": "tech-infra",
+          "label": "技術選定・インフラ",
+          "tag": "本"
+        },
+        {
+          "slug": "guide-implement",
+          "label": "実装"
+        },
+        {
+          "slug": "development",
+          "label": "開発・実装（TDD）",
+          "tag": "本"
+        },
+        {
+          "slug": "qa",
+          "label": "テスト・レビュー・QA",
+          "tag": "本"
+        },
+        {
+          "slug": "guide-ship",
+          "label": "PR・提出"
+        },
+        {
+          "slug": "delivery",
+          "label": "デプロイ・リリース",
+          "tag": "本"
+        }
+      ]
+    },
+    {
+      "key": "repo",
+      "title": "リポジトリ",
+      "items": [
+        {
+          "slug": "guide-repo",
+          "label": "リポジトリ",
+          "children": [
+            {
+              "slug": "guide-repo-directory",
+              "label": "ディレクトリ構成"
+            },
+            {
+              "slug": "guide-repo-gitignore",
+              "label": ".gitignore"
+            },
+            {
+              "slug": "guide-repo-ai-1",
+              "label": "AI設定（1/2）"
+            },
+            {
+              "slug": "guide-repo-ai-2",
+              "label": "AI設定（2/2）"
+            },
+            {
+              "slug": "guide-repo-docker-1",
+              "label": "Docker（1/2）"
+            },
+            {
+              "slug": "guide-repo-docker-2",
+              "label": "Docker（2/2）"
+            },
+            {
+              "slug": "guide-repo-cicd-1",
+              "label": "CI/CD（1/2）"
+            },
+            {
+              "slug": "guide-repo-cicd-2",
+              "label": "CI/CD（2/2）"
+            },
+            {
+              "slug": "guide-repo-docs-1",
+              "label": "docs と履歴（1/2）"
+            },
+            {
+              "slug": "guide-repo-docs-2",
+              "label": "docs と履歴（2/2）"
+            },
+            {
+              "slug": "guide-repo-s3",
+              "label": "S3 / MinIO"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ops",
+      "title": "運用・品質",
+      "items": [
+        {
+          "slug": "guide-ops",
+          "label": "運用・品質",
+          "children": [
+            {
+              "slug": "guide-ops-orchestration",
+              "label": "エージェント運用"
+            },
+            {
+              "slug": "guide-ops-harness",
+              "label": "ハーネスとマルチエージェント"
+            },
+            {
+              "slug": "guide-ops-pitfalls",
+              "label": "AIの誤りと運用注意"
+            },
+            {
+              "slug": "guide-ops-history",
+              "label": "履歴・記録"
+            }
+          ]
+        },
+        {
+          "slug": "operations",
+          "label": "運用・監視・保守",
+          "tag": "本"
+        },
+        {
+          "slug": "security",
+          "label": "セキュリティ（横断）",
+          "tag": "本"
+        }
+      ]
+    },
+    {
+      "key": "adoption",
+      "title": "AI導入・組み込み",
+      "items": [
+        {
+          "slug": "guide-ai-tools",
+          "label": "ツール徹底比較"
+        },
+        {
+          "slug": "guide-ai-business",
+          "label": "業務に組み込む"
+        },
+        {
+          "slug": "guide-ai-system",
+          "label": "システムに組み込む"
+        },
+        {
+          "slug": "guide-ai-cases",
+          "label": "導入事例集"
+        }
+      ]
+    },
+    {
+      "key": "glossary",
+      "title": "用語集",
+      "items": [
+        {
+          "slug": "guide-glossary",
+          "label": "用語集",
+          "children": [
+            {
+              "slug": "guide-glossary-beginner",
+              "label": "初見10語"
+            },
+            {
+              "slug": "guide-glossary-tools",
+              "label": "AIツール用語"
+            },
+            {
+              "slug": "guide-glossary-design",
+              "label": "設計概念"
+            },
+            {
+              "slug": "guide-glossary-tdd",
+              "label": "開発手法 / TDD"
+            },
+            {
+              "slug": "guide-glossary-docs",
+              "label": "ドキュメント"
+            },
+            {
+              "slug": "guide-glossary-infra",
+              "label": "テスト・インフラ"
+            },
+            {
+              "slug": "guide-glossary-quality",
+              "label": "品質・運用"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ref",
+      "title": "メモ・ツール",
+      "items": [
+        {
+          "slug": "ai-news",
+          "label": "AIニュース"
+        },
+        {
+          "slug": "adr-generator",
+          "label": "ADR生成ツール"
+        },
+        {
+          "slug": "memo-ai-tools",
+          "label": "メモ：AIツール"
+        },
+        {
+          "slug": "memo-ai-reference-tools",
+          "label": "メモ：MCP・連携"
+        },
+        {
+          "slug": "memo-ai-reference-rag",
+          "label": "メモ：RAG・実装"
+        },
+        {
+          "slug": "memo-dev-method",
+          "label": "メモ：開発手法"
+        },
+        {
+          "slug": "memo-stack",
+          "label": "メモ：開発スタック"
+        },
+        {
+          "slug": "memo-cloud",
+          "label": "メモ：クラウド"
+        },
+        {
+          "slug": "memo-keywords",
+          "label": "メモ：キーワード"
+        },
+        {
+          "slug": "vercel-beginner-guide",
+          "label": "Vercel 入門"
+        },
+        {
+          "slug": "lambda-api-guide",
+          "label": "Lambda API 設計"
+        }
+      ]
+    }
+  ],
+  "pageScripts": {
+    "index": [
+      "/assets/vendor/jszip.min.js",
+      "/assets/playbook-builder.js",
+      "/assets/playbook-export.js"
+    ],
+    "flow-rules-samples": [
+      "/assets/rules-samples-modal.js"
+    ],
+    "ai-news": [
+      "/assets/ai-news-app.js"
+    ]
+  },
+  "bodyClass": {
+    "ai-news": "page-ai-news",
+    "index": "page-home"
+  },
+  "models": [
+    {
+      "group": "GPT-6 系（現行）",
+      "items": [
+        [
+          "gpt-6-luna",
+          "gpt-6-luna（既定・低コスト）"
+        ],
+        [
+          "gpt-6.1-terra",
+          "gpt-6.1-terra"
+        ],
+        [
+          "gpt-6.1-sol",
+          "gpt-6.1-sol"
+        ],
+        [
+          "gpt-6-astra",
+          "gpt-6-astra（最上位）"
+        ]
+      ]
+    },
+    {
+      "group": "GPT-5 系（提供継続中）",
+      "items": [
+        [
+          "gpt-5.6-luna",
+          "gpt-5.6-luna"
+        ],
+        [
+          "gpt-5.6-terra",
+          "gpt-5.6-terra"
+        ],
+        [
+          "gpt-5.6-sol",
+          "gpt-5.6-sol"
+        ],
+        [
+          "gpt-5.5",
+          "gpt-5.5"
+        ],
+        [
+          "gpt-5.5-pro",
+          "gpt-5.5-pro"
+        ],
+        [
+          "gpt-5.4",
+          "gpt-5.4"
+        ],
+        [
+          "gpt-5.4-mini",
+          "gpt-5.4-mini"
+        ]
+      ]
+    }
+  ],
+  "retiredModels": [
+    "gpt-4o",
+    "gpt-4o-mini",
+    "gpt-4.1",
+    "gpt-4.1-mini",
+    "o4-mini",
+    "o3-pro",
+    "gpt-5.4-nano"
+  ]
+}

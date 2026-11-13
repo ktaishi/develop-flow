@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500" role="img" aria-label="PRINCIPLES">
+  <defs>
+    <linearGradient id="bg00" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1320"/><stop offset="1" stop-color="#10182b"/>
+    </linearGradient>
+    <radialGradient id="g00" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#6c7cff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#9b7cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="t00" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6c7cff"/><stop offset="1" stop-color="#9b7cff"/>
+    </linearGradient>
+    <filter id="bl00"><feGaussianBlur stdDeviation="36"/></filter>
+  </defs>
+  <rect width="1200" height="500" fill="url(#bg00)"/>
+  <g filter="url(#bl00)"><circle cx="161" cy="101" r="286" fill="url(#g00)" opacity="0.3"/><circle cx="779" cy="257" r="189" fill="url(#g00)" opacity="0.4"/><circle cx="570" cy="162" r="214" fill="url(#g00)" opacity="0.5"/></g>
+  <g stroke="#9b7cff" stroke-width="3" fill="url(#g00)">
+      <rect x="630" y="298" width="360" height="42" rx="9" fill-opacity="0.30"/>
+      <rect x="663" y="248" width="294" height="42" rx="9" fill-opacity="0.24"/>
+      <rect x="696" y="198" width="228" height="42" rx="9" fill-opacity="0.18"/>
+      <rect x="729" y="148" width="162" height="42" rx="9" fill-opacity="0.12"/></g>
+  <text x="64" y="80" font-family="ui-monospace,Menlo,monospace" font-size="22" letter-spacing="6" fill="#9b7cff" opacity="0.95">PRINCIPLES</text>
+  <text x="56" y="456" font-family="-apple-system,Helvetica,sans-serif" font-weight="800" font-size="170" fill="url(#t00)" opacity="0.95">00</text>
+  <rect x="0" y="0" width="1200" height="500" fill="none" stroke="#232b3d" stroke-width="1"/>
+</svg>

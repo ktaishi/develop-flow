@@ -1,0 +1,92 @@
+<!--meta {"title": "Codex 設定早見", "desc": "AGENTS.md・コンテキスト・ツリー。", "kind": "flow", "scripts": [], "reviewed": "2026-11-13"} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-codex">Codex 設定早見</h1>
+      <p class="lead">AGENTS.md・コンテキスト・ツリー。</p>
+<aside class="update-note"><b>2026-11 追記:</b> CLI 0.167 で <code>codex agents --no-daemon</code>（エージェント コマンドセンター）が追加され、既定のカタログモデルは GPT-6.1 Sol になった。要点は <a href="trends-2026.html#codex">トレンド：Codex</a> を参照。</aside>
+
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li><code>AGENTS.md</code> を入口として整える</li>
+<li>リポジトリツリーを最新に維持する</li>
+<li>Plan は <code>tasks/todo.md</code> に置くと決める</li>
+</ul>
+<p class="page-brief__tasks">AGENTS.md を整備 — 完了: Codex 入口ができた</p>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-claude.html">← Claude Code 設定早見</a> <a href="guide-rules-skills-1.html">Skills 実践 — 設計と記述 →</a></p>
+</aside>
+<h3 id="17-codex"><a class="toclink" href="#17-codex">Codex</a></h3>
+
+<h4 id="17-codex-setup"><a class="toclink" href="#17-codex-setup">手順: Codex 初期設定（リポ）</a></h4>
+<p>構築順（公式）: <strong>AGENTS.md → Skills → MCP → Subagents</strong></p>
+<ol class="steps">
+<li>ルートに <code>AGENTS.md</code>（短い索引）→ <a href="guide-rules-skills-2.html#17-agents-template">サンプル</a></li>
+<li><code>tasks/todo.md</code></li>
+<li><code>.agents/skills/&lt;name&gt;/SKILL.md</code>（長い手順）</li>
+<li>（任意）<code>.codex/config.toml</code> — プロジェクト上書き</li>
+<li>（任意）MCP — Skill の <code>SKILL.md</code> に利用ツールを宣言</li>
+</ol>
+<pre><code class="language-text">project/
+├── AGENTS.md
+├── tasks/todo.md
+├── .agents/skills/deploy/SKILL.md
+├── .codex/config.toml          # 任意
+└── src/feature-x/AGENTS.md     # この cwd 用の追加規約
+</code></pre>
+<pre><code class="language-toml"># .codex/config.toml（例）
+[project]
+approval_policy = "suggest"   # 慣れたら "auto"（Git 追跡ブランチ上のみ）
+</code></pre>
+
+<h4 id="17-codex-workflows"><a class="toclink" href="#17-codex-workflows">手順: 典型ワークフロー（Codex）</a></h4>
+<p>出典: <a href="https://developers.openai.com/codex/concepts/customization">customization</a></p>
+
+<p><strong>A. Issue → 実装 → PR</strong></p>
+<ol class="steps">
+<li>GitHub Issue の Acceptance Criteria を <code>tasks/todo.md</code> に転記</li>
+<li>Codex に Issue URL + <code>@AGENTS.md</code> + <code>@tasks/todo.md</code></li>
+<li>差分を suggest モードで 1 ファイルずつ承認</li>
+<li>CI green → PR 作成（push は許可後）</li>
+</ol>
+<pre><code class="language-text">Issue #42 を実装。AGENTS.md と tasks/todo.md に従う。
+Done when: CI の rspec job green。docs/invoice-export/02_design.md と整合。</code></pre>
+
+<p><strong>B. サブフォルダ作業</strong></p>
+<pre><code class="language-text">cwd: src/feature-x/
+→ AGENTS.md（ルート）を読んだあと src/feature-x/AGENTS.md を追加適用
+</code></pre>
+
+<h3 id="17-codex-ref"><a class="toclink" href="#17-codex-ref">公式対応と配置</a></h3>
+<h4 id="17-codex-official"><a class="toclink" href="#17-codex-official">公式 BP → 本リポの対応（一覧）</a></h4>
+<table>
+<thead><tr><th>公式</th><th>手順</th></tr></thead>
+<tbody>
+<tr><td>AGENTS 階層</td><td><a href="#17-codex-setup">初期設定</a> · <a href="#17-codex-tree">ツリー</a></td></tr>
+<tr><td>Skills 段階ロード</td><td><a href="guide-rules-skills-3.html#17-skill-template">SKILL.md サンプル</a></td></tr>
+<tr><td>承認モード</td><td><code>approval_policy = suggest</code> から開始</td></tr>
+<tr><td>CI 失敗</td><td><code>/fix-ci</code>（Cursor 併用時）· ログ URL を渡す</td></tr>
+</tbody>
+</table>
+
+<h4 id="17-codex-context"><a class="toclink" href="#17-codex-context">手順: セッション引き継ぎ</a></h4>
+<ol class="steps">
+<li>新規スレッド</li>
+<li><code>tasks/todo.md</code> + 変更対象パスを列挙</li>
+<li>モジュール固有ルールはそのフォルダの <code>AGENTS.md</code> を参照させる</li>
+</ol>
+
+<h4 id="17-codex-tree"><a class="toclink" href="#17-codex-tree">配置ツリー（Codex）</a></h4>
+<pre><code class="language-text">project/
+├── AGENTS.md
+├── tasks/todo.md
+├── .agents/skills/deploy/SKILL.md
+├── .codex/config.toml
+└── src/feature-x/AGENTS.md
+</code></pre>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-claude.html">← Claude Code 設定早見</a><a class="flow-pager__next" href="guide-rules-skills-1.html">Skills 実践 — 設計と記述 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

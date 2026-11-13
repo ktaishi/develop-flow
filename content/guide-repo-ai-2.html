@@ -1,0 +1,80 @@
+<!--meta {"title": "AI設定（2/2）", "desc": "API キー・コスト。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-ai-2">AI設定（2/2）</h1>
+      <p class="lead">API キー・コスト。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>API キーはサーバ側だけで読み、env / Secret Manager に隔離する</li>
+<li>入力と出力の境界で認可・バリデーション・schema 検証を必ず通す（→ 出力を検証する）</li>
+<li>段階導入し、レート制限・タイムアウト・リトライを先に固定する</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-ai-1.html">← AI設定（1/2）</a></p>
+</aside>
+<h3 id="119-openai-safety"><a class="toclink" href="#119-openai-safety">OpenAI API の安全な組み込み</a></h3>
+<h4 id="119-openai-minimum"><a class="toclink" href="#119-openai-minimum">最小安全構成</a></h4>
+<p>典型的な流れは <code>client -&gt; backend -&gt; OpenAI API -&gt; backend -&gt; client</code>。通常は 信頼できないフロントエンドから OpenAI API を直接呼ばない。APIキー露出の問題だけでなく、レート制限、監査ログ、prompt差し替え、レスポンス検証、リトライ/タイムアウト制御をサーバ側に集約できなくなるため。</p>
+<pre><code class="language-bash"># .env.example
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL=your-openai-model
+OPENAI_TIMEOUT_MS=15000
+OPENAI_MAX_RETRIES=2
+</code></pre>
+<ul>
+<li>秘密情報: <code>OPENAI_API_KEY</code> はサーバ側だけで読む。ローカルは <code>.env</code>、本番は Secret Manager / CI Secret を使い、<code>.env.example</code> にはダミー値だけ置く</li>
+<li>入力境界: client から受ける値は backend で認可・バリデーションし、必要なら個人情報や機密文字列をマスクしてから OpenAI に渡す</li>
+<li>出力境界: 返却前に JSON schema / 型 / 禁止語 / 参照ID などを検証し、想定外の出力は fallback か再試行に倒す</li>
+</ul>
+<h4 id="119-openai-operations"><a class="toclink" href="#119-openai-operations">運用と段階導入</a></h4>
+<ul>
+<li>Prompt / version 管理: system prompt、few-shot、出力schema、使用モデルを識別可能にし、変更時はバージョンを上げて追跡できるようにする</li>
+<li>ログ / redaction: 入出力全文を無制限保存しない。<code>trace_id</code>、model、token使用量、遅延、成功/失敗理由を残し、本文は必要最小限 + redaction 前提にする</li>
+<li>保護: レート制限、タイムアウト、指数バックオフ付きリトライを先に入れる。障害時の一時停止条件も決めておく</li>
+<li>段階導入: まずは1機能・内部ユーザー限定で開始し、オフライン評価と実運用ログを見ながら公開範囲を広げる。<code>timeout</code>、<code>malformed output</code>、<code>rate limit</code> の失敗系テストを先に足す</li>
+<li>docs / ADR / testing との接続: 機能単位では <code>docs/&lt;feature&gt;/04_tech_decisions.md</code> にユースケース、モデル、同期/非同期、出力形式、コスト上限を書く。全体方針になるなら ADR 化し、<code>05_test_plan.md</code> と <code>06_logging.md</code> に評価観点と運用ルールを残す</li>
+</ul>
+<blockquote>
+<p>NOTE: 既存プロジェクトでは、まず「LLMを使わない実装」で足りない理由を明文化してから小さく入れる。導入理由、失敗時のfallback、人手確認が必要な境界が曖昧なら先に設計を固める。</p>
+</blockquote>
+
+<h3 id="11-10-prewarm"><a class="toclink" href="#11-10-prewarm">プロンプトキャッシュのプリウォーム（Claude API Pre-warming）</a></h3>
+<p>公式: <a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pre-warming-the-cache">Prompt caching — Pre-warming the cache</a>。共有 system / ツール定義を事前キャッシュし、初回対話のキャッシュミス遅延を避ける。</p>
+<h4 id="1110-prewarm-mechanism"><a class="toclink" href="#1110-prewarm-mechanism">仕組み（<code>max_tokens: 0</code>）</a></h4>
+<ul>
+<li><code>max_tokens: 0</code> のリクエストではプレフィルまで実行され、<code>cache_control</code> のブレークポイントでキャッシュが書き込まれたうえで出力は生成されずに即返る。レスポンスは <code>content: []</code>、<code>stop_reason: "max_tokens"</code>、<code>usage</code> は通常どおり。</li>
+<li><code>cache_control</code> は、本番リクエストと共有される末尾ブロック（多くの場合は system やツール定義）に置く。プレースホルダ用の user メッセージ（例: <code>"warmup"</code>）にブレークポイントを置くと、キャッシュキーがズレて本番がヒットしない。プリウォームでは明示的な cache breakpoint を使う（自動キャッシュは最終ブロックにブレークポイントが付くため、プレースホルダが最後だと不適切）。プレースホルダの本文は空白以外なら任意で、prefill では読まれるが回答はされない。</li>
+<li>プレフィックスが未キャッシュなら通常と同様のキャッシュ書き込み課金。確認は <code>usage.cache_creation_input_tokens</code> 等。出力トークンは 0 で課金されない。</li>
+</ul>
+<h4 id="1110-prewarm-ttl"><a class="toclink" href="#1110-prewarm-ttl">運用パターンと TTL</a></h4>
+<ul>
+<li>アプリ起動時や定期ジョブでプリウォームし、完了後に本番の <code>messages.create</code> を送る。</li>
+<li>デフォルトの 5 分 TTL では、温め続けるなら少なくとも 5 分ごとにプリウォームを送り直す。ユーザー間隔が長い場合は公式の 1 時間キャッシュ（同一ドキュメント内の別節）を検討。</li>
+</ul>
+<h4 id="1110-prewarm-deny"><a class="toclink" href="#1110-prewarm-deny"><code>max_tokens: 0</code> が拒否される条件（公式どおり）</a></h4>
+<ul>
+<li><code>stream: true</code>、Extended thinking（<code>thinking.type: "enabled"</code>）、Structured outputs（<code>output_config.format</code>）、<code>tool_choice</code> が <code>{"type":"tool",...}</code> または <code>{"type":"any"}</code>。</li>
+<li>Message Batches 内のリクエストでは <code>max_tokens: 0</code> は拒否される（バッチは TTFT 対象外で、書き込んだキャッシュも追随リクエストまでに失効しやすい、という旨が公式に記載）。</li>
+</ul>
+<p>過去の <code>max_tokens: 1</code> によるウォームアップは、出力が発生しない <code>max_tokens: 0</code> が推奨とされている（意図が明確で出力トークン課金もない）。</p>
+<pre><code>// 共有 system を先にキャッシュ（本番リクエストと同一の system ブロック構成に合わせる）
+const prewarm = await client.messages.create({
+  model: "claude-opus-4-7",
+  max_tokens: 0,
+  system: [
+    { type: "text", text: SYSTEM_PROMPT_TEXT, cache_control: { type: "ephemeral" } },
+  ],
+  messages: [{ role: "user", content: "warmup" }],
+});
+// prewarm.stop_reason === "max_tokens" / prewarm.content は []</code></pre>
+
+</details>
+
+<hr />
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-ai-1.html">← AI設定（1/2）</a><span class="muted flow-pager__next">章内末尾 →</span></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

@@ -1,0 +1,65 @@
+<!--meta {"title": "AI設定（1/2）", "desc": "MCP・env。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-ai-1">AI設定（1/2）</h1>
+      <p class="lead">MCP・env。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>MCP の秘密情報は env に隔離し、コミットしないと決める</li>
+<li>RAG は1領域に絞って小さく導入し、出典必須を組み込む（→ 出典を渡す）</li>
+<li>OpenAI API はユースケース・モデル・出力形式を先に固定する</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-docs-2.html">← docs と履歴（2/2）</a> <a href="guide-repo-ai-2.html">AI設定（2/2） →</a></p>
+</aside>
+<h3 id="11-8-ai-group"><a class="toclink" href="#11-8-ai-group">AI・API 設定</a></h3>
+<h3 id="11-8-rag"><a class="toclink" href="#11-8-rag">RAG (Retrieval-Augmented Generation) の導入</a></h3>
+<h4 id="118-rag-overview"><a class="toclink" href="#118-rag-overview">RAG とは</a></h4>
+<ul>
+<li>基本構成: ソース文書 → chunking → embeddings / index → retrieval → prompt composition → 回答 + 引用</li>
+<li>一次情報は <code>docs/</code>、<code>docs/adr/</code>、用語集、仕様書を優先する</li>
+<li><code>z_docs/history/</code> などの個人メモを検索対象に入れるなら、「草稿・履歴を含む」ことを明示する</li>
+</ul>
+<blockquote>
+<p>NOTE: RAG を正式運用するなら、<code><a href="flow-rules-samples.html#sample-60-ai-workflow-mdc">.cursor/rules/60-ai-workflow.mdc</a></code> と <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> にも「出典を添える」「根拠が取れないときは推測で埋めない」を入れておくとブレにくい。</p>
+</blockquote>
+<h4 id="118-rag-fit"><a class="toclink" href="#118-rag-fit">向いているケース / 向いていないケース</a></h4>
+<p>向いているケース:</p>
+<ul>
+<li>社内ドキュメント、運用マニュアル、ADR、仕様書、サポートナレッジのように 文書が正式な記録 の知識を引かせたいとき</li>
+<li>回答のたびに 出典を添えたい とき</li>
+<li>モデル再学習ではなく、文書更新で知識を更新したい とき</li>
+</ul>
+<p>向いていない、または注意が必要なケース:</p>
+<ul>
+<li>元文書の品質が低い、重複が多い、古い版が混ざるなど、検索前の情報整理ができていない状態</li>
+<li>更新タイミング、再インデックス条件、失効ルールなどの 鮮度管理 が決まっていない状態</li>
+<li>出典を返さずに使う運用。誤答時に根拠追跡ができず、利用者も検証しづらい</li>
+<li>本来は DB クエリや外部 API 呼び出しで確定値を返すべき処理。RAG は検索付き要約であり、システム of record の代替ではない</li>
+</ul>
+<h4 id="118-rag-rollout"><a class="toclink" href="#118-rag-rollout">小さく導入する手順</a></h4>
+<ol class="steps">
+<li>対象知識を絞る: まずは1領域だけに限定する。例: オンボーディング資料、運用FAQ、1機能分の仕様群</li>
+<li>source of truth を整理する: <code>docs/</code>、<code>docs/adr/</code>、用語集のどれを正式な記録にするかを決め、重複や古い版を潰す</li>
+<li>更新フローを決める: 誰が更新し、いつ再インデックスし、古い文書をどう失効させるかを決める</li>
+<li>検索粒度とメタデータを決める: chunk の大きさ、見出し単位、文書ID、版、更新日時、章名を揃える</li>
+<li>評価基準を先に決める: 取得精度、引用の正確さ、根拠なし時に回答を控える率、レイテンシを最低限測る</li>
+<li>ログとフィードバックを残す: 質問、取得文書、回答、ユーザーフィードバックを保存して改善材料にする</li>
+<li>小さく公開してから広げる: まずは限定ユーザー・限定ユースケースで運用し、定着したら対象文書を増やす。全体方針になるなら ADR 化も検討する</li>
+</ol>
+<p>RAG は 検索基盤の話である前に、文書運用の話。このドキュメントの流れに合わせるなら、<code>docs/</code> / <code>docs/adr/</code> / 用語集を整えたうえで、AIワークフローに「出典必須」を組み込む順が安全。Naive RAG で足りない場合（多段推論・検索判断・自己修正）は <a href="memo-ai-reference-rag.html#21-ref-agentic-rag">RAG 参考 — Agentic RAG</a> を参照。</p>
+<h3 id="11-9-openai-api"><a class="toclink" href="#11-9-openai-api">生成AI機能 (OpenAI API) の組み込み</a></h3>
+<h4 id="119-openai-decisions"><a class="toclink" href="#119-openai-decisions">先に決めること</a></h4>
+<ul>
+<li>ユースケース: 要約、抽出、分類、チャット支援、下書き生成など、何をAIに任せるかを先に固定する。確定値を返す処理は通常のDB/APIで解く</li>
+<li>レイテンシ / コスト / モデル: 対話UIなら応答目標時間、バッチなら件数と上限単価を決め、まずは小さめのモデルから評価する</li>
+<li>同期 / 非同期: 画面で待てるなら同期、時間が読みにくい・再実行が必要・件数が多いならジョブ化する</li>
+<li>出力形式: 人間向け文章か、JSONなどの機械可読形式かを決める。後者は backend で型・schema を検証する前提で設計する</li>
+</ul>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-docs-2.html">← docs と履歴（2/2）</a><a class="flow-pager__next" href="guide-repo-ai-2.html">AI設定（2/2） →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

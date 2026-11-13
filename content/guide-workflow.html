@@ -1,0 +1,328 @@
+<!--meta {"title": "全体像", "desc": "Phase 地図とタスク分岐。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-workflow">全体像</h1>
+      <p class="lead">Phase 地図とタスク分岐。</p>
+    </header>
+    <div class="flow-body">
+
+
+<!-- guide-workflow-ai:start -->
+<p class="workflow-split-lead">一般業務 → <a href="memo-ai-tools.html#21-chat-vs-workflow">4要素</a> · 開発業務 → 下表。</p>
+<h3 id="dev-lifecycle-ai"><a class="toclink" href="#dev-lifecycle-ai">開発ライフサイクル × AIツール</a></h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>段階</th><th>AIに任せる</th><th>人間が決める</th><th>正本</th></tr></thead>
+<tbody>
+<tr><td>要件定義</td><td>PRD 下書き・論点整理</td><td>Must / Won't・承認</td><td><a href="#0-5-requirements">要件定義</a></td></tr>
+<tr><td>Phase 1 規約</td><td>Rules / Skills 草案</td><td>禁止事項・検証 gate</td><td><a href="guide-rules-phase1.html#phase-1">規約整備</a></td></tr>
+<tr><td>Phase 2 Plan</td><td>タスク分解案</td><td>スコープ・完了条件</td><td><a href="guide-design.html#phase-2-plan">Plan</a></td></tr>
+<tr><td>Phase 3 設計</td><td>docs 骨子・レビュー観点</td><td>DB / API の正本</td><td><a href="guide-design.html#phase-3-design">設計</a></td></tr>
+<tr><td>Phase 4–5 実装</td><td>コード生成・テスト追加</td><td>アーキテクチャ・レビュー</td><td><a href="guide-implement.html#phase-4-core">実装</a></td></tr>
+<tr><td>Phase 6 共通</td><td>CI / ログ / デプロイ手順案</td><td>本番変更の承認</td><td><a href="guide-implement.html#phase-6-crosscut">共通作業</a></td></tr>
+<tr><td>Phase 7 PR</td><td>AI 一次レビュー・説明文</td><td>マージ判断</td><td><a href="guide-ship.html#phase-7-pr">PR</a> · <a href="guide-ship.html#14-agent-review">AIレビュー</a></td></tr>
+<tr><td>定期ワークフロー</td><td>CI digest · PR 監視下書き</td><td>マージ · 本番変更</td><td><a href="guide-ops-orchestration.html#18-dev-workflows">4要素</a></td></tr>
+<tr><td>運用</td><td>調査委譲 · ログ要約</td><td>障害判断 · ロールバック</td><td><a href="guide-ops-orchestration.html#18-orchestration">運用</a> · <a href="guide-ops-orchestration.html#18-dev-workflows">定期WF</a></td></tr>
+</tbody>
+</table>
+</div>
+<p class="workflow-split-lead">定期実行の設計 → <a href="guide-ops-orchestration.html#18-dev-workflows">開発ワークフロー</a> · 一般業務の型 → <a href="memo-ai-tools.html#21-chat-vs-workflow">4要素早見</a>。</p>
+<!-- guide-workflow-ai:end -->
+<h3 id="3-phase-map"><a class="toclink" href="#3-phase-map">Phase 地図</a></h3>
+<div class="mermaid">
+flowchart LR
+    REQ[要件定義] --> P1[Phase 1]
+    P1 --> P2[Phase 2 Plan]
+    P2 --> P3[Phase 3 設計]
+    P3 --> P4[Phase 4-5 実装]
+    P4 --> P6[Phase 6 共通]
+    P6 --> P7[Phase 7 PR]
+</div>
+<h4 id="phase-by-task-type"><a class="toclink" href="#phase-by-task-type">タスク種別ごとのフェーズ適用</a></h4>
+<p>着手前にタスク種別を決め、「スキップ可」列で省略できる Phase を確認します。</p>
+<table>
+<thead>
+<tr>
+<th>タスク種別</th>
+<th>スキップ可</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>新規プロジェクト立ち上げ</td>
+<td>なし</td>
+<td>要件定義 → 全 Phase実施</td>
+</tr>
+<tr>
+<td>新規機能（中規模以上）</td>
+<td>0（ルール既存時）</td>
+<td><a href="guide-workflow.html#0-5-requirements">要件定義</a> 必須。ルール追記が必要なら Phase 1</td>
+</tr>
+<tr>
+<td>新規機能（小規模）</td>
+<td>要件定義, Phase 1, Phase 3</td>
+<td><a href="guide-setup.html#0-quick">3段</a> + ADR + Plan で足りることが多い</td>
+</tr>
+<tr>
+<td>バグ修正</td>
+<td>0, 2, 5</td>
+<td>Phase 2 で再現条件を明確化。Phase 4 で回帰テストから</td>
+</tr>
+<tr>
+<td>リファクタ</td>
+<td>2（要件不変時）, 4–5</td>
+<td>既存テストで挙動保証してから着手</td>
+</tr>
+<tr>
+<td>調査・PoC</td>
+<td>5, 6（破棄前提なら）</td>
+<td>Phase 2 で「PoC である旨」を明示</td>
+</tr>
+</tbody>
+</table>
+<hr />
+
+
+
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-workflow.html#13-new-task">新規タスク</a></li>
+  <li><a href="guide-workflow.html#0-5-requirements">要件定義</a></li>
+  <li><a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+<hr />
+<p class="callout green">要件すり合わせ — Phase 1〜7 はエンジニア向け。ここでは PdM・関係者（SH） と「何を・なぜ・誰のために」を決める。Approved PRD が Phase 2 の入力になる。</p>
+<p>手順の正式な記録: <a href="memo-dev-method.html#21-prd">メモ — PRD</a>、<code>docs/PRD-workflow.md</code>。</p>
+
+<h3 id="0-5-requirements"><a class="toclink" href="#0-5-requirements">要件定義（Phase 0.5）</a></h3>
+<h4 id="0-5-when"><a class="toclink" href="#0-5-when">いつ実施するか</a></h4>
+<p>下表で「実施 / スキップ」を切り分ける。迷ったら <a href="guide-workflow.html#phase-by-task-type">タスク種別と Phase</a> を見る。</p>
+<table>
+<thead><tr><th>実施する</th><th>スキップ可（たたき台 / Issue で可）</th></tr></thead>
+<tbody>
+<tr>
+<td>新規機能（中規模以上）</td>
+<td>バグ修正・1行修正</td>
+</tr>
+<tr>
+<td>複数 関係者（SH）・部門をまたぐ変更</td>
+<td>スコープが Issue 1枚で固定</td>
+</tr>
+<tr>
+<td>優先度・やらないこと（Won't） が争点</td>
+<td>内部リファクタ（要件不変）</td>
+</tr>
+</tbody>
+</table>
+<p class="scenario-inline"><span class="scenario-inline__label">複数 関係者（SH） が関与する「請求 PDF エクスポート」は PRD 必須</span> — 複数 関係者（SH） が関与する「請求 PDF エクスポート」は PRD 必須。1 行 typo 修正は Issue だけで Phase 2 へ直行する。</p>
+
+<p>小規模は <a href="guide-setup.html#0-quick">3段のたたき台</a> で十分なことが多い。</p>
+
+<h4 id="0-5-flow"><a class="toclink" href="#0-5-flow">PRD すり合わせ（5段階）</a></h4>
+<ol class="steps">
+<li>起票 — Issue / チケット URL を PRD に書く。</li>
+<li>ドラフト — 背景・ゴール/非ゴール・ユーザー・機能/非機能・受け入れ条件・メトリクス・リスク。</li>
+<li>レビュー — PdM + 開発 + 関係 関係者（SH）。コメントは PR かファイル上に残す。</li>
+<li>承認 — ステータス <code>Approved</code> と承認日を更新。</li>
+<li>実装連携 — Phase 2 に PRD パスを渡す。API/DB 詳細は Phase 3 の <code>docs/&lt;feature&gt;/</code> へ。</li>
+</ol>
+<p>置き場所: <code>docs/prd/&lt;機能スラッグ&gt;.md</code>。エピックは <code>docs/prd/&lt;名前&gt;/README.md</code>。</p>
+<h4 id="0-5-gate"><a class="toclink" href="#0-5-gate">開発着手前チェック</a></h4>
+<p>PRD 不要とする場合は、ADR か Issue に理由を書いてチーム合意を取る。</p>
+<table>
+<thead><tr><th>フェーズ</th><th>開始条件</th></tr></thead>
+<tbody>
+<tr><td>Phase 1（rules 整備）</td><td>PRD Approved、または「PRD 不要」を ADR/Issue に記録</td></tr>
+<tr><td>Phase 2 Plan</td><td>Approved PRD（または <code>00_brief.md</code>）を Plan プロンプトに添付</td></tr>
+<tr><td>Phase 3 設計 docs</td><td>Phase 2 完了。PRD の Must が <code>01_requirements.md</code> にトレースできる</td></tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-prd-approved-phase2-plan">
+<h4 class="info-panel__title" id="scenario-prd-approved-phase2-plan">PRD 承認前は Phase 2 を開始しない</h4>
+<div class="info-panel__body"><p>PRD が <code>Approved</code> になるまで Phase 2 Plan を開始しない。PRD 不要のバグ修正は Issue #501 に「PRD 不要・再現手順のみ」と書いてから Plan する。</p></div>
+</aside>
+
+<h4 id="0-5-handoff"><a class="toclink" href="#0-5-handoff">Phase 2 への引き渡し</a></h4>
+<ul>
+<li><code>【タスク】</code> に PRD パス + Issue URL（仕様書だけ貼って PRD を省略しない）。</li>
+<li>PRD の受け入れ条件 → Plan の「完了条件」「レビュアー確認ポイント」へ落とす。</li>
+<li>未決事項は Phase 2 前に 関係者（SH） 合意。Plan に「未決」と明記する。</li>
+</ul>
+<h4 id="0-5-ai"><a class="toclink" href="#0-5-ai">AI の使い所</a></h4>
+<p>AI は下書き役。最終判断と Approved は PdM/関係者（SH） が行う。</p>
+<table>
+<thead><tr><th>AI に任せてよい</th><th>人間（PdM/関係者（SH））が決める</th></tr></thead>
+<tbody>
+<tr>
+<td>PRD ドラフト・観点チェックリスト・競合整理</td>
+<td>優先度・スコープ外（やらないこと（Won't））・承認</td>
+</tr>
+<tr>
+<td>受け入れ条件の漏れ指摘</td>
+<td>ビジネス上のトレードオフ・KPI 目標値</td>
+</tr>
+<tr>
+<td>議事メモの構造化</td>
+<td>関係者（SH） 合意のファシリテーション</td>
+</tr>
+</tbody>
+</table>
+<p class="scenario-inline"><span class="scenario-inline__label">PRD ドラフトの確定フロー</span> — 開発者 A が AI に PRD ドラフトを依頼し、PdM が やらないこと（Won't） と KPI 目標値を確定する。Approved ステータスは PdM のみが更新する。</p>
+
+
+<div class="mermaid">
+sequenceDiagram
+    participant PdM as PdM
+    participant 関係者（SH） as ステークホルダー
+    participant Dev as 開発
+    participant AI as AI
+
+    PdM->>関係者（SH）: ヒアリング / 優先度確認
+    Dev->>AI: PRD ドラフト依頼（Issue・制約付き）
+    AI-->>Dev: PRD 草案
+    Dev->>PdM: レビュー依頼
+    PdM->>関係者（SH）: レビュー / コメント
+    関係者（SH）-->>PdM: 合意 / 修正指示
+    PdM->>Dev: Approved PRD
+    Dev->>Dev: Phase 2 Plan 開始
+</div>
+
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-issue-prd-docs-prd-lt-slu">
+<h4 class="info-panel__title" id="scenario-issue-prd-docs-prd-lt-slu">AI への PRD ドラフト生成プロンプト</h4>
+<div class="info-panel__body"><pre><code class="language-text">以下の Issue / 制約から PRD ドラフトを docs/prd/&lt;slug&gt;.md に書いてください。
+実装案・API 詳細は書かない（Phase 3 担当）。
+
+【入力】
+- Issue: [URL]
+- 背景・制約: [箇条書き]
+- 関係 SH: [役割]
+
+【必須セクション】
+- ゴール / 非ゴール（Must / Won't）
+- ユーザー / ペルソナ
+- 機能要件 / 非機能要件
+- 受け入れ条件（テスト可能な表現）
+- リスク / オープンクエスチョン
+
+【禁止】
+- SH 合意前に Approved と書かない
+- 技術選定の断定（代替案列挙のみ可）
+</code></pre></div>
+</aside>
+<hr />
+<h3 id="13-new-task"><a class="toclink" href="#13-new-task">タスク種別と着手分岐</a></h3>
+<p>図は着手前の分岐がポイント。左枝がリポ初回（新規プロジェクト）、右枝が既存リポへの機能追加。スキップ可否の一覧は <a href="guide-workflow.html#phase-by-task-type">タスク種別と Phase</a>（平易語キャプション付き）。</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Dev as 開発者
+    participant AI as AIエージェント
+    participant Team as PM/レビュアー
+    participant CI as CI
+
+    alt 新規プロジェクト（リポ初回）
+        Note over Dev,Team: 立ち上げ。Phase 1 から実施
+        Dev->>Team: PRD すり合わせ
+        Team-->>Dev: Approved PRD
+        Dev->>AI: Phase 1 ルール整備
+        AI-->>Dev: rules / AGENTS.md 等
+    else 既存リポへの機能追加
+        Note over Dev: Phase 1 は原則スキップ
+        opt 中規模以上の新規機能
+            Dev->>Team: PRD すり合わせ
+            Team-->>Dev: Approved PRD
+        end
+    end
+
+    Dev->>AI: Phase 2 Plan
+    AI-->>Dev: タスク分解・リスク
+    Dev->>Team: 不明点確認
+    Dev->>CI: 下書き PR（Draft PR）作成
+
+    opt 設計 doc が必要な規模
+        Dev->>AI: Phase 3 設計
+        AI-->>Dev: docs / ADR
+        Dev->>Team: 設計レビュー
+    end
+
+    alt TDD 採用チーム
+        loop Phase 4-5 実装
+            Dev->>AI: RED
+            AI-->>Dev: 失敗テスト
+            Dev->>AI: GREEN
+            Dev->>AI: REFACTOR
+            Dev->>Dev: コミット
+        end
+    else 通常実装
+        Dev->>AI: Phase 4-5 実装
+        AI-->>Dev: コード + テスト
+        Dev->>Dev: コミット
+    end
+
+    Dev->>Dev: ローカル疎通確認
+
+    Dev->>Dev: Phase 6 共通作業
+    Note over Dev: 結合テスト・ログ・マイグレーション
+
+    Dev->>CI: Phase 7 PR
+    CI-->>Dev: green
+    Dev->>Team: レビュー依頼
+
+    loop レビュー対応
+        Team-->>Dev: コメント
+        Dev->>AI: 修正
+        Dev->>CI: 再実行
+    end
+</div>
+<p>図の共通区間（Phase 2 以降）の対応表。詳細はリンク先の章を参照。</p>
+<table>
+<thead><tr><th>Phase</th><th>新規プロジェクト</th><th>既存リポへの追加</th><th>詳細</th></tr></thead>
+<tbody>
+<tr><td>要件すり合わせ</td><td>実施</td><td>中規模以上のみ（小規模は省略可）</td><td><a href="guide-workflow.html#0-5-requirements">要件定義</a></td></tr>
+<tr><td>Phase 1</td><td>実施</td><td>原則スキップ（ルール追記時のみ）</td><td><a href="guide-rules-phase1.html#phase-1">Phase 1</a></td></tr>
+<tr><td>Phase 2 Plan</td><td colspan="2">タスク分解・下書き PR（Draft PR）</td><td><a href="guide-design.html#phase-2-plan">Phase 2</a></td></tr>
+<tr><td>Phase 3 設計</td><td>実施</td><td>小規模は省略可</td><td><a href="guide-design.html#phase-3-design">Phase 3</a></td></tr>
+<tr><td>Phase 4–5 実装</td><td colspan="2">コア → アプリ（TDD はチーム方針に従う）</td><td><a href="guide-implement.html#phase-4-core">Phase 4</a> / <a href="guide-implement.html#phase-5-app">Phase 5</a></td></tr>
+<tr><td>Phase 6 共通作業</td><td colspan="2">結合・ログ・マイグレーション</td><td><a href="guide-implement.html#phase-6-crosscut">Phase 6</a></td></tr>
+<tr><td>Phase 7 PR</td><td colspan="2">CI green・レビューループ</td><td><a href="guide-ship.html#phase-7-pr">Phase 7</a></td></tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-scenario">
+<h4 class="info-panel__title" id="scenario-scenario">ユーザー招待メール再送</h4>
+<div class="info-panel__body"><p>既存リポへの機能追加の例。「ユーザー招待メール再送」。中規模。PdM 1名・開発者 1名・レビュアー 1名。</p>
+<ul>
+<li>図の右枝（Phase 1 スキップ）に該当</li>
+<li>要件すり合わせ: PRD を PdM と Approved まで（1日）</li>
+<li>Phase 2: Plan + 下書き PR（<code>feature/resend-invite</code>）</li>
+<li>Phase 3: <code>docs/invite-resend.md</code> + ADR → 設計レビュー</li>
+<li>Phase 4–5: <code>app/services/invite_mailer.rb</code> → コントローラ</li>
+<li>Phase 7: CI green → レビュアー承認 → マージ</li>
+</ul></div>
+</aside>
+<blockquote>
+<p>規模により、1日で完結することも、1週間を超えることもある。</p>
+<p>タスク粒度は 1–3 日が目安。 履歴も適度なサイズに収まる。それ以上は分割を検討。</p>
+</blockquote>
+<hr />
+    <details class="archive-fold">
+<summary>2026年6月時点の X 上の話題（記録）</summary>
+<p class="archive-fold__note">当時の投稿の要点を記録として残しています。現在の状況は公式の Docs / changelog と <a href="trends-2026.html">2026年11月のトレンド</a> を確認してください。</p>
+<table>
+<thead><tr><th>出典</th><th>要点</th><th>この章</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/0xchromium/status/2062515355306631467">@0xchromium</a></td><td>チャット≠ワークフロー。<strong>ROLE · TOOLS · TRIGGER · OUTPUT</strong> の4要素で自動化</td><td><a href="guide-ops-orchestration.html#18-dev-workflows">開発WF</a> · <a href="memo-ai-tools.html#21-chat-vs-workflow">4要素</a></td></tr>
+<tr><td><a href="https://x.com/noisyb0y1/status/2063295755104747553">@noisyb0y1 gstack</a></td><td>Phase 型 Skills（<code>/office-hours</code> · <code>/qa</code> · <code>/ship</code>）で手戻りを減らす</td><td><a href="#dev-lifecycle-ai">ライフサイクル</a> · <a href="#3-phase-map">Phase 地図</a></td></tr>
+<tr><td><a href="https://x.com/steipete/status/2063697162748260627">@steipete</a></td><td>都度プロンプトではなく<strong>ループ設計</strong>（discover→plan→execute→verify）</td><td><a href="memo-ai-tools.html#21-loop-engineering">Loop</a></td></tr>
+<tr><td><a href="https://x.com/reach_vb/status/2063713960495558940">@reach_vb</a></td><td>Automations · Worktrees · Skills · Connectors · Sub-agents + 状態ファイル</td><td><a href="#13-new-task">タスク分岐</a></td></tr>
+</tbody>
+</table>
+</details>
+</div><nav class="flow-pager" aria-label="前後の章"><a href="guide-setup.html">← セットアップ</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

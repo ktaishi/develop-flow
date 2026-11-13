@@ -1,0 +1,220 @@
+<!--meta {"title": "Plan・設計", "desc": "Phase 2 Plan と Phase 3 要件設計。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-design">Plan・設計</h1>
+      <p class="lead">Phase 2 Plan と Phase 3 要件設計。</p>
+    </header>
+    <div class="flow-body">
+
+
+<p class="prereq-line wiki-lead"><a href="guide-rules-compare.html#17-compare">Plan</a> を先に。完了 → <a href="guide-design.html#phase-3-design">Phase 3</a> または実装へ</p>
+<p>Phase 2 は、コードを書く前に「何を・どの順で・どこまでやるか」を AI と一緒に固める段階です。Plan が通れば Phase 3 の設計 docs に進みます。</p>
+
+<span id="phase-2-plan" class="redirect-anchor" aria-hidden="true"></span>
+<h3 id="51-plan-gate"><a class="toclink" href="#51-plan-gate">着手前の確認</a></h3>
+<p class="callout yellow">着手前チェック：中規模以上の機能は、<a href="guide-workflow.html#0-5-gate">Approved PRD</a>（または <code>00_brief.md</code>）を Plan 入力に入れてから始めてください。未承認のまま Plan に入ると、あとで設計や実装がやり直しになりやすいです。</p>
+<h3 id="51-plan-prompt"><a class="toclink" href="#51-plan-prompt">Plan プロンプト</a></h3>
+<p>新規タスクの最初のメッセージとして、Plan モード（または同等の計画フェーズ）のチャットに貼り付けます。角括弧 <code>[...]</code> は自分の PRD パス・Issue・既存コードのパスに置き換えてから送ってください。</p>
+<pre><code class="language-text">新規タスクに着手します。Planモードで進行表を作ってください。
+実装の中身はまだ書かないでください。
+
+【タスク】
+- PRD（Approved）: [docs/prd/xxx.md へのパス]
+- Issue: [URL]
+
+【コンテキスト】
+- 関連する既存実装: [パス]
+- 関連するルールファイル (.cursor/rules / CLAUDE.md / .claude/skills): [該当ファイル]
+- 関連する個人メモ (あれば): [z_docs などへのリンク]
+- スプリント目標との関係: [あれば]
+- 期限・優先度: [あれば]
+
+【作ってほしいもの】
+1. タスク分解 (各サブタスクの完了条件)
+2. 影響範囲の調査結果 (どのモジュール/ファイル/テストが影響を受けるか)
+3. 設計判断が必要なポイント (代替案を3つまで)
+4. リスクと回避策
+5. レビュアー観点での確認ポイント
+6. PoC/プロトタイプで先に確認すべき不確実箇所 (あれば)
+
+出力先: **まずはこのチャット**。チームで追う Plan は **tasks/todo.md** にチェックリスト化（テンプレ同梱）。個人たたき台だけなら **z_docs/&lt;feature-name&gt;/00_plan.md** でも可（docs/ の公式成果物ではない）
+
+実装やコード生成はまだ不要です。
+</code></pre>
+<blockquote>
+<p>大事なポイント：コンテキストの「関連する既存実装」は省略しないでください。パスが無いと、AI はリポジトリの慣習と違う案を出しがちです。</p>
+</blockquote>
+<h3 id="51-plan-outputs"><a class="toclink" href="#51-plan-outputs">Plan の成果物</a></h3>
+<p>Plan 完了時に揃えたい出力は次のとおりです。<code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code> はチーム共有の Plan 正式な記録、<code>z_docs/</code> は個人メモ用（詳細は <a href="guide-repo-docs-1.html#11-6-tasks">tasks/（リポジトリ）</a>）。</p>
+<table>
+<thead>
+<tr><th>出力</th><th>必須</th><th>保存先</th></tr>
+</thead>
+<tbody>
+<tr><td>タスク分解（完了条件付き）</td><td>必須</td><td>チャット / <code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code>（推奨）/ <code>z_docs/&lt;feature&gt;/00_plan.md</code>（個人のみ）</td></tr>
+<tr><td>Plan 結果・レビュー</td><td>推奨</td><td><code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code> の「レビュー・結果」</td></tr>
+<tr><td>影響範囲調査</td><td>必須</td><td>チャット</td></tr>
+<tr><td>設計判断ポイント（代替案）</td><td>推奨</td><td>チャット → Phase 3 で docs へ</td></tr>
+<tr><td>リスクと回避策</td><td>必須</td><td>チャット</td></tr>
+<tr><td>レビュアー確認ポイント</td><td>推奨</td><td>PR description 下書き</td></tr>
+<tr><td>下書き PR（下書き PR（Draft PR））</td><td>推奨</td><td>GitHub</td></tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-phase3-docs">
+<h4 class="info-panel__title" id="scenario-phase3-docs">設計判断は Phase 3 で ADR に昇格</h4>
+<div class="info-panel__body"><p>設計判断（キャッシュ方針など）はチャットに代替案つきで残し、Phase 3 で <code>docs/adr/0042-cache-strategy.md</code> に昇格。レビュアー確認ポイントは 下書き PR（下書き PR（Draft PR）） の description 下書きにそのまま貼る。</p></div>
+</aside>
+
+<h3 id="51-plan-flow"><a class="toclink" href="#51-plan-flow">進め方（流れ）</a></h3>
+<p>開発者・AI・PM/レビュアーのやり取りは、おおよそ次の流れになります。</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Dev as 開発者
+    participant AI as AI
+    participant Team as PM/レビュアー
+
+    Dev->>AI: Plan プロンプト + 既存実装パス
+    AI-->>Dev: 分解・リスク・影響範囲
+    Dev->>Dev: 出力レビュー
+    alt 不明点あり
+        Dev->>Team: 事前確認
+        Team-->>Dev: 回答
+        Dev->>AI: Plan 修正
+    end
+    Dev->>Dev: 下書き PR（下書き PR（Draft PR）） 作成
+</div>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-ai-api-pm-p">
+<h4 class="info-panel__title" id="scenario-ai-api-pm-p">外部要因の不明点は先に PM 確認</h4>
+<div class="info-panel__body"><p>AI が「外部 API のレート制限が不明」と出したら、先に PM に確認してから Plan を修正。合意後に 下書き PR（下書き PR（Draft PR）） を作り、タイトルは <code>[WIP] feat: 注文キャンセル</code> のように途中経過だと分かる形にする。</p></div>
+</aside>
+<hr />
+<hr />
+<p class="prereq-line wiki-lead">小規模は <a href="guide-setup.html#0-quick">3段フロー</a> で足りることも。完了 → <a href="guide-implement.html#phase-4-core">Phase 4</a></p>
+<p class="callout" id="61-ddd-tdd-clean-architecture">Phase 3 = AI と docs を作る手順。DDD / クリーンアーキなどの設計方針はプロジェクト固有です。正式な記録は <code>docs/</code>・ADR・rules。参考は <a href="memo-dev-method.html#21-ddd-clean-arch">メモ — DDD / クリーンアーキ</a>。</p>
+
+<span id="phase-3-design" class="redirect-anchor" aria-hidden="true"></span>
+<h3 id="61-phase3-flow"><a class="toclink" href="#61-phase3-flow">設計ドキュメント生成</a></h3>
+<p>Phase 3 では、要件と設計を <code>docs/&lt;feature&gt;/</code> にまとめます。レイヤ分割やモジュール構成は既存コードと ADR に合わせる。方針が未決なら、実装の前に ADR を起票してください。</p>
+<p>AI 協働・設計 docs・検証の役割の違いは、次の表のとおりです。</p>
+<table>
+<thead>
+<tr>
+<th>観点</th>
+<th>AI 協働（本フロー）</th>
+<th>設計（docs / ADR）</th>
+<th>検証</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>役割</td>
+<td>AI 出力の範囲・禁止・進め方を固定</td>
+<td>責務・データ・API・不変条件の記述</td>
+<td>仕様・ルールとの整合確認</td>
+</tr>
+<tr>
+<td>主な適用 Phase</td>
+<td>Phase 1 → 全 Phase</td>
+<td>Phase 3</td>
+<td>Phase 4〜4、PR 前</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>推奨順：Phase 1 のルール → Phase 3 の設計 docs → それに沿った実装 → lint / テスト / CI / レビュー。</li>
+<li>TDD 採用時：Phase 4 で <a href="guide-implement.html#72-tdd-1-red-green-refactor-3">10.2 TDDテンプレ（任意）</a> を使う。</li>
+<li>DDD / クリーンアーキ採用時：下の折りたたみ、または <a href="memo-dev-method.html#21-ddd-clean-arch">メモ</a> の追記ブロックをプロンプト末尾に足す。</li>
+</ul>
+<p>Plan が承認されたあと、設計用チャットで docs 生成まで進める流れは次のとおりです。</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Dev as 開発者
+    participant AI as AI
+    participant Docs as docs/
+
+    Dev->>AI: 設計プロンプト + 既存コード参照
+    AI-->>Docs: 01_requirements.md
+    AI-->>Docs: 02_design.md
+    AI-->>Docs: 03_db_schema.md
+    AI-->>Docs: 04_tech_decisions.md
+    Dev->>Dev: 設計レビュー
+    alt ADR 必要
+        AI-->>Docs: docs/adr/NNNN-*.md
+    end
+</div>
+<p>貼り付けタイミング：Phase 2 の Plan がレビューで OK になったあと、設計専用のチャット（または同チャットの続き）で、下のブロックをそのまま送ります。技術スタックの <code>[選択]</code> と参照パスを埋めてから貼ってください。</p>
+<pre><code class="language-text">Planを承認します。技術スタックは [選択] で確定。
+これから挙げる4ドキュメントを **`docs/&lt;feature-name&gt;/`** (チーム公式ドキュメント置き場) に生成または既存ファイルへ追記してください。
+途中で確認を求めず一気通貫で出してください。
+
+【前提】 ※ .cursor/rules/ または CLAUDE.md / AGENTS.md のプロジェクト制約に準拠
+- 既存のアーキテクチャ・ディレクトリ構成・命名規則を踏襲する（逸脱する場合は 04_tech_decisions + ADR で理由を書く）
+
+【既存コードベースの参照必須箇所】
+- [類似機能のディレクトリ]
+- [共通基盤のディレクトリ]
+
+【生成/更新物】
+1) docs/&lt;feature-name&gt;/01_requirements.md
+   - 機能要件 (Must/Should/Won't を表で)
+   - 非機能要件 (性能/信頼性/セキュリティ/保守性)
+   - スコープ外
+   - ユースケース図と主要シーケンス図 (Mermaid最小構文)
+   - 既存機能との関係 (どこを拡張するか)
+   - 用語 (既存 glossary.md と整合)
+
+2) docs/&lt;feature-name&gt;/02_design.md
+   - 影響を受けるモジュール/レイヤと変更点
+   - 主要コンポーネントの責務 (新規/変更を区別)
+   - データフロー・API 境界（該当する場合）
+   - エラー設計方針
+   - トランザクション境界・並行制御方針（該当する場合）
+   - 既存パターンを踏襲した箇所 / 新規導入した箇所の説明
+
+3) docs/&lt;feature-name&gt;/03_db_schema.md (DB変更がある場合のみ)
+   - 既存ER図への差分 (Mermaid erDiagram)
+   - 新規/変更テーブル: カラム/型/NULL/制約/INDEX/用途を表で
+   - マイグレーション計画 (forward / rollback)
+   - データ移行が必要なら別途記載
+
+4) docs/&lt;feature-name&gt;/04_tech_decisions.md
+   - 新規ライブラリ導入があれば理由と代替案
+   - アーキテクチャ・設計スタイルの選択と理由（採用しなかった案も）
+   - 既存規約と異なる選択をした場合の理由
+
+最後に docs/&lt;feature-name&gt;/README.md にこれら4ドキュメントへのリンクを生成してください。
+重要な技術選定 (FW変更・DB変更・破壊的変更等) は `docs/adr/NNNN-&lt;slug&gt;.md` として ADR (<a href="guide-repo-docs-1.html#11-7-adr">11.7 ADR</a>) も併せて生成してください。
+</code></pre>
+<details class="section-fold" id="61-design-addon">
+<summary>プロンプト追記 — DDD / クリーンアーキ採用時のみ</summary>
+<p>チームが DDD + クリーンアーキを採用しているときだけ、上のプロンプト末尾に次を追加します。詳細は <a href="memo-dev-method.html#21-ddd-clean-arch">メモ — DDD / クリーンアーキ</a>。</p>
+<p class="scenario-inline"><span class="scenario-inline__label">集約境界の明文化と設計判断の記録</span> — 集約境界が曖昧なときは、02_design に「注文＝集約ルート、明細は VO」と書き、04_tech_decisions に Vertical Slice を採らなかった理由を 3 行で残す。</p>
+
+<pre><code class="language-text">【02_design.md 追記 — DDD / クリーンアーキ採用時】
+- DDD を適用する範囲 (Entity / Value Object / Aggregate / Domain Service / Repository)
+- クリーンアーキテクチャの層境界と依存方向
+- 業務例外と技術例外の分離
+
+【04_tech_decisions.md 追記】
+- DDD / クリーンアーキテクチャをどこまで採るか、その理由
+- Vertical Slice / CRUD モノリス等、採用しなかった選択肢
+</code></pre>
+</details>
+<hr />
+    <details class="archive-fold">
+<summary>2026年6月時点の X 上の話題（記録）</summary>
+<p class="archive-fold__note">当時の投稿の要点を記録として残しています。現在の状況は公式の Docs / changelog と <a href="trends-2026.html">2026年11月のトレンド</a> を確認してください。</p>
+<table>
+<thead><tr><th>出典</th><th>要点</th><th>この章</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/bcherny/status/2017742741636321619">@bcherny チーム Tips</a></td><td>複雑タスクは <strong>Plan mode</strong>（<kbd>Shift</kbd>+<kbd>Tab</kbd>×2）で計画承認後 1-shot 実装</td><td><a href="#51-plan-flow">Plan 進め方</a></td></tr>
+<tr><td><a href="https://x.com/bcherny/status/2007179832300581177">@bcherny セットアップ</a></td><td>計画に時間を使い、実装は任せる — ズレたら follow-up ではなく<strong>計画を直す</strong></td><td><a href="#51-plan-gate">着手前</a></td></tr>
+<tr><td><a href="https://x.com/samueljmcd/status/2066524627585634765">@samueljmcd</a></td><td>ループ図の本体は <strong>verifier</strong>。open loop は探索、closed loop が成果</td><td><a href="guide-ops-orchestration.html#18-4-verify">検証</a></td></tr>
+<tr><td>Cursor 公式 BP</td><td>Plan Mode → 承認 → Build。ズレたら計画からやり直し（<a href="https://cursor.com/docs/agent/plan-mode">Docs</a>）</td><td><a href="guide-rules-cursor.html#17-past-chats">@Past Chats</a></td></tr>
+</tbody>
+</table>
+</details>
+</div><nav class="flow-pager" aria-label="前後の章"><a href="guide-rules.html">← ルール / Plan</a><a class="flow-pager__next" href="guide-implement.html">実装 →</a></nav>
+  </article>
+</div>

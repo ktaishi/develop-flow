@@ -1,0 +1,130 @@
+<!--meta {"title": "導入事例集", "desc": "開発・業務・システム組み込みの実例8件を「課題→構成→結果→学び」で。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-ai-cases">導入事例集</h1>
+      <p class="lead">開発・業務・システム組み込みの実例8件を「課題→構成→結果→学び」で。</p>
+    </header>
+    <div class="flow-body">
+
+<p class="wiki-lead">「課題 → 構成 → 結果 → 学び」の型で読める導入事例集。自チームに近いものを1つ選び、同じ構成から始めるのが最短。各事例は一般化した再現可能な型として記述している。</p>
+
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>開発・業務・組み込みの実例を「課題→構成→結果→学び」で読む</li>
+<li>自分の状況に近い事例を選んで応用する</li>
+<li>導入手順（howto）を参考に小さく始める</li>
+</ul>
+<p class="page-brief__nav"><a href="index.html#playbook-hub">↑ 章トップ</a> <a href="guide-ai-system.html">← システムへの組み込み</a> <a href="index.html#playbook-hub">章トップへ戻る →</a></p>
+</aside>
+<h3 id="cases-dev"><a class="toclink" href="#cases-dev">開発現場の事例</a></h3>
+
+<h4 id="case-legacy"><a class="toclink" href="#case-legacy">事例1: レガシーコードの解読とテスト整備</a></h4>
+<table>
+<tbody>
+<tr><td><strong>課題</strong></td><td>10年もののモノリス。仕様書なし・テストカバレッジ 10% 未満で、改修のたびにデグレ</td></tr>
+<tr><td><strong>構成</strong></td><td>Claude Code のサブエージェントでモジュール単位の挙動を調査→仕様メモを <code>docs/</code> に生成→そのメモを根拠に特性テスト（characterization test)を追加</td></tr>
+<tr><td><strong>結果</strong></td><td>3週間で主要モジュールのカバレッジ 60%。以後の改修は AI 任せでもテストが網になる</td></tr>
+<tr><td><strong>学び</strong></td><td>「コードを直す」前に「コードを説明させる」が先。生成した仕様メモは人間が必ず1周レビューする</td></tr>
+</tbody>
+</table>
+
+<h4 id="case-pr-review"><a class="toclink" href="#case-pr-review">事例2: PR レビューの前段自動化</a></h4>
+<table>
+<tbody>
+<tr><td><strong>課題</strong></td><td>シニア2名にレビューが集中し、PR の滞留が平均2日</td></tr>
+<tr><td><strong>構成</strong></td><td>CI で <code>claude -p</code>（または Codex のコードレビュー連携）を実行し、規約違反・明らかなバグ・テスト漏れを先に指摘。人間は設計判断に集中</td></tr>
+<tr><td><strong>結果</strong></td><td>人間レビューの指摘の約半分が前段で消化され、滞留が半日〜1日に短縮</td></tr>
+<tr><td><strong>学び</strong></td><td>レビュー観点を <a href="guide-rules.html">Rules / Skills</a> に明文化したことが効いた。AI 指摘への返信を必須にすると形骸化しない</td></tr>
+</tbody>
+</table>
+
+<h4 id="case-parallel"><a class="toclink" href="#case-parallel">事例3: 小タスクの並列処理（Codex クラウド）</a></h4>
+<table>
+<tbody>
+<tr><td><strong>課題</strong></td><td>「型エラー解消」「非推奨 API 置換」など、簡単だが面倒なタスクがバックログに 50 件滞留</td></tr>
+<tr><td><strong>構成</strong></td><td>1タスク=1目的に分割して Codex クラウドへ一括投入。翌朝、生成された PR をまとめてレビュー</td></tr>
+<tr><td><strong>結果</strong></td><td>2週間でバックログをほぼ消化。成功率はタスクの独立性に強く依存（独立タスクで体感 7〜8割）</td></tr>
+<tr><td><strong>学び</strong></td><td>失敗した PR は深追いせず閉じて手元でやり直す方が速い。環境構築スクリプトの整備で成功率が上がる</td></tr>
+</tbody>
+</table>
+
+<hr />
+<h3 id="cases-biz"><a class="toclink" href="#cases-biz">業務の事例</a></h3>
+
+<h4 id="case-minutes"><a class="toclink" href="#case-minutes">事例4: 議事録→ナレッジの自動整備</a></h4>
+<table>
+<tbody>
+<tr><td><strong>課題</strong></td><td>会議は録画されるが文字起こしは放置され、決定事項が人の記憶頼み</td></tr>
+<tr><td><strong>構成</strong></td><td>文字起こし→共有テンプレ（決定事項・宿題・期限の3点抽出）で要約→ナレッジベースの当該プロジェクト配下に保存、の3段ワークフロー</td></tr>
+<tr><td><strong>結果</strong></td><td>会議後 10 分で全員に決定事項が共有される。過去の決定の検索が可能に</td></tr>
+<tr><td><strong>学び</strong></td><td>テンプレの「3点だけ抽出」が肝。全文要約にすると誰も読まない。<a href="guide-ai-business.html#biz-patterns">組み込み型</a>の2→3への移行例</td></tr>
+</tbody>
+</table>
+
+<h4 id="case-inquiry"><a class="toclink" href="#case-inquiry">事例5: 問い合わせ一次対応の下書き</a></h4>
+<table>
+<tbody>
+<tr><td><strong>課題</strong></td><td>CS の返信作成に1件 15 分。新人は過去事例を探すだけで時間切れ</td></tr>
+<tr><td><strong>構成</strong></td><td>FAQ・過去対応をナレッジ化（RAG）→受信内容から回答下書きと根拠リンクを生成→<strong>送信は必ず人間</strong>が確認・修正</td></tr>
+<tr><td><strong>結果</strong></td><td>1件あたり 15 分→5分。新人の立ち上がりが早くなる副次効果が大きい</td></tr>
+<tr><td><strong>学び</strong></td><td>「自動送信しない」と最初に決めたことで現場の抵抗がなかった。下書き品質の苦情はナレッジ側の不備のシグナルとして扱う</td></tr>
+</tbody>
+</table>
+
+<hr />
+<h3 id="cases-system"><a class="toclink" href="#cases-system">システム組み込みの事例</a></h3>
+
+<h4 id="case-internal-qa"><a class="toclink" href="#case-internal-qa">事例6: 社内規程 QA ボット</a></h4>
+<table>
+<tbody>
+<tr><td><strong>課題</strong></td><td>規程・手続きの問い合わせが管理部門に集中（月 200 件超）</td></tr>
+<tr><td><strong>構成</strong></td><td>規程文書を正本に統一→ハイブリッド検索の RAG→チャットツールの社内ボットとして提供。回答には必ず規程の該当箇所リンクを付ける</td></tr>
+<tr><td><strong>結果</strong></td><td>問い合わせの約6割がボットで自己解決。「文書がない質問」のログが規程整備の優先順位になった</td></tr>
+<tr><td><strong>学び</strong></td><td>導入の8割は文書整備だった（<a href="guide-ai-system.html#sys-rag">RAG の手順1</a>）。「分からない時は分からないと答える」指示が信頼を作る</td></tr>
+</tbody>
+</table>
+
+<h4 id="case-pipeline"><a class="toclink" href="#case-pipeline">事例7: 非構造データの構造化パイプライン</a></h4>
+<table>
+<tbody>
+<tr><td><strong>課題</strong></td><td>取引先ごとに形式が違う発注書（PDF・メール本文）の手入力に毎日2時間</td></tr>
+<tr><td><strong>構成</strong></td><td>構造化出力（JSON スキーマ）で品目・数量・期日を抽出→既存バリデーションを通過したものだけ基幹に登録→不合格は人間の確認キューへ</td></tr>
+<tr><td><strong>結果</strong></td><td>自動登録率 85%。残り 15% は従来どおり人間が処理（完全自動化を狙わない設計）</td></tr>
+<tr><td><strong>学び</strong></td><td>「合格基準を機械的に判定できる形にして、不合格は人間へ」の振り分け設計がすべて。小型モデルで十分でコストはごく小さい</td></tr>
+</tbody>
+</table>
+
+<h4 id="case-ops-agent"><a class="toclink" href="#case-ops-agent">事例8: 運用調査エージェント</a></h4>
+<table>
+<tbody>
+<tr><td><strong>課題</strong></td><td>障害アラートのたびに当番がログ・メトリクス・直近デプロイを手作業で突き合わせ</td></tr>
+<tr><td><strong>構成</strong></td><td>監視ツール・ログ基盤・GitHub を MCP サーバ経由で読み取り専用接続したエージェントが、アラート発生時に一次調査レポート（仮説3つ＋根拠）を自動生成</td></tr>
+<tr><td><strong>結果</strong></td><td>当番の初動 30 分が5分に。誤った仮説もあるが「どこを見るべきか」が揃う価値が大きい</td></tr>
+<tr><td><strong>学び</strong></td><td>読み取り専用に限定したので導入の合意が早かった。対応操作（再起動等）の自動化は次段階として分離（<a href="guide-ai-system.html#sys-agent">権限は最小から</a>）</td></tr>
+</tbody>
+</table>
+
+<hr />
+<h3 id="cases-howto"><a class="toclink" href="#cases-howto">自分のチームに当てはめる</a></h3>
+<ol class="steps">
+<li>上の事例から「課題」が一番近いものを選ぶ</li>
+<li>その事例の「構成」を最小規模で再現する（対象を1業務・1リポジトリに絞る）</li>
+<li>「学び」欄の落とし穴を先回りで対策に入れる</li>
+<li>2週間運用して実測値を取り、<a href="guide-ai-business.html#biz-roi">効果測定</a>の型で報告する</li>
+</ol>
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-ai-tools.html">ツール徹底比較</a></li>
+  <li><a href="guide-ai-business.html">業務への組み込み</a></li>
+  <li><a href="guide-ai-system.html">システムへの組み込み</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+    </div><nav class="flow-pager" aria-label="前後の章"><a href="guide-ai-system.html">← システムへの組み込み</a><span class="muted flow-pager__next">末尾 →</span></nav>
+  </article>
+</div>

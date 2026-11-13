@@ -1,0 +1,110 @@
+<!--meta {"title": "S3 / MinIO", "desc": "本番 S3 とローカル MinIO。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-s3">S3 / MinIO</h1>
+      <p class="lead">本番 S3 とローカル MinIO。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>本番は S3、ローカルは MinIO に切り替えると決める</li>
+<li>接続先は環境変数で切り替え、SDK は両方で共通にする</li>
+<li>compose と <code>.env.example</code> に MinIO 設定を追加する</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-docker-2.html">← Docker（2/2）</a> <a href="guide-repo-cicd-1.html">CI/CD（1/2） →</a></p>
+</aside>
+<h3 id="11-4-s3-minio"><a class="toclink" href="#11-4-s3-minio">ストレージ: 本番 S3 / ローカル MinIO (AWS想定)</a></h3>
+<h4 id="114-policy"><a class="toclink" href="#114-policy">方針</a></h4>
+<ul>
+<li>本番: Amazon S3 (高可用性・低コスト・IAMで権限管理)</li>
+<li>ローカル: MinIO (S3互換APIをDockerコンテナで提供。オフライン可能・無料)</li>
+<li>コード側: 環境変数で接続先だけ切り替える。AWS SDK (boto3 / aws-sdk-go / @aws-sdk/client-s3) は両方で同じものを使う</li>
+</ul>
+<h4 id="114-docker-compose"><a class="toclink" href="#114-docker-compose"><code>docker-compose.yml</code> への追加</a></h4>
+<pre><code class="language-yaml">services:
+  # ... 既存の app / db / redis ...
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - &quot;9000:9000&quot;   # S3 API
+      - &quot;9001:9001&quot;   # Web Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address &quot;:9001&quot;
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;mc&quot;, &quot;ready&quot;, &quot;local&quot;]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 初期バケット作成 (起動時に1回だけ実行)
+  minio-setup:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: &gt;
+      /bin/sh -c &quot;
+      mc alias set local http://minio:9000 minioadmin minioadmin &amp;&amp;
+      mc mb -p local/app-uploads &amp;&amp;
+      mc mb -p local/app-backups
+      &quot;
+
+volumes:
+  minio-data:
+</code></pre>
+<h4 id="envexample"><a class="toclink" href="#envexample"><code>.env.example</code></a></h4>
+<pre><code class="language-bash"># === AWS共通 ===
+AWS_REGION=ap-northeast-1
+
+# === S3 バケット名 (本番/ローカル共通でコード側から参照) ===
+S3_BUCKET_UPLOADS=app-uploads
+S3_BUCKET_BACKUPS=app-backups
+
+# === ローカル (MinIO) 用 ===
+# 本番では未設定にする (IAMロール認証に切り替わる)
+AWS_ENDPOINT_URL=http://minio:9000
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_S3_USE_PATH_STYLE=true
+</code></pre>
+<h3 id="s3-code"><a class="toclink" href="#s3-code">コードと運用</a></h3>
+<h4 id="python-boto3"><a class="toclink" href="#python-boto3">コード側の切り替え例 (Python / boto3)</a></h4>
+<pre><code class="language-python">import os
+import boto3
+from botocore.config import Config
+
+
+def make_s3_client():
+    kwargs: dict = {&quot;region_name&quot;: os.environ[&quot;AWS_REGION&quot;]}
+
+    if endpoint := os.environ.get(&quot;AWS_ENDPOINT_URL&quot;):
+        # ローカル開発 (MinIO): エンドポイントとアクセスキーを明示
+        kwargs[&quot;endpoint_url&quot;] = endpoint
+        kwargs[&quot;aws_access_key_id&quot;] = os.environ[&quot;AWS_ACCESS_KEY_ID&quot;]
+        kwargs[&quot;aws_secret_access_key&quot;] = os.environ[&quot;AWS_SECRET_ACCESS_KEY&quot;]
+        kwargs[&quot;config&quot;] = Config(s3={&quot;addressing_style&quot;: &quot;path&quot;})
+    # 本番: 何も指定しないと IAM Role (Task Role / IRSA) で自動認証
+
+    return boto3.client(&quot;s3&quot;, **kwargs)
+</code></pre>
+<blockquote>
+<p>NOTE: 本番で <code>AWS_ACCESS_KEY_ID</code> / <code>SECRET_ACCESS_KEY</code> を環境変数で渡すのはアンチパターン。ECS Task Role / EKS IRSA を使えば SDK が自動で credential を取得する。長期credentialを発行しないことがセキュリティの基本。</p>
+</blockquote>
+<h4 id="minio"><a class="toclink" href="#minio">MinIO の運用メモ</a></h4>
+<ul>
+<li>コンソール: <a href="http://localhost:9001">http://localhost:9001</a> (admin: <code>minioadmin</code> / <code>minioadmin</code>)</li>
+<li>バケット操作・オブジェクト閲覧・IAMユーザ管理がGUIで可能</li>
+<li><code>mc</code> (MinIO Client) でCLI操作: <code>docker compose exec minio-setup mc ls local/app-uploads</code></li>
+<li>ARM Mac でも <code>linux/arm64</code> イメージが公式提供されている</li>
+</ul>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-docker-2.html">← Docker（2/2）</a><a class="flow-pager__next" href="guide-repo-cicd-1.html">CI/CD（1/2） →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

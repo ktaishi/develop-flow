@@ -1,0 +1,293 @@
+<!--meta {"title": "CI/CD（1/2）", "desc": "パイプラインと AWS 想定。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-cicd-1">CI/CD（1/2）</h1>
+      <p class="lead">パイプラインと AWS 想定。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>PR / push で lint・test を回す CI を先に置く</li>
+<li>main マージで deploy する流れを workflow に固定する</li>
+<li>OIDC で短命クレデンシャルにし、Role を repo / branch で絞る</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-s3.html">← S3 / MinIO</a> <a href="guide-repo-cicd-2.html">CI/CD（2/2） →</a></p>
+</aside>
+<h3 id="11-5-cicd"><a class="toclink" href="#11-5-cicd">CI/CD: AWS想定 (仮)</a></h3>
+<h4 id="cicd-overview"><a class="toclink" href="#cicd-overview">全体像</a></h4>
+<div class="mermaid">
+flowchart LR
+    Dev[Developer] -->|push| GH[GitHub]
+    GH -->|trigger| GHA[GitHub Actions]
+    GHA -->|OIDC AssumeRole| IAM[AWS IAM Role]
+    GHA -->|build push| ECR[Amazon ECR]
+    GHA -->|update service| ECS[ECS Fargate]
+    ECS -->|read| SM[Secrets Manager]
+    ECS -->|read write| S3[Amazon S3]
+    ECS -->|stdout| CWL[CloudWatch Logs]
+    ECS -->|connect| RDS[Amazon RDS]
+    ECS -->|connect| EC[ElastiCache Redis]
+</div>
+<h4 id="cicd-service-choice"><a class="toclink" href="#cicd-service-choice">サービス選定 (仮想定)</a></h4>
+<table>
+<thead>
+<tr>
+<th>役割</th>
+<th>サービス</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ソース管理</td>
+<td>GitHub</td>
+<td>AWS CodeCommitは実務でほぼ使わない</td>
+</tr>
+<tr>
+<td>CI (テスト/lint)</td>
+<td>GitHub Actions</td>
+<td>無料枠あり、エコシステム豊富</td>
+</tr>
+<tr>
+<td>CD (ビルド/デプロイ)</td>
+<td>GitHub Actions + AWS CLI</td>
+<td>CodePipeline/CodeBuildは選定しない</td>
+</tr>
+<tr>
+<td>イメージレジストリ</td>
+<td>Amazon ECR</td>
+<td>プライベートで安全</td>
+</tr>
+<tr>
+<td>実行環境</td>
+<td>Amazon ECS (Fargate)</td>
+<td>サーバレス、運用負荷低</td>
+</tr>
+<tr>
+<td>シークレット管理</td>
+<td>AWS Secrets Manager / SSM Parameter Store</td>
+<td>機密度で使い分け</td>
+</tr>
+<tr>
+<td>ログ集約</td>
+<td>CloudWatch Logs</td>
+<td>Datadog連携も可</td>
+</tr>
+<tr>
+<td>監視・アラート</td>
+<td>CloudWatch Alarms (+ Datadog 任意)</td>
+<td></td>
+</tr>
+<tr>
+<td>ストレージ</td>
+<td>Amazon S3 (本番) / MinIO (ローカル)</td>
+<td>(11.4)</td>
+</tr>
+<tr>
+<td>RDB</td>
+<td>Amazon RDS (PostgreSQL/MySQL) / Aurora</td>
+<td></td>
+</tr>
+<tr>
+<td>キャッシュ</td>
+<td>ElastiCache (Redis)</td>
+<td></td>
+</tr>
+<tr>
+<td>ロードバランサ</td>
+<td>ALB</td>
+<td>HTTPSはACMで証明書管理</td>
+</tr>
+<tr>
+<td>CDN</td>
+<td>CloudFront</td>
+<td>静的アセット高速化</td>
+</tr>
+<tr>
+<td>Infra as Code</td>
+<td>Terraform / AWS CDK</td>
+<td>Terraformが事実上の標準</td>
+</tr>
+</tbody>
+</table>
+<h4 id="githubworkflowsciyml-lintprpush"><a class="toclink" href="#githubworkflowsciyml-lintprpush"><code>.github/workflows/ci.yml</code> (テスト/Lint、PR・push時)</a></h4>
+<pre><code class="language-yaml">name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  id-token: write   # OIDC用
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build dev image
+        run: docker compose build app
+
+      - name: Lint
+        run: docker compose run --rm app ruff check .
+
+      - name: Type check
+        run: docker compose run --rm app mypy src
+
+      - name: Test
+        run: docker compose run --rm app pytest -v --cov=src --cov-report=xml
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+</code></pre>
+<blockquote>
+<p>CI もローカルと同じ Docker環境で実行する。「ローカルで通ったらCIでも通る」を担保する基本戦術。</p>
+</blockquote>
+<h4 id="githubworkflowsdeployyml-main"><a class="toclink" href="#githubworkflowsdeployyml-main"><code>.github/workflows/deploy.yml</code> (main マージ時)</a></h4>
+<pre><code class="language-yaml">name: Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ap-northeast-1
+  ECR_REPOSITORY: app
+  ECS_CLUSTER: app-cluster
+  ECS_SERVICE: app-service
+  CONTAINER_NAME: app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/GitHubActionsDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        run: |
+          IMAGE=&quot;${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}&quot;
+          docker build -f docker/app/Dockerfile -t $IMAGE .
+          docker push $IMAGE
+          echo &quot;IMAGE=$IMAGE&quot; &gt;&gt; $GITHUB_ENV
+
+      - name: Render new task definition
+        id: taskdef
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: .aws/task-definition.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ env.IMAGE }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.taskdef.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+</code></pre>
+<h3 id="oidc"><a class="toclink" href="#oidc">OIDC認証 (重要)</a></h3>
+<p>長期アクセスキーをGitHub Secretsに保存しない。代わりに OIDC でその場限りの認証情報を発行する。</p>
+<p>セットアップ手順:</p>
+<ol class="steps">
+<li>AWS IAM で OIDC Identity Provider を追加 (<code>token.actions.githubusercontent.com</code>)</li>
+<li>GitHubリポジトリ・ブランチ限定の IAM Role を作成</li>
+<li>Role の信頼ポリシーで Repository / Branch を絞る (他リポジトリから乗っ取られないため)</li>
+<li>GitHub Actions 側で <code>aws-actions/configure-aws-credentials@v4</code> でRole Assume</li>
+</ol>
+<p>信頼ポリシー例 (mainブランチのみ許可):</p>
+<pre><code class="language-json">{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [{
+    &quot;Effect&quot;: &quot;Allow&quot;,
+    &quot;Principal&quot;: {
+      &quot;Federated&quot;: &quot;arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com&quot;
+    },
+    &quot;Action&quot;: &quot;sts:AssumeRoleWithWebIdentity&quot;,
+    &quot;Condition&quot;: {
+      &quot;StringEquals&quot;: {
+        &quot;token.actions.githubusercontent.com:aud&quot;: &quot;sts.amazonaws.com&quot;
+      },
+      &quot;StringLike&quot;: {
+        &quot;token.actions.githubusercontent.com:sub&quot;: &quot;repo:my-org/my-repo:ref:refs/heads/main&quot;
+      }
+    }
+  }]
+}
+</code></pre>
+<h4 id="ecs-task-definition-awstask-definitionjson"><a class="toclink" href="#ecs-task-definition-awstask-definitionjson">ECS Task Definition の要点 (<code>.aws/task-definition.json</code> 抜粋)</a></h4>
+<pre><code class="language-json">{
+  &quot;family&quot;: &quot;app&quot;,
+  &quot;executionRoleArn&quot;: &quot;arn:aws:iam::123456789012:role/ecsTaskExecutionRole&quot;,
+  &quot;taskRoleArn&quot;: &quot;arn:aws:iam::123456789012:role/AppTaskRole&quot;,
+  &quot;networkMode&quot;: &quot;awsvpc&quot;,
+  &quot;requiresCompatibilities&quot;: [&quot;FARGATE&quot;],
+  &quot;cpu&quot;: &quot;512&quot;,
+  &quot;memory&quot;: &quot;1024&quot;,
+  &quot;containerDefinitions&quot;: [
+    {
+      &quot;name&quot;: &quot;app&quot;,
+      &quot;image&quot;: &quot;PLACEHOLDER&quot;,
+      &quot;essential&quot;: true,
+      &quot;portMappings&quot;: [{&quot;containerPort&quot;: 8000, &quot;protocol&quot;: &quot;tcp&quot;}],
+      &quot;environment&quot;: [
+        {&quot;name&quot;: &quot;AWS_REGION&quot;, &quot;value&quot;: &quot;ap-northeast-1&quot;},
+        {&quot;name&quot;: &quot;S3_BUCKET_UPLOADS&quot;, &quot;value&quot;: &quot;app-prod-uploads&quot;}
+      ],
+      &quot;secrets&quot;: [
+        {
+          &quot;name&quot;: &quot;DATABASE_URL&quot;,
+          &quot;valueFrom&quot;: &quot;arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:app/db-url&quot;
+        }
+      ],
+      &quot;logConfiguration&quot;: {
+        &quot;logDriver&quot;: &quot;awslogs&quot;,
+        &quot;options&quot;: {
+          &quot;awslogs-group&quot;: &quot;/ecs/app&quot;,
+          &quot;awslogs-region&quot;: &quot;ap-northeast-1&quot;,
+          &quot;awslogs-stream-prefix&quot;: &quot;app&quot;,
+          &quot;awslogs-create-group&quot;: &quot;true&quot;
+        }
+      },
+      &quot;healthCheck&quot;: {
+        &quot;command&quot;: [&quot;CMD-SHELL&quot;, &quot;curl -f http://localhost:8000/healthz || exit 1&quot;],
+        &quot;interval&quot;: 30,
+        &quot;timeout&quot;: 5,
+        &quot;retries&quot;: 3,
+        &quot;startPeriod&quot;: 10
+      }
+    }
+  ]
+}
+</code></pre>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-s3.html">← S3 / MinIO</a><a class="flow-pager__next" href="guide-repo-cicd-2.html">CI/CD（2/2） →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

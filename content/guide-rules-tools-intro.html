@@ -1,0 +1,97 @@
+<!--meta {"title": "3ツール早見 — 共通と選び方", "desc": "Cursor / Claude Code / Codex の共通 Plan とツール選び。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-tools-intro">3ツール早見 — 共通と選び方</h1>
+      <p class="lead">Cursor / Claude Code / Codex の共通 Plan とツール選び。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>3ツールは同じ Plan 正本を共有</li>
+<li>公式ソースを先に揃える</li>
+<li>次: Cursor → Claude → Codex</li>
+</ul>
+<p class="page-brief__tasks">ツールを1本に絞る — 完了: ツールと Plan パスが決まった</p>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-compare.html">← Rules / Skills / Plan の切り分け</a> <a href="guide-rules-cursor.html">Cursor 設定早見 →</a></p>
+</aside>
+<h3 id="17-three-tools"><a class="toclink" href="#17-three-tools">3ツール早見（Cursor / Claude Code / Codex）</a></h3>
+<p id="17-rules-skills" hidden aria-hidden="true"></p>
+
+<h4 id="17-tool-pick"><a class="toclink" href="#17-tool-pick">メインツール別 — 設定の置き場</a></h4>
+<ul>
+<li><strong>Cursor</strong> — IDE で diff を見ながら日常実装・Plan（2章: 複雑な機能・デバッグ・大規模リファクタ）</li>
+<li><strong>Claude Code</strong> — ターミナルで長時間自律・CI 調査（2章: 長時間自律タスク）</li>
+<li><strong>Codex</strong> — Issue / クラウド PR・ルーチン並列（2章: ルーチン修正の並列）。ローカル CLI も可</li>
+</ul>
+<table>
+<thead><tr><th>ツール</th><th>Rules</th><th>手順</th><th>Plan 正本</th><th>手順集</th></tr></thead>
+<tbody>
+<tr><td><strong>Cursor</strong></td><td><code>.cursor/rules/*.mdc</code></td><td><code>.cursor/commands/</code> · Skills</td><td><code>tasks/todo.md</code> + <code>.cursor/plans/</code></td><td><a href="guide-rules-cursor.html#17-cursor-setup">初期設定</a> · <a href="guide-rules-cursor.html#17-cursor-workflows">作業手順</a></td></tr>
+<tr><td><strong>Claude Code</strong></td><td><code>CLAUDE.md</code></td><td><code>.claude/skills/</code> · Hooks</td><td><code>tasks/todo.md</code></td><td><a href="guide-rules-claude.html#17-claude-setup">初期設定</a> · <a href="guide-rules-claude.html#17-claude-workflows">作業手順</a></td></tr>
+<tr><td><strong>Codex</strong></td><td><code>AGENTS.md</code>（階層）</td><td><code>.agents/skills/</code> · MCP</td><td><code>tasks/todo.md</code></td><td><a href="guide-rules-codex.html#17-codex-setup">初期設定</a> · <a href="guide-rules-codex.html#17-codex-workflows">作業手順</a></td></tr>
+</tbody>
+</table>
+
+<span id="17-official-sources" class="redirect-anchor" aria-hidden="true"></span>
+<h4 id="17-official-sources-quick"><a class="toclink" href="#17-official-sources-quick">公式（一次情報リンク）</a></h4>
+<table>
+<thead><tr><th>ツール</th><th>一次情報</th></tr></thead>
+<tbody>
+<tr><td>Cursor</td><td><a href="https://cursor.com/ja/blog/agent-best-practices">エージェント BP</a> · <a href="https://cursor.com/ja/docs/context/rules">Rules</a> · <a href="https://cursor.com/ja/docs/skills">Skills</a> · <a href="https://cursor.com/ja/docs/context/commands">Commands</a></td></tr>
+<tr><td>Claude Code</td><td><a href="https://code.claude.com/docs/en/best-practices">Best practices</a> · <a href="https://code.claude.com/docs/en/features-overview">Extend</a> · <a href="https://code.claude.com/docs/en/hooks">Hooks</a></td></tr>
+<tr><td>Codex</td><td><a href="https://developers.openai.com/codex/guides/agents-md/">AGENTS.md</a></td></tr>
+<tr><td>標準</td><td><a href="https://agentskills.io/specification">Agent Skills</a> — 詳細は <a href="guide-rules-bp.html#17-bp-sources">BP 参照表</a>（Cursor 章）</td></tr>
+</tbody>
+</table>
+
+<h4 id="17-cross-tool"><a class="toclink" href="#17-cross-tool">状況別 — 何をするか（3ツール共通）</a></h4>
+<div class="mermaid">
+flowchart LR
+  planNode[Plan] --> askNode[依頼]
+  askNode --> implNode[実装]
+  implNode --> verifyNode[検証]
+  verifyNode --> doneNode[完了]
+</div>
+<p><strong>Plan</strong> — <code>tasks/todo.md</code> または Plan モードに Done when まで書く。<strong>依頼</strong> — 対象ファイルと検証コマンドを渡す。<strong>完了</strong> — テスト結果等の証拠を添え、仕様は <code>docs/</code> に残す（チャットだけにしない）。</p>
+<table>
+<thead><tr><th>状況</th><th>操作</th><th>Cursor</th><th>Claude Code</th><th>Codex</th></tr></thead>
+<tbody>
+<tr><td>3ステップ以上の作業を始める前</td><td>Plan をファイル化</td><td><kbd>Shift</kbd>+<kbd>Tab</kbd> Plan → <code>/plan</code></td><td>Plan モード → <code>tasks/todo.md</code></td><td>Issue + <code>tasks/todo.md</code></td></tr>
+<tr><td>会話が長くなった・別の機能に移るとき</td><td>コンテキストを切る</td><td>新規 + <code>@Past Chats</code>（前の会話を参照）</td><td>新規 + <code>/resume</code>（必要時）</td><td>新規スレッド + todo</td></tr>
+<tr><td>変更内容をレビューするとき</td><td>ブランチ文脈</td><td><code>@Branch</code></td><td><code>git diff</code> を渡す</td><td>PR / ブランチ指定</td></tr>
+<tr><td>作業を終えるとき</td><td>検証を示す</td><td><code>/verify</code></td><td>テストコマンド + <code>/goal</code></td><td>承認前に diff 確認</td></tr>
+<tr><td>同じミスがまた起きたとき</td><td>ルール 1 条追加</td><td><code>.cursor/rules/</code></td><td><code>CLAUDE.md</code> 1 行</td><td><code>AGENTS.md</code> 1 行</td></tr>
+</tbody>
+</table>
+<p>委譲・並列: <a href="guide-ops-harness.html#18-multiagent">マルチエージェント</a> · プロンプト例: <a href="guide-rules-prompt.html#17-prompt">プロンプト設計</a></p>
+
+<h3 id="17-shared"><a class="toclink" href="#17-shared">共通の土台</a></h3>
+<h4 id="17-shared-plan"><a class="toclink" href="#17-shared-plan">共通: Plan・docs・AGENTS.md</a></h4>
+
+<h4 id="17-shared-plan-setup"><a class="toclink" href="#17-shared-plan-setup">手順: Plan 正本を置く</a></h4>
+<ol class="steps">
+<li>リポ直下に <code>tasks/</code> を作成（無ければ）</li>
+<li><code>tasks/todo.md</code> を作成（下記テンプレをコピー）</li>
+<li>各タスクに <strong>終わりの条件（Done when）</strong>（検証コマンド or 手動確認）を 1 行ずつ書く</li>
+<li>仕様は <code>docs/&lt;feature&gt;/01_requirements.md</code> へ（Rules に複製しない）</li>
+</ol>
+<pre><code class="language-markdown">## タスク
+- [ ] 要件確認 — Done when: docs/invoice-export/01_requirements.md レビュー済
+- [ ] 実装 — Done when: `docker compose exec app bundle exec rspec spec/services/invoice_export_spec.rb`
+- [ ] PR — Done when: /pr-check 9 カテゴリすべて [x]
+
+## Plan メモ
+- リスク: 在庫不足時のエラー型は ErrInsufficientStock に統一
+</code></pre>
+<pre><code class="language-text">docs/
+├── adr/016-pdf-async.md
+└── invoice-export/
+    ├── 01_requirements.md
+    └── 02_design.md
+</code></pre>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-compare.html">← Rules / Skills / Plan の切り分け</a><a class="flow-pager__next" href="guide-rules-cursor.html">Cursor 設定早見 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

@@ -1,0 +1,272 @@
+<!--meta {"title": "PR・提出", "desc": "Phase 7 PR と提出前チェックリスト。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-ship">PR・提出</h1>
+      <p class="lead">Phase 7 PR と提出前チェックリスト。</p>
+    </header>
+    <div class="flow-body">
+
+
+<p class="prereq-line wiki-lead">提出前に <a href="guide-ship.html#14-pr-check">PR前チェック</a>。指摘 → <code>tasks/lessons.md</code></p>
+<p>Phase 7 では PR を出し、CI を green にしたうえでレビューループを回します。説明文と個人メモを AI に整えさせると、レビュアーの負担が下がります。</p>
+
+<h3 id="phase-7-pr"><a class="toclink" href="#phase-7-pr">Phase 7 — PR 作成</a></h3>
+<h3 id="100-pr-flow"><a class="toclink" href="#100-pr-flow">PR 作成の流れ</a></h3>
+<p>開発者・AI・CI・レビュアーの典型的な流れは次のとおりです。</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Dev as 開発者
+    participant AI as AI
+    participant CI as CI
+    participant Rev as レビュアー
+
+    Dev->>AI: PR description 生成
+    AI-->>Dev: 概要・確認手順・観点
+    Dev->>CI: PR 作成
+    CI-->>Dev: green
+    Dev->>Rev: レビュー依頼
+    loop レビュー対応
+        Rev-->>Dev: コメント
+        Dev->>AI: [REVIEW] 修正依頼
+        Dev->>CI: 再実行
+        CI-->>Dev: green
+    end
+    Rev-->>Dev: Approve
+</div>
+<p>PR description に載せる項目と、参照すべき docs は次の表にまとめています。</p>
+<table>
+<thead>
+<tr><th>PR description 項目</th><th>必須</th><th>参照先</th></tr>
+</thead>
+<tbody>
+<tr><td>概要（ユーザ視点）</td><td>必須</td><td>—</td></tr>
+<tr><td>変更内容・影響範囲</td><td>必須</td><td><code>docs/&lt;feature&gt;/</code></td></tr>
+<tr><td>テスト戦略</td><td>必須</td><td><code>05_test_plan.md</code></td></tr>
+<tr><td>動作確認手順</td><td>必須</td><td>—</td></tr>
+<tr><td>関連 Issue / ADR リンク</td><td>推奨</td><td><code>docs/adr/</code></td></tr>
+<tr><td>レビュー観点</td><td>推奨</td><td>Plan 出力</td></tr>
+<tr><td>既知の残課題</td><td>任意</td><td>Follow-up Issue</td></tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-ui-description-2-docs-or">
+<h4 class="info-panel__title" id="scenario-ui-description-2-docs-or">UI 変更時の PR description 記載項目</h4>
+<div class="info-panel__body"><p>UI 変更あり：description にスクリーンショット 2 枚と、<code>docs/&lt;feature&gt;/05_test_plan.md</code> へのリンク。レビュー観点に境界条件・副作用を明記する。</p></div>
+</aside>
+<p>貼り付けタイミング：ローカルテストと CI が通ったあと、PR を開く直前（または 下書き PR（Draft PR） を Ready にする直前）に、当該機能のチャット履歴をコンテキストに含めて送ります。</p>
+<pre><code class="language-text">ここまでの全チャットから、PR descriptionと、必要なら個人メモ用のサマリを作ってください。
+
+【PR description】
+リポジトリの .github/pull_request_template に合わせる。なければ以下:
+- 概要 (1段落、ユーザ視点での変更点)
+- 変更内容 (機能/設計/影響範囲、箇条書き)
+- テスト戦略 (新規/変更したテストの種類と網羅範囲)
+- 動作確認手順 (レビュアーがローカルで再現するための手順)
+- 関連Issue / 関連ドキュメントへのリンク (**docs/&lt;feature&gt;/** へのリンク、関連ADRがあれば **docs/adr/NNNN-*.md** へのリンク)
+- スクリーンショット/動画 (UI変更なら)
+- レビュー観点の指示 (重点的に見てほしい箇所)
+- 既知の残課題 / Follow-up Issue化候補
+
+【任意の個人メモ z_docs/&lt;feature-name&gt;/history/yymmdd-hhMM-summary.md】
+- フェーズごとの主要な意思決定 (時系列)
+- 私が指摘・修正させたAI出力 (業務知識が反映されている箇所)
+- 採用しなかった代替案とその理由
+- 残課題 / TODO / 改善余地 (次のPR/Issue化候補)
+- 学び (チーム共有したい知見)
+
+【含めないもの】
+- AI出力のコード全文 (要点のみ)
+- 試行錯誤のノイズ
+</code></pre>
+<h3 id="101"><a class="toclink" href="#101">レビューコメント対応のループ</a></h3>
+<p>GitHub のレビューコメントが付いたら、本文をそのまま次のプロンプトに入れて AI に渡します。コミット接頭辞は <code>[REVIEW]</code> を使います。</p>
+<pre><code class="language-text">レビューコメントを取り込みます。
+
+【コメント】
+[GitHub のコメント本文をそのまま貼る]
+
+【対応方針案】
+- 修正方針: [A案 / B案]
+- 影響範囲: [ファイル/テスト]
+
+このコメントに対する対応を:
+1. テスト追加 (RED)
+2. 実装修正 (GREEN)
+3. 必要なら公式ドキュメント更新 (docs/)
+の順で行ってください。
+
+コミットメッセージ接頭辞は [REVIEW] を使ってください。
+</code></pre>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-scenario">
+<h4 class="info-panel__title" id="scenario-scenario">エラーメッセージが英語だけ</h4>
+<div class="info-panel__body"><p>「エラーメッセージが英語だけ」というコメント → RED で i18n キーのテスト追加 → GREEN でメッセージ修正 → 必要なら <code>docs/&lt;feature&gt;/01_requirements.md</code> の用語表を 1 行更新。</p></div>
+</aside>
+<hr />
+
+
+
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-ship.html#14-pr-check">PR前チェック</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+<hr />
+<p class="prereq-line wiki-lead"><a href="guide-ship.html#phase-7-pr">Phase 7</a> 後の最終確認。関連 → <a href="guide-ops-history.html#15-history">履歴</a> · <a href="guide-ops-pitfalls.html#16-ai-pitfalls">AIの誤り</a></p>
+<p>PR 提出前に 9 カテゴリを確認する。詳細は折りたたみ内。抜けがあればレビューで指摘される前に直す。</p>
+<p>下表はカテゴリ一覧。各リンクで詳細チェック項目へジャンプする。</p>
+<table>
+<thead>
+<tr><th>カテゴリ</th><th>確認項目数</th><th>詳細</th></tr>
+</thead>
+<tbody>
+<tr><td>規約・基盤</td><td>2</td><td><a href="#check-rules">15.1</a></td></tr>
+<tr><td>ドキュメント</td><td>5</td><td><a href="#docs-z_docs-116">15.2</a></td></tr>
+<tr><td>コード</td><td>5</td><td><a href="#check-code">15.3</a></td></tr>
+<tr><td>検証</td><td>5</td><td><a href="#check-tests">15.4</a></td></tr>
+<tr><td>動作</td><td>5</td><td><a href="#check-runtime">15.5</a></td></tr>
+<tr><td>ログ・モニタリング</td><td>4</td><td><a href="#check-logging">15.6</a></td></tr>
+<tr><td>履歴・PR</td><td>3</td><td><a href="#pr">15.7</a></td></tr>
+<tr><td>セキュリティ</td><td>8</td><td><a href="#check-security">15.8</a></td></tr>
+<tr><td>インフラ・CI/CD</td><td>5</td><td><a href="#cicd">15.9</a></td></tr>
+</tbody>
+</table>
+
+<h4 id="14-agent-review"><a class="toclink" href="#14-agent-review">AI レビュー — Agent Review · Bugbot（2026）</a></h4>
+<p>出典: <a href="https://cursor.com/ja/blog/agent-best-practices">Cursor 公式 BP</a>。人間レビューの<strong>前</strong>に AI で一次スクリーニング。</p>
+<table>
+<thead><tr><th>タイミング</th><th>手段</th><th>本リポ</th></tr></thead>
+<tbody>
+<tr><td>生成中</td><td>diff ビューで Stop · 指示し直し</td><td>Plan に戻る（<a href="guide-ops-harness.html#18-plan-revert">18-plan-revert</a>）</td></tr>
+<tr><td>Agent 完了後</td><td>Review → Find Issues（Agent Review）</td><td><code>/review</code></td></tr>
+<tr><td>ローカル差分</td><td>Source Control → Agent Review vs main</td><td>提出前チェック「検証」</td></tr>
+<tr><td>PR 作成後</td><td>Bugbot 自動レビュー</td><td>CI green 後 · <a href="memo-cloud.html">CodeRabbit 等</a> と併用可</td></tr>
+</tbody>
+</table>
+<h3 id="14-pr-check"><a class="toclink" href="#14-pr-check">提出前チェックリスト</a></h3>
+<details class="section-fold" id="14-pr-detail">
+<summary>カテゴリ別チェック項目（9種・クリックで展開）</summary>
+<h4 id="check-rules"><a class="toclink" href="#check-rules">規約・基盤</a></h4>
+<ul>
+<li>利用中ラインのルール (<code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> / <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> / <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> / <code>.claude/skills/</code> / <code>.agents/skills/</code>) が最新の業務制約を反映している</li>
+<li>ルールに違反する実装を書いていない（CI lint で検知できると尚良）</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-pr">
+<h4 class="info-panel__title" id="scenario-pr">PR 前に rules への抵触を確認</h4>
+<div class="info-panel__body"><p>PR 前に <code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> と <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> を開き、今回の変更が alwaysApply 制約に抵触しないか確認する。ルール改訂が必要なら機能 PR とは別 PR に分ける。</p></div>
+</aside>
+<h4 id="docs-z_docs-116"><a class="toclink" href="#docs-z_docs-116">ドキュメント (docs/ が公式、個人メモは任意)</a> <small><a href="guide-repo-docs-1.html#11-6-docs-z-docs">→ 11.6</a></small></h4>
+<ul>
+<li><code>docs/&lt;feature-name&gt;/</code> に公式ドキュメント（要件・設計・DB・技術選定・テスト計画・ログ・デプロイ）が揃っている</li>
+<li>重要な技術選定は docs/adr/ に ADR 起票されている（<a href="guide-repo-docs-1.html#11-7-adr">11.7 ADR</a>）</li>
+<li>docs/README.md / docs/architecture.md / docs/glossary.md が最新と整合</li>
+<li>docs/glossary.md に新規用語が追加されている</li>
+<li>Mermaid は最小構文。エッジラベルに HTML を使っていない</li>
+</ul>
+<h4 id="check-code"><a class="toclink" href="#check-code">コード</a></h4>
+<ul>
+<li>レイヤ構成通り（依存方向が正しい）</li>
+<li>業務不変条件を破る実装がない</li>
+<li>業務例外と技術例外が分離されている</li>
+<li>エラーメッセージに業務情報が含まれる</li>
+<li>既存規約・既存パターンに従っている（理由なく外れていない）</li>
+</ul>
+<h4 id="check-tests"><a class="toclink" href="#check-tests">検証（ルール・テスト）</a></h4>
+<ul>
+<li>利用中ラインのルールに沿った実装（CI lint / レビューで確認）</li>
+<li>追加・更新したテストがあり、CI で green</li>
+<li>境界値・異常系が必要な範囲でカバーされている</li>
+<li>既存テストが落ちていない</li>
+<li>TDD 採用チームのみ: <code>[RED]</code> → <code>[GREEN]</code> → <code>[REFACTOR]</code> のコミット順序</li>
+</ul>
+<h4 id="check-runtime"><a class="toclink" href="#check-runtime">動作</a></h4>
+<ul>
+<li>CI green</li>
+<li>ローカル（Docker）/ staging で動作確認済み</li>
+<li><code>make up</code> で起動 / <code>make test</code> でテスト通過</li>
+<li>マイグレーションが forward / rollback できることを確認済み</li>
+<li>リスク高い場合は機能フラグ等の段階リリース手段を用意</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-make-up-make-test">
+<h4 class="info-panel__title" id="scenario-make-up-make-test">提出前のローカル起動・テスト確認</h4>
+<div class="info-panel__body"><p>提出前に <code>make up</code> で起動し <code>make test</code> を通す。staging で PDF 出力を確認したログを PR に貼り、CI green の URL も添える。</p></div>
+</aside>
+<h4 id="check-logging"><a class="toclink" href="#check-logging">ログ・モニタリング</a></h4>
+<ul>
+<li>業務イベントでログが出ている</li>
+<li>機微情報がマスキングされている</li>
+<li>必要なメトリクス・トレースが追加されている</li>
+<li>重要機能ならエラー時にアラートが飛ぶ設定がある</li>
+</ul>
+<h4 id="pr"><a class="toclink" href="#pr">履歴・PR</a></h4>
+<ul>
+<li>PR description が埋まっている</li>
+<li>採用しなかった代替案と理由が PR description または docs に記録されている（重要なものは docs/adr/ にも）</li>
+<li>レビュアーが見るべきポイントが明示されている</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-pr-description">
+<h4 class="info-panel__title" id="scenario-pr-description">レビュー観点と不採用案の記録</h4>
+<div class="info-panel__body"><p>PR description に「レビュー観点: 楽観ロックの境界」を書く。採用しなかった案は <code>docs/adr/</code> か PR 本文に理由付きで残す。</p></div>
+</aside>
+<h4 id="check-security"><a class="toclink" href="#check-security">セキュリティ</a></h4>
+<ul>
+<li><code>.env</code> などシークレットがコミットに混入していない</li>
+<li>API キー・トークン類が履歴・コード・ログに含まれていない</li>
+<li>認可チェックが必要な箇所に漏れがない</li>
+<li><code>.gitignore</code> で必要なファイルが除外されている（<a href="guide-repo-gitignore.html#11-2-gitignore">11.2</a>）</li>
+<li><code>.env.example</code> が最新の必要環境変数を反映している</li>
+<li>個人 IDE 設定（<code>.vscode/</code> <code>.idea/</code> 個人分）がコミットに含まれていない</li>
+<li>AWS 長期アクセスキーがコード・ワークフロー・履歴に含まれていない（OIDC 使用）</li>
+<li>IAM Role の権限が最小化されている（<code>Resource: "*"</code> がない）</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-git-diff">
+<h4 class="info-panel__title" id="scenario-git-diff">diff での秘密情報混入チェック</h4>
+<div class="info-panel__body"><p><code>git diff</code> で <code>.env</code> や API キーが混入していないか確認する。<code>.env.example</code> が新規変数を反映し、AWS は OIDC ロールのみ使っているか見る。</p></div>
+</aside>
+<h4 id="cicd"><a class="toclink" href="#cicd">インフラ・CI/CD (該当する場合)</a></h4>
+<ul>
+<li><code>.github/workflows/ci.yml</code> が green</li>
+<li><code>.aws/task-definition.json</code> の environment / secrets が新規環境変数を反映</li>
+<li>新規 AWS リソースは Terraform/CDK でコード化されている（手動作成していない）</li>
+<li>S3 バケット名・IAM Role ARN 等が環境別（dev/staging/prod）に分離されている</li>
+<li>新規リソース時は CloudWatch Logs / S3 のライフサイクル/保持期間を設定</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-github-workflows-ci">
+<h4 class="info-panel__title" id="scenario-github-workflows-ci">CI green と IaC 反映の確認</h4>
+<div class="info-panel__body"><p><code>.github/workflows/ci.yml</code> が green で、新 S3 バケットは Terraform の <code>infra/dev/</code> にコード化されているか確認する。<code>.aws/task-definition.json</code> の secrets も更新済みか見る。</p></div>
+</aside>
+</details>
+<hr />
+
+
+
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-ops-history.html#15-history">履歴</a></li>
+  <li><a href="guide-ops-pitfalls.html#16-ai-pitfalls">AIの誤り</a></li>
+  <li><a href="guide-repo-directory.html#11-1-directory">リポジトリ</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+    <details class="archive-fold">
+<summary>2026年6月時点の X 上の話題（記録）</summary>
+<p class="archive-fold__note">当時の投稿の要点を記録として残しています。現在の状況は公式の Docs / changelog と <a href="trends-2026.html">2026年11月のトレンド</a> を確認してください。</p>
+<table>
+<thead><tr><th>出典</th><th>要点</th><th>この章</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/bcherny/status/2038454336355999749">@bcherny 隠れ機能</a></td><td><code>/loop</code> で PR 監視・rebase 自動化 — レビュー待ちをループに載せる</td><td><a href="#phase-7-pr">Phase 7 PR</a></td></tr>
+<tr><td><a href="https://x.com/samueljmcd/status/2066524627585634765">@samueljmcd</a></td><td>テストスイート通過 ≠ 本番 Ready（Bun Rust port 事例）</td><td><a href="#14-pr-check">提出前チェック</a></td></tr>
+<tr><td><a href="https://x.com/leerob/status/1929727742821413331">@leerob</a></td><td>Cursor は <strong>diff レビュー</strong>に強い — エージェント出力は人間が差分で承認</td><td><a href="#100-pr-flow">PR の流れ</a></td></tr>
+<tr><td><a href="https://x.com/noisyb0y1/status/2063295755104747553">@noisyb0y1</a></td><td><code>/ship</code> Skill で PR 説明・チェックリストを型どおりに</td><td><a href="memo-ai-tools.html#21-gstack">gstack</a></td></tr>
+</tbody>
+</table>
+</details>
+</div><nav class="flow-pager" aria-label="前後の章"><a href="guide-implement.html">← 実装</a><a class="flow-pager__next" href="guide-repo.html">リポジトリ →</a></nav>
+  </article>
+</div>

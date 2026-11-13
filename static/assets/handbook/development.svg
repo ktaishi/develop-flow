@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500" role="img" aria-label="DEVELOPMENT">
+  <defs>
+    <linearGradient id="bg05" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1320"/><stop offset="1" stop-color="#10182b"/>
+    </linearGradient>
+    <radialGradient id="g05" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3fd0ff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#4d8cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="t05" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3fd0ff"/><stop offset="1" stop-color="#4d8cff"/>
+    </linearGradient>
+    <filter id="bl05"><feGaussianBlur stdDeviation="36"/></filter>
+  </defs>
+  <rect width="1200" height="500" fill="url(#bg05)"/>
+  <g filter="url(#bl05)"><circle cx="834" cy="217" r="215" fill="url(#g05)" opacity="0.3"/><circle cx="678" cy="390" r="223" fill="url(#g05)" opacity="0.4"/><circle cx="155" cy="289" r="175" fill="url(#g05)" opacity="0.5"/></g>
+  <g fill="none">
+      <circle cx="810" cy="238" r="86" stroke="#4d8cff" stroke-width="3" stroke-dasharray="150 32"/>
+      <polygon points="810,152 826,160 810,168" fill="#4d8cff"/>
+      <circle cx="810" cy="152" r="12" fill="#ff6b6b"/>
+      <circle cx="885" cy="281" r="12" fill="#5ee0a0"/>
+      <circle cx="735" cy="281" r="12" fill="#7c9eff"/>
+      <text x="810" y="250" text-anchor="middle" font-family="ui-monospace,monospace" font-size="34" fill="#4d8cff">&lt;/&gt;</text></g>
+  <text x="64" y="80" font-family="ui-monospace,Menlo,monospace" font-size="22" letter-spacing="6" fill="#4d8cff" opacity="0.95">DEVELOPMENT</text>
+  <text x="56" y="456" font-family="-apple-system,Helvetica,sans-serif" font-weight="800" font-size="170" fill="url(#t05)" opacity="0.95">05</text>
+  <rect x="0" y="0" width="1200" height="500" fill="none" stroke="#232b3d" stroke-width="1"/>
+</svg>

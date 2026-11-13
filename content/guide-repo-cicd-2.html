@@ -1,0 +1,146 @@
+<!--meta {"title": "CI/CD（2/2）", "desc": "デプロイ・ロールバック。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-cicd-2">CI/CD（2/2）</h1>
+      <p class="lead">デプロイ・ロールバック。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>deploy 後に HEAD とヘルスチェックを確認する</li>
+<li>デプロイ戦略（Rolling / Blue-Green / Canary）を先に決める</li>
+<li>rollback と緊急停止の手順を用意しておく</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-cicd-1.html">← CI/CD（1/2）</a> <a href="guide-repo-docs-1.html">docs と履歴（1/2） →</a></p>
+</aside>
+<h4 id="iam-role-taskrolearn"><a class="toclink" href="#iam-role-taskrolearn">IAM Role 最小権限例 (アプリ用 = <code>taskRoleArn</code>)</a></h4>
+<p>S3アクセスのみ必要なケース:</p>
+<pre><code class="language-json">{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;s3:GetObject&quot;, &quot;s3:PutObject&quot;, &quot;s3:DeleteObject&quot;],
+      &quot;Resource&quot;: [
+        &quot;arn:aws:s3:::app-prod-uploads/*&quot;,
+        &quot;arn:aws:s3:::app-prod-backups/*&quot;
+      ]
+    },
+    {
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;s3:ListBucket&quot;],
+      &quot;Resource&quot;: [
+        &quot;arn:aws:s3:::app-prod-uploads&quot;,
+        &quot;arn:aws:s3:::app-prod-backups&quot;
+      ]
+    }
+  ]
+}
+</code></pre>
+<blockquote>
+<p><code>Resource: "*"</code> 禁止。バケット単位で絞る。</p>
+</blockquote>
+<h4 id="cicd-env-config"><a class="toclink" href="#cicd-env-config">環境ごとの構成</a></h4>
+<table>
+<thead>
+<tr>
+<th>環境</th>
+<th>用途</th>
+<th>ストレージ</th>
+<th>デプロイ条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>local</code></td>
+<td>開発者ローカル</td>
+<td>MinIO (Docker)</td>
+<td>手動 (<code>make up</code>)</td>
+</tr>
+<tr>
+<td><code>dev</code></td>
+<td>共通開発環境 (AWS)</td>
+<td>S3 (dev用バケット)</td>
+<td><code>develop</code> push 時 自動</td>
+</tr>
+<tr>
+<td><code>staging</code></td>
+<td>本番相当の検証</td>
+<td>S3 (staging用)</td>
+<td>リリースタグ作成時</td>
+</tr>
+<tr>
+<td><code>production</code></td>
+<td>本番</td>
+<td>S3 (prod用)</td>
+<td>手動承認後の deploy ワークフロー</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cicd-deploy"><a class="toclink" href="#cicd-deploy">デプロイと認証</a></h3>
+<h4 id="cicd-deploy-strategy"><a class="toclink" href="#cicd-deploy-strategy">デプロイ戦略</a></h4>
+<ul>
+<li>Rolling Update (デフォルト): ECS の Deployment 機能を使う</li>
+<li>Blue/Green: CodeDeploy統合 (大規模変更時)</li>
+<li>Canary: 機能フラグ (Feature Flag) と組み合わせる</li>
+<li>Rollback: <code>aws ecs update-service</code> で前バージョンのtask definitionに戻す</li>
+<li>緊急停止: Desired Count を 0 にする / 機能フラグでOFF</li>
+</ul>
+<h4 id="ci"><a class="toclink" href="#ci">ローカル ⇔ CI ⇔ 本番の認証差分まとめ</a></h4>
+<table>
+<thead>
+<tr>
+<th>環境</th>
+<th>認証方式</th>
+<th>設定場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ローカル (MinIO)</td>
+<td>固定アクセスキー</td>
+<td><code>.env</code> (gitignore)</td>
+</tr>
+<tr>
+<td>CI (GitHub Actions)</td>
+<td>OIDC → IAM Role Assume</td>
+<td>ワークフローYAML</td>
+</tr>
+<tr>
+<td>本番 (ECS Fargate)</td>
+<td>Task Role (IRSA相当)</td>
+<td>Task Definition</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cicd-cost"><a class="toclink" href="#cicd-cost">コストと運用</a></h3>
+<h4 id="cicd-cost-notes"><a class="toclink" href="#cicd-cost-notes">コスト・運用の注意点</a></h4>
+<ul>
+<li>ECR: lifecycle policy で古いイメージを自動削除 (デフォルトのままだと無限に溜まる)</li>
+<li>CloudWatch Logs: 保持期間を明示 (デフォルトは無期限でコスト高)</li>
+<li>S3: ライフサイクルで Glacier 移行 / 古いオブジェクト自動削除</li>
+<li>Secrets Manager: <code>$0.40/secret/月</code> (記憶ベース、要最新確認)。機密度低いものは Parameter Store (無料枠あり) で代替</li>
+<li>NAT Gateway: 意外と高い。VPC設計で privatelink / VPC endpoint も検討</li>
+</ul>
+<h4 id="cursorrules"><a class="toclink" href="#cursorrules"><code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> への追補</a></h4>
+<p><code><a href="flow-rules-samples.html#sample-70-local-env-mdc">70-local-env.mdc</a></code> に AWS 周りを追補:</p>
+<pre><code class="language-text">## ストレージ
+- ローカル: MinIO コンテナ経由 (環境変数 AWS_ENDPOINT_URL で切替)
+- 本番: S3 + IAM Task Role
+- アプリコードで AWS_ACCESS_KEY_ID を本番にハードコードしない
+- S3 アクセスは boto3 / aws-sdk のデフォルト credential chain に任せる
+
+## CI/CD
+- GitHub Actions の認証は OIDC のみ。長期アクセスキー禁止
+- IAM Role 信頼ポリシーは リポジトリ・ブランチで絞る
+- 新規 AWS リソースは Terraform / CDK でコード化、手動作成禁止
+</code></pre>
+<blockquote>
+<p>NOTE: AWS のサービス名・料金・API仕様は時々変わる。実プロジェクトで採用する際は AWS公式ドキュメント・料金ページで最新を確認すること。本セクションは2026年初頭時点の一般的なパターンに基づいた仮想定。</p>
+</blockquote>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-cicd-1.html">← CI/CD（1/2）</a><a class="flow-pager__next" href="guide-repo-docs-1.html">docs と履歴（1/2） →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

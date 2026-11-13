@@ -1,0 +1,41 @@
+/* 旧フローのページをハンドブックと同じ本文スタイルに揃える（枠の入れ子をやめる） */
+.main-area .flow-article:has(.flow-body) {
+  max-width: 50rem; margin: 0; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none;
+}
+.flow-article > header h1 {
+  margin: 0.2em 0 0.5em; font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.25; font-weight: 900; letter-spacing: 0.01em;
+}
+.flow-article > header .lead { font-size: 1.1rem; line-height: 1.85; color: var(--theme-fg-secondary); }
+.chapter-badge { text-transform: none !important; letter-spacing: 0 !important; }
+.content-section { padding: 0 !important; margin-bottom: 0.5rem !important; border: 0 !important; background: none !important; border-radius: 0 !important; }
+.content-section:hover { background: none !important; }
+.flow-body h2 { font-weight: 900; border-bottom: 0; padding-top: 1.4rem; border-top: 1px solid var(--theme-border); }
+.flow-body h2::before, .flow-body h3::before { display: none !important; }
+.page-brief { border: 0; border-left: 4px solid var(--c-ok); border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+.flow-body table { display: block; overflow-x: auto; }
+.flow-body td, .flow-body th { min-width: 7.5em; }
+
+/* ハンドブック章の装飾画像は控えめな大きさにする */
+.hb > .hb-hero-img, .hb-hero-img { width: min(100%, 26rem) !important; margin: 0.5rem 0 1.5rem; }
+
+/* 最終確認日と「直す・報告する」 */
+.page-meta {
+  max-width: 50rem; margin: 3rem 0 0; padding: 0.75rem 1rem; display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; align-items: baseline;
+  border-top: 1px solid var(--theme-border); color: var(--theme-fg-muted); font-size: 0.84rem; line-height: 1.6;
+}
+.page-meta time { font-family: var(--fontStack-monospace); color: var(--theme-fg); }
+.page-meta--stale { background: var(--tint-warn); border-top-color: var(--c-warn); }
+.page-meta__links { display: inline-flex; gap: 1rem; margin-left: auto; }
+.page-meta + .pager { margin-top: 1.5rem; }
+
+/* 過去の話題を折りたたんで残す */
+.archive-fold { margin: 3rem 0 1rem; border: 1px solid var(--theme-border-strong); border-radius: var(--radius-md); background: var(--surface-raised); }
+.archive-fold > summary { cursor: pointer; padding: 0.7rem 1rem; font-weight: 700; font-size: 0.92rem; color: var(--theme-fg-secondary); }
+.archive-fold[open] > summary { border-bottom: 1px solid var(--theme-border); }
+.archive-fold > :not(summary) { margin-inline: 1rem; }
+.archive-fold__note { font-size: 0.85rem; color: var(--theme-fg-muted); }
+
+@media (max-width: 860px) {
+  #main-content { padding-inline: 1rem; }
+  .page-meta__links { margin-left: 0; }
+}

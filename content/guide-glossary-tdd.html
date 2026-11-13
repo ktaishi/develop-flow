@@ -1,0 +1,48 @@
+<!--meta {"title": "開発手法 / TDD", "desc": "TDD と Phase。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-glossary-tdd">開発手法 / TDD</h1>
+      <p class="lead">TDD と Phase。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>Red-Green-Refactor のサイクルで進めると決める</li>
+<li>Inside-out / Outside-in の方針を先に固定する</li>
+<li>AAA でテストを書き、C0 / C1 / C2 で網羅度を確認する</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-glossary.html">↑ 章トップ</a> <a href="guide-glossary-tools.html">← AIツール用語</a> <a href="guide-glossary-design.html">設計概念 →</a></p>
+</aside>
+<h3 id="tdd"><a class="toclink" href="#tdd">開発手法 / TDD</a></h3>
+<h4 id="tdd-test-driven-development"><a class="toclink" href="#tdd-test-driven-development">TDD (Test-Driven Development)</a></h4>
+<p>テストを実装より先に書く。<a href="#red-green-refactor">Red-Green-Refactor</a> を高速に回す。</p>
+<h4 id="red-green-refactor"><a class="toclink" href="#red-green-refactor">Red-Green-Refactor</a></h4>
+<p>TDD の基本サイクル。</p>
+<ol class="steps">
+<li>RED: 失敗するテストを書く（実装はまだ書かない）</li>
+<li>GREEN: テストが通る最小コード（汚くてもよい）</li>
+<li>REFACTOR: テストを通したまま設計改善（新規テスト追加禁止）</li>
+</ol>
+<h4 id="inside-out-tdd-outside-in-tdd"><a class="toclink" href="#inside-out-tdd-outside-in-tdd">Inside-out TDD / Outside-in TDD</a></h4>
+<p>TDD の 2 アプローチ。</p>
+<ul>
+<li>Inside-out: ドメインから外側へ。モック最小。本ドキュメントの推奨</li>
+<li>Outside-in: UI/API から内側へ。依存をモックで埋める</li>
+</ul>
+<h4 id="aaa-arrange-act-assert"><a class="toclink" href="#aaa-arrange-act-assert">AAA (Arrange-Act-Assert)</a></h4>
+<p>テストを 3 段階で書く構造。Arrange（準備）→ Act（1 回実行）→ Assert（検証）。</p>
+<h4 id="c0-c1-c2"><a class="toclink" href="#c0-c1-c2">C0 / C1 / C2 カバレッジ</a></h4>
+<p>テストでコードが実行された割合の種類。</p>
+<ul>
+<li>C0: 全行が 1 回以上実行されたか</li>
+<li>C1: <code>if/else</code> の両分岐が実行されたか</li>
+<li>C2: 複合条件の各項が真偽両方を取ったか</li>
+</ul>
+<p>目安: C0 80%+ / C1 70%+。</p>
+<hr />
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-glossary-tools.html">← AIツール用語</a><a class="flow-pager__next" href="guide-glossary-design.html">設計概念 →</a></nav>" aria-label="前後の章"><a href="guide-design.html">← 設計</a><a class="flow-pager__next" href="guide-implement.html">実装 →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><span class="muted flow-pager__next">末尾 →</span></nav>
+  </article>
+</div>

@@ -1,0 +1,144 @@
+<!--meta {"title": "Claude Code 設定早見", "desc": "CLAUDE.md・チーム共有・検証ループ。", "kind": "flow", "scripts": [], "reviewed": "2026-11-13"} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-claude">Claude Code 設定早見</h1>
+      <p class="lead">CLAUDE.md・チーム共有・検証ループ。</p>
+<aside class="update-note"><b>2026-11 追記:</b> auto mode の分類器フォールバック廃止、<code>permissions.blockWritesOutsideWorkingDirectories</code>、<code>CLAUDE_CODE_SUBAGENT_EFFORT</code> など権限・サブエージェントまわりの設定が増えた。要点は <a href="trends-2026.html#claude-code">トレンド：Claude Code</a> に整理した。</aside>
+
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li><code>CLAUDE.md</code> を git 共有し、チームで使う</li>
+<li>検証コマンドを列挙して品質の要に置く</li>
+<li>並列実行は Plan 確定後に回すと決める</li>
+</ul>
+<p class="page-brief__tasks">検証コマンドを列挙 — 完了: Claude 設定が書かれた</p>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-cursor.html">← Cursor 設定早見</a> <a href="guide-rules-codex.html">Codex 設定早見 →</a></p>
+</aside>
+<h3 id="17-claude"><a class="toclink" href="#17-claude">Claude Code</a></h3>
+
+<h4 id="17-claude-setup"><a class="toclink" href="#17-claude-setup">手順: Claude Code 初期設定（リポ）</a></h4>
+<ol class="steps">
+<li>リポで <code>claude</code> を起動（または <code>curl -fsSL https://claude.ai/install.sh | bash</code> でインストール）</li>
+<li><code>/init</code> → <code>CLAUDE.md</code> の下書きを生成 → 20〜40 行に削る</li>
+<li><code>tasks/todo.md</code> を置く（<a href="guide-rules-tools-intro.html#17-shared-plan-setup">共通 Plan</a>）</li>
+<li>（任意）<code>.claude/skills/&lt;name&gt;/SKILL.md</code> — 再利用ワークフロー</li>
+<li>（任意）<code>.claude/agents/&lt;name&gt;.md</code> — 専用ツール・モデルを持つカスタム Subagent</li>
+<li>（任意）Hooks — <code>.claude/settings.json</code> で Stop 時にテスト自動実行</li>
+</ol>
+<pre><code class="language-text">project/
+├── CLAUDE.md              # ★ 短い Rules
+├── tasks/todo.md
+├── docs/
+└── .claude/
+    ├── skills/phase4-tdd/SKILL.md
+    ├── agents/security-reviewer.md   # カスタム subagent（任意）
+    └── settings.json      # hooks（任意）
+</code></pre>
+<aside class="info-panel info-panel--tip" role="complementary">
+<div class="info-panel__body">
+<strong>Subagent 定義例</strong>（<code>.claude/agents/security-reviewer.md</code>）:
+<pre><code class="language-markdown">---
+name: security-reviewer
+description: Reviews code for security vulnerabilities
+tools: Read, Grep, Glob, Bash
+model: opus
+---
+SQL インジェクション・XSS・認証・認可・シークレット漏洩をチェック。
+具体的な行番号と修正案を返す。</code></pre>
+「Use a subagent to review this code for security issues.」で呼び出し。
+</div>
+</aside>
+<pre><code class="language-markdown"># CLAUDE.md（例・短く）
+
+## 毎回
+- 着手前: tasks/todo.md の終わりの条件（Done when）を読む
+- 仕様: docs/ のみ（ここに API 詳細を書かない）
+
+## 検証
+- テスト: docker compose exec app bundle exec rspec &lt;path&gt;
+
+## 禁止
+- git push / commit はユーザー許可後のみ
+</code></pre>
+
+<h4 id="17-claude-workflows"><a class="toclink" href="#17-claude-workflows">手順: 典型ワークフロー（Claude Code）</a></h4>
+<p>出典: <a href="https://code.claude.com/docs/en/best-practices">best-practices</a></p>
+
+<p><strong>A. Explore → Plan → Implement</strong></p>
+<ol class="steps">
+<li>Plan モード（または最初のプロンプトで「まず調査のみ」）</li>
+<li>調査結果を <code>tasks/todo.md</code> にチェックリスト化</li>
+<li>実装モードへ切替 → ファイルパスと検証コマンドを明示</li>
+<li>テスト green → commit（許可後）</li>
+</ol>
+<pre><code class="language-text">Phase3 設計のみ。コード変更なし。
+docs/invoice-export/01_requirements.md を読み、不明点を質問リストに。
+
+（Plan 確定後）
+02_design.md に沿って InvoiceExportService を実装。
+Done when: bundle exec rspec spec/services/invoice_export_spec.rb</code></pre>
+
+<p><strong>B. セッション再開・チェックポイント</strong></p>
+<pre><code class="language-text"># 直近セッションを続ける
+claude --continue
+
+# セッション一覧から選ぶ
+claude --resume
+
+# 任意の時点へ巻き戻し（会話・コード・両方）
+/rewind</code></pre>
+<p>長い transcript はコスト増 — 新規 + <code>tasks/todo.md</code> を優先（<a href="#17-claude-context">引き継ぎ</a>）。<code>/rewind</code> はプロンプト送信ごとに自動スナップショット — 失敗した実装はいつでも戻せる。</p>
+
+<p><strong>C. 完了条件を設定して自律実行</strong></p>
+<pre><code class="language-text"># Done when 条件を登録 → ターンごとに評価 subagent が再チェック
+/goal "rspec spec/services/ が all green"
+
+# CI 系の長時間ループは permission-mode auto で承認プロンプトを省略
+claude --permission-mode auto -p "fix all lint errors"</code></pre>
+
+<p><strong>D. Skill を明示的に呼ぶ</strong></p>
+<pre><code class="language-text">/phase4-domain-tdd
+spec/domain/invoice_export_spec.rb の在庫不足ケース 1 サイクルだけ</code></pre>
+
+<h3 id="17-claude-ref"><a class="toclink" href="#17-claude-ref">公式対応と配置</a></h3>
+<h4 id="17-claude-official"><a class="toclink" href="#17-claude-official">公式 BP → 本リポの対応（一覧）</a></h4>
+<table>
+<thead><tr><th>公式 BP</th><th>本リポでの対応</th></tr></thead>
+<tbody>
+<tr><td>検証手段を渡す（/goal · Stop hook）</td><td>プロンプトに rspec / make test · <code>/goal "条件"</code> · <a href="guide-ops-orchestration.html#18-4-verify">完了前検証</a></td></tr>
+<tr><td>CLAUDE.md は短く・/init で生成</td><td><a href="#17-claude-setup">初期設定</a> · <a href="guide-rules-phase1.html#42-claude-code">Phase1 テンプレ</a></td></tr>
+<tr><td>Subagents で調査をコンテキスト分離</td><td><code>.claude/agents/</code> 定義 · <a href="guide-ops-harness.html#18-2-subagents">調査の任せ方</a></td></tr>
+<tr><td>副作用ある手順は disable-model-invocation</td><td><code>disable-model-invocation: true</code>（<a href="guide-rules-skills-1.html#17-skills-disable-invocation">Skill 設定</a>）</td></tr>
+<tr><td>失敗したら /rewind でチェックポイント復元</td><td><code>/rewind</code> · git との組み合わせ（<a href="#17-claude-workflows">ワークフロー B</a>）</td></tr>
+<tr><td>lessons</td><td><code>tasks/lessons.md</code> → 再発時 CLAUDE.md 1 行</td></tr>
+</tbody>
+</table>
+
+<h4 id="17-claude-context"><a class="toclink" href="#17-claude-context">手順: セッション引き継ぎ</a></h4>
+<ol class="steps">
+<li>新規セッションを開く</li>
+<li><code>tasks/todo.md</code> を最初に渡す（パスまたは貼り付け）</li>
+<li>前回の続きが必要なら <code>/resume</code>（1 セッションに絞る）</li>
+<li>チーム共有は <code>docs/</code> を更新（チャット全文はコピペしない）</li>
+</ol>
+
+<h4 id="17-claude-tree"><a class="toclink" href="#17-claude-tree">配置ツリー（Claude Code）</a></h4>
+<pre><code class="language-text">project/
+├── CLAUDE.md                              # ★ 短い Rules（/init で生成）
+├── CLAUDE.local.md                        # 個人上書き（.gitignore に追加）
+├── tasks/{todo,lessons}.md
+├── docs/
+└── .claude/
+    ├── settings.json                      # hooks・permissions
+    ├── skills/phase3-design-doc/SKILL.md  # 再利用ワークフロー
+    └── agents/security-reviewer.md        # カスタム subagent（任意）
+</code></pre>
+<p><code>CLAUDE.md</code> はモノレポで <code>packages/api/CLAUDE.md</code> のように入れ子も可。親→子の順で自動マージされる。</p>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-cursor.html">← Cursor 設定早見</a><a class="flow-pager__next" href="guide-rules-codex.html">Codex 設定早見 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

@@ -1,0 +1,78 @@
+/* デザイントークン。色・書体・余白はここだけで定義する（legacy.css の変数もここで上書き）。 */
+:root {
+  --paper-rgb: 247 249 252;
+  --raised-rgb: 255 255 255;
+  --ink-rgb: 16 27 51;
+  --accent-rgb: 36 71 198;
+  --ok-rgb: 28 122 84;
+
+  --theme-bg: rgb(var(--paper-rgb));
+  --surface-raised: rgb(var(--raised-rgb));
+  --theme-card: #eef2f8;
+  --theme-card-hover: #e3e9f2;
+  --theme-fg: rgb(var(--ink-rgb));
+  --theme-fg-secondary: rgb(var(--ink-rgb) / 0.74);
+  --theme-fg-muted: rgb(var(--ink-rgb) / 0.58);
+  --theme-border: rgb(var(--ink-rgb) / 0.11);
+  --theme-border-strong: rgb(var(--ink-rgb) / 0.22);
+  --theme-accent: rgb(var(--accent-rgb));
+  --theme-accent-hover: #1a3497;
+  --on-accent: #ffffff;
+  --signal: #d4411e;            /* 朱。NEW と現在地だけに使う */
+  --c-ok: #1c7a54;
+  --c-warn: #a35f00;
+  --c-danger: #b3261e;
+  --tint-ok: #e6f4ee;
+  --tint-warn: #fbf1dc;
+  --tint-danger: #fbe9e7;
+  --tint-info: #e8edfb;
+  --code-bg: #131a2c;
+  --code-fg: #dfe6f7;
+
+  --link: var(--theme-accent);
+  --link-hover: var(--theme-accent-hover);
+  --text-primary: var(--theme-fg);
+  --sidebar-border: var(--theme-border);
+  --sidebar-bg: var(--theme-bg);
+
+  --fontStack-system: "Zen Kaku Gothic New", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+  --fontStack-monospace: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --top-h: 3.5rem;
+  --page-header-h: var(--top-h);
+  --side-w: 17rem;
+  --rail-w: 14.5rem;
+  --prose: 46rem;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --elev-1: 0 1px 0 rgb(var(--ink-rgb) / 0.06);
+  --elev-2: 0 6px 20px -8px rgb(var(--ink-rgb) / 0.28);
+  --elev-3: 0 18px 48px -16px rgb(var(--ink-rgb) / 0.42);
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --paper-rgb: 13 19 33;
+  --raised-rgb: 22 30 48;
+  --ink-rgb: 228 233 244;
+  --accent-rgb: 147 169 255;
+  --ok-rgb: 110 207 160;
+  --theme-card: #19223a;
+  --theme-card-hover: #222d4a;
+  --theme-accent-hover: #b9c7ff;
+  --on-accent: #0d1321;
+  --signal: #ff7a55;
+  --c-ok: #6ecfa0;
+  --c-warn: #f0b95a;
+  --c-danger: #ff8a80;
+  --tint-ok: #12291f;
+  --tint-warn: #2c2210;
+  --tint-danger: #2e1614;
+  --tint-info: #17203c;
+  --code-bg: #0a0f1c;
+  --elev-2: 0 6px 20px -8px rgb(0 0 0 / 0.6);
+  --elev-3: 0 18px 48px -16px rgb(0 0 0 / 0.75);
+  color-scheme: dark;
+}

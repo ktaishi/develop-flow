@@ -1,0 +1,64 @@
+<!--meta {"title": "AIツール用語", "desc": "Cursor / Claude / Codex。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-glossary-tools">AIツール用語</h1>
+      <p class="lead">Cursor / Claude / Codex。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li><code>.cursor/rules/</code> と <code>.mdc</code> の frontmatter を読めるようにする</li>
+<li><code>alwaysApply</code> / <code>globs</code> で適用範囲を制御すると決める</li>
+<li>AGENTS.md・CLAUDE.md・Skills / Hooks のツール別配置を確認する</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-glossary.html">↑ 章トップ</a> <a href="guide-glossary-beginner.html">← 初見10語</a> <a href="guide-glossary-tdd.html">開発手法 / TDD →</a></p>
+</aside>
+<h3 id="cursor-ai"><a class="toclink" href="#cursor-ai">Cursor / Claude Code / Codex / AIツール関連</a></h3>
+<h4 id="cursorrules_1"><a class="toclink" href="#cursorrules_1"><code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code></a></h4>
+<p>Cursor がプロジェクト固有の AI 指示を読むディレクトリ。配下の <code>.mdc</code> が個別ルール。</p>
+<h4 id="mdc"><a class="toclink" href="#mdc"><code>.mdc</code> ファイル</a></h4>
+<p>Cursor ルールの拡張子。<code>[frontmatter](#frontmatter)</code> 付き Markdown。</p>
+<h4 id="frontmatter"><a class="toclink" href="#frontmatter"><code>frontmatter</code></a></h4>
+<p>ファイル先頭の YAML メタデータ。Cursor では <code>description</code> / <code>alwaysApply</code> / <code>globs</code> を指定。</p>
+<p>例:</p>
+<pre><code class="language-text">---
+description: コーディング規約
+alwaysApply: true
+---
+
+# 本文ここから
+</code></pre>
+<h4 id="alwaysapply"><a class="toclink" href="#alwaysapply"><code>alwaysApply</code></a></h4>
+<p><code>[frontmatter](#frontmatter)</code> のブール値。<code>true</code> なら毎ターンコンテキストに載る。</p>
+<ul>
+<li><code>true</code>: 常に適用。ドメイン制約など必須事項向け</li>
+<li>省略 / <code>false</code>: <code>[globs](#globs)</code> 合致時または <code>@rule-name</code> 時のみ</li>
+<li>注意: 多用するとコスト・性能に効く。本当に必須だけ <code>true</code> に</li>
+</ul>
+<h4 id="globs"><a class="toclink" href="#globs"><code>globs</code></a></h4>
+<p>ルールを適用するファイルパターン。合致ファイル編集時だけコンテキストに含まれる。</p>
+<ul>
+<li><code>globs: **/*.py</code> → Python 編集時のみ</li>
+<li><code>globs: tests/**</code> → tests 配下編集時のみ</li>
+</ul>
+<h3 id="tools-shared"><a class="toclink" href="#tools-shared">共有・Claude 系</a></h3>
+<h4 id="agentsmd_1"><a class="toclink" href="#agentsmd_1"><code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code></a></h4>
+<p>AI エージェント向け指示書。Codex は作業ディレクトリに近い <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> を優先（<a href="guide-rules-phase1.html#42-codex">Phase 1 Codex</a>）。</p>
+<h4 id="claudemd_1"><a class="toclink" href="#claudemd_1"><code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code></a></h4>
+<p>Claude Code がセッション開始時に読むファイル。リポジトリ直下は全体方針、サブディレクトリはローカル規約（<a href="guide-rules-phase1.html#claude-setup-12">セットアップ 12 項</a>）。</p>
+<h4 id="claudeskills_1"><a class="toclink" href="#claudeskills_1"><code>.claude/skills/</code></a></h4>
+<p>Claude Code の反復手順置き場。長い運用は Skill に分離し <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> は短く保つ。</p>
+<h4 id="claudehooks_1"><a class="toclink" href="#claudehooks_1"><code>Hooks</code>（Claude Code）</a></h4>
+<p>特定イベント後にコマンドを強制実行。lint や危険コマンド検査向け。</p>
+<h3 id="tools-codex"><a class="toclink" href="#tools-codex">Codex 系</a></h3>
+<h4 id="codex-skills_1"><a class="toclink" href="#codex-skills_1"><code>.agents/skills/</code>（Codex）</a></h4>
+<p>Codex の共有 Skill 置き場。各 Skill は <code><a href="flow-rules-samples.html#sample-claude-skills">SKILL.md</a></code>（<code>name</code> / <code>description</code>）と任意の <code>scripts/</code>。</p>
+<h4 id="codex-config_1"><a class="toclink" href="#codex-config_1"><code><a href="flow-rules-samples.html#sample-codex-config-toml">.codex/config.toml</a></code>（Codex）</a></h4>
+<p>Codex のプロジェクト上書き設定。trusted プロジェクトのみ読み込む。</p>
+<hr />
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-glossary-beginner.html">← 初見10語</a><a class="flow-pager__next" href="guide-glossary-tdd.html">開発手法 / TDD →</a></nav>" aria-label="前後の章"><a href="guide-design.html">← 設計</a><a class="flow-pager__next" href="guide-implement.html">実装 →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><span class="muted flow-pager__next">末尾 →</span></nav>
+  </article>
+</div>

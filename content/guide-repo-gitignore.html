@@ -1,0 +1,165 @@
+<!--meta {"title": ".gitignore", "desc": "秘密情報と生成物の除外。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-gitignore">.gitignore</h1>
+      <p class="lead">秘密情報と生成物の除外。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li><code>.env</code> 実体・シークレットは除外すると決める</li>
+<li>rules・テンプレ類はコミット対象に含める</li>
+<li>コミット前に <code>git check-ignore</code> で確認する</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-directory.html">← ディレクトリ構成</a> <a href="guide-repo-docker-1.html">Docker（1/2） →</a></p>
+</aside>
+<h3 id="11-2-gitignore"><a class="toclink" href="#11-2-gitignore"><code>.gitignore</code></a></h3>
+<h4 id="gitignore-policy"><a class="toclink" href="#gitignore-policy">方針</a></h4>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-scenario">
+<h4 class="info-panel__title" id="scenario-scenario">コミット対象と除外対象の例</h4>
+<div class="info-panel__body"><p>コミット: <code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code>、<code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code>、<code>.env.example</code> / 除外: <code>.env</code>、<code>docker-compose.override.yml</code>、<code>node_modules/</code></p></div>
+</aside>
+<ul>
+<li>コミットすべき: <code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> / <code><a href="flow-rules-samples.html#sample-agents-md">AGENTS.md</a></code> / <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code> / 共有 <code>.claude/skills/</code> / <code>.agents/skills/</code> / <code><a href="flow-rules-samples.html#sample-codex-config-toml">.codex/config.toml</a></code>* / <code>.env.example</code> / Docker 関連 / <code>Makefile</code></li>
+<li>コミットしない: <code>.env</code> 実体 / シークレット / キャッシュ / ビルド成果物 / 個人 IDE 設定</li>
+<li>テンプレは <a href="https://github.com/github/gitignore">github/gitignore</a> を組み合わせる</li>
+</ul>
+<h4 id="gitignore-as-rule"><a class="toclink" href="#gitignore-as-rule">.gitignore として</a></h4>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-cursor">
+<h4 class="info-panel__title" id="scenario-cursor">.cursor/.claude 配下の例外的 git 管理</h4>
+<div class="info-panel__body"><p><code>.cursor/*</code> → <code>!.cursor/rules/</code> / <code>.claude/*</code> → <code>!.claude/skills/</code> + <code>!.claude/settings.json</code></p></div>
+</aside>
+<pre><code class="language-gitignore"># === OS ===
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# === エディタ / IDE ===
+.vscode/*
+!.vscode/settings.json      # チーム共有設定だけはコミット (任意)
+!.vscode/extensions.json
+.idea/
+*.iml
+.fleet/
+.zed/
+
+# === Cursor / Claude Code / Codex ===
+# .cursor/rules/ / AGENTS.md / CLAUDE.md / 共有する .claude/* / .agents/skills/ はコミット対象
+.cursor/*
+!.cursor/rules/
+# Claude Code の共有設定だけ復活
+.claude/*
+!.claude/skills/
+!.claude/agents/
+!.claude/settings.json
+# Codex: プロジェクト設定と共有 Skill（.codex/ は trusted 時のみ読込）
+.codex/*
+!.codex/config.toml
+!.agents/
+!.agents/skills/
+# AI 関連の他ツールのローカル
+.specstory/
+.aider*
+
+# === 環境変数 / シークレット (絶対コミットしない) ===
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+# テンプレート類はコミット
+!.env.example
+!.env.sample
+# クラウド credentials
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+.aws/
+.gcloud/
+
+# === ログ・実行成果物 ===
+*.log
+logs/
+tmp/
+*.pid
+*.seed
+
+# === カバレッジ・キャッシュ ===
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+coverage/
+.nyc_output/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.cache/
+
+# === Docker (ローカルマウント先) ===
+.docker-data/
+postgres-data/
+mysql-data/
+redis-data/
+# 個人カスタマイズ用 override は gitignore (雛形は .example で配布)
+docker-compose.override.yml
+
+# === 一時 / 個人作業 ===
+.scratch/
+.notes/
+*.bak
+</code></pre>
+<h3 id="gitignore-detail"><a class="toclink" href="#gitignore-detail">設定の詳細</a></h3>
+<h4 id="gitignore-by-language"><a class="toclink" href="#gitignore-by-language">言語別追加分</a></h4>
+<p>Python</p>
+<pre><code class="language-gitignore">__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+.ipynb_checkpoints/
+</code></pre>
+<p>Node.js / Next.js</p>
+<pre><code class="language-gitignore">node_modules/
+.next/
+out/
+.turbo/
+.nuxt/
+dist/
+build/
+.parcel-cache/
+.pnpm-store/
+.yarn/cache
+.yarn/install-state.gz
+*.tsbuildinfo
+</code></pre>
+<p>Go</p>
+<pre><code class="language-gitignore"># vendor/ をコミットするかは方針次第 (CI のオフライン化を重視するなら commit)
+# vendor/
+bin/
+*.exe
+*.test
+*.out
+coverage.out
+</code></pre>
+<blockquote>
+<p>NOTE: <code>!</code>（再含有）は親ディレクトリ自体が無視されていない場合のみ有効。<code>.cursor/*</code> + <code>!.cursor/rules/</code> は機能する。<code>.cursor/</code> や <code>.claude/</code> をディレクトリごと無視すると <code>!</code> が効かない。</p>
+</blockquote>
+<details class="section-fold" id="11-infra-fold">
+<summary>11.3〜11.10 インフラ・docs・ADR・RAG 詳細（クリックで展開）</summary>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-directory.html">← ディレクトリ構成</a><a class="flow-pager__next" href="guide-repo-docker-1.html">Docker（1/2） →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

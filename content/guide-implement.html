@@ -1,0 +1,273 @@
+<!--meta {"title": "実装", "desc": "Phase 4–6 コア・アプリ・共通作業。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-implement">実装</h1>
+      <p class="lead">Phase 4–6 コア・アプリ・共通作業。</p>
+    </header>
+    <div class="flow-body">
+
+
+<p class="prereq-line wiki-lead">Plan + docs を冒頭で AI に渡す。完了 → <a href="guide-implement.html#phase-5-app">Phase 5</a></p>
+<p>Phase 4 はコアロジック（ビジネスルールが集中する部分）を実装する段階です。命名やディレクトリは <code>02_design.md</code> と rules に合わせます。DDD なら domain 層、Vertical Slice なら feature 単位、などプロジェクト次第です。</p>
+<p>Phase 1 のルールは毎回 AI に渡し、既存パターンから外れないようにします。厳格な TDD を標準にしているチームだけ、下の 10.2 テンプレを使います。それ以外は「テストを足しながら実装」＋レビュー・CI で足りることが多いです。</p>
+
+<h3 id="phase-4-core"><a class="toclink" href="#phase-4-core">Phase 4 — コア実装（TDD）</a></h3>
+<h4 id="73-tdd-overview"><a class="toclink" href="#73-tdd-overview">TDD サイクル（概要）</a></h4>
+
+<h4 id="73-agent-tdd-2026"><a class="toclink" href="#73-agent-tdd-2026">エージェント TDD 5 ステップ（公式）</a></h4>
+<p>出典: <a href="https://cursor.com/ja/blog/agent-best-practices">Cursor BP</a>。チームが TDD を採用するときの Agent 依頼順。</p>
+<ol class="steps">
+<li>期待入出力付き<strong>テストだけ</strong>を書かせる（実装はまだ書かない）</li>
+<li>テスト実行 → <strong>失敗</strong>を確認（RED）</li>
+<li>テストをコミット</li>
+<li>テストを変えずに通る実装を書かせ、green まで反復（GREEN）</li>
+<li>満足したら実装をコミット · Refactor は時間があれば</li>
+</ol>
+<p>Done when を Plan / <code>tasks/todo.md</code> に書く。検証は <a href="guide-ops-orchestration.html#18-4-verify">18-4-verify</a>。</p>
+<p>1 モジュールあたりの典型的なループは次のとおりです。</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Dev as 開発者
+    participant AI as AI
+    participant Test as テスト
+
+    loop TDDサイクル
+        Dev->>AI: RED プロンプト
+        AI-->>Test: 失敗テスト追加
+        Test-->>Dev: fail 確認
+        Dev->>AI: GREEN プロンプト
+        AI-->>Test: 最小実装
+        Test-->>Dev: pass 確認
+        Dev->>AI: REFACTOR プロンプト
+        AI-->>Test: 設計改善（振る舞い不変）
+        Test-->>Dev: pass 維持
+        Dev->>Dev: コミット
+    end
+</div>
+<p>各フェーズで AI に何を頼み、いつ完了とするかは次の表にまとめています。</p>
+<table>
+<thead>
+<tr><th>フェーズ</th><th>AI への依頼</th><th>完了条件</th></tr>
+</thead>
+<tbody>
+<tr><td>RED</td><td>失敗テストのみ書く</td><td>対象テストが fail</td></tr>
+<tr><td>GREEN</td><td>最小実装</td><td>対象テストが pass</td></tr>
+<tr><td>REFACTOR</td><td>振る舞いを変えず改善</td><td>全テスト pass</td></tr>
+</tbody>
+</table>
+<h4 id="71"><a class="toclink" href="#71">対象洗い出し</a></h4>
+<p>設計 docs が揃ったあと、まだコードを書かない段階で次のプロンプトを送ります。Inside-out（内側から外へ）で進める前提です。</p>
+<pre><code class="language-text">コアロジックを Inside-out で実装します（TDD 採用時）。実装はまだしません。
+お題と設計 (docs/&lt;feature-name&gt;/02_design.md) から、Phase 4 で実装すべき
+モジュール/コンポーネントを、依存関係順に列挙してください。
+
+【出力】
+1. 実装順序リスト
+2. 各対象について
+   - 責務 (1行)
+   - 主要不変条件 / ビジネスルール
+   - 想定テストケース 3〜5個 (正常/境界/異常)
+3. TDDサイクル合計数の見積もり（TDD 採用時）
+4. 既存モジュールとの関係 (再利用 / 拡張 / 新規)
+
+実装/テストコードはまだ書かないでください。
+</code></pre>
+<h4 id="72-tdd-1-red-green-refactor-3"><a class="toclink" href="#72-tdd-1-red-green-refactor-3">TDDテンプレ（任意）</a></h4>
+<p>チームが Inside-out TDD を標準にしているときの、1 サイクル分のテンプレです。ルールと <code>02_design.md</code> をコンテキストに含めてください。</p>
+<p class="scenario-inline"><span class="scenario-inline__label">サイクルごとにチャットを分けると履歴が追いやすいです</span> — サイクルごとにチャットを分けると履歴が追いやすいです。「Cycle 2: OrderTotal」のように対象名をプロンプト先頭に書き、RED のあとローカルで fail を確認してから GREEN に進む。</p>
+
+<h4 id="red"><a class="toclink" href="#red">RED</a></h4>
+<p>まず失敗するテストだけを追加します。実装ファイルは触りません。</p>
+<pre><code class="language-text">=== TDD Cycle N: &lt;対象&gt; ===
+
+【RED】
+以下のテストを tests/unit/&lt;module&gt;/test_&lt;対象&gt;.py に書いてください。
+実装ファイルは触らないでください。
+（パスはプロジェクトのテスト配置規約に合わせて読み替える）
+
+対象: &lt;対象&gt;
+責務: &lt;責務&gt;
+
+テストケース (今サイクル):
+1. test_&lt;条件1&gt;_&lt;期待結果1&gt;
+2. test_&lt;条件2&gt;_&lt;期待結果2&gt;
+3. test_&lt;条件3&gt;_&lt;期待結果3&gt;
+
+要件:
+- Arrange-Act-Assert を明確に分ける
+- 既存テストヘルパ/フィクスチャがあれば再利用
+- 1ケースだけ実行可能な命名
+
+出力後、テスト実行で全件failする想定であることを宣言してください。
+</code></pre>
+<h4 id="green"><a class="toclink" href="#green">GREEN</a></h4>
+<p>テストを通す最小の実装だけを書きます。</p>
+<pre><code class="language-text">【GREEN】
+上記テストを通す最小実装を src/&lt;module&gt;/&lt;対象&gt;.py に書いてください。
+（パスは 02_design.md のモジュール構成に合わせる）
+ルール:
+- 過度な抽象化禁止
+- 未使用フィールド/メソッド禁止
+- 将来用パラメータ禁止
+- プロジェクト rules（.cursor/rules/ / CLAUDE.md 等）を遵守
+- 既存コードの設計パターンに揃える
+
+出力後、全件pass想定であることを宣言してください。
+</code></pre>
+<h4 id="refactor"><a class="toclink" href="#refactor">REFACTOR</a></h4>
+<p>テストはそのまま、設計だけを整えます。新規テストの追加はしません。</p>
+<pre><code class="language-text">【REFACTOR】
+テストは全て保ったまま設計改善してください。
+観点:
+- 不変条件を型・小さな関数に閉じ込められるか
+- 計算ロジックが再利用可能な private メソッドに切り出せるか
+- 例外メッセージに業務情報を含められるか
+- 既存の共通ユーティリティに置き換えられるか
+
+【制約】
+- 新規テスト追加禁止
+- 振る舞いを変えない
+- 採用する改善は3つ以内
+- 改善後のdiffと理由を最後にまとめる
+</code></pre>
+<p class="scenario-inline"><span class="scenario-inline__label">REFACTOR時のメソッド分割理由の記録</span> — REFACTOR で private メソッドを 2 つ増やしたら、diff 末尾に「① 境界チェック共通化 ② 丸め処理分離」と理由を 3 行で書かせる。テスト追加は禁止のまま全件 pass を再確認する。</p>
+
+<h4 id="73"><a class="toclink" href="#73">各サイクル後のコミット</a></h4>
+<p class="callout yellow">NOTE: <code>git add</code> / <code>git commit</code> はユーザー明示許可後に実行（<a href="guide-glossary-docs.html#force-confirm-rule">強制確認ルール</a>）。以下はコミットメッセージ例です。</p>
+<p>テストの pass/fail を確認したあと、リポジトリのルールに従いコミットします（操作確認が必要な環境では、許可を得てから実行）。</p>
+<pre><code class="language-bash">git add . &amp;&amp; git commit -m &quot;[RED] add failing tests for &lt;対象&gt;&quot;
+git add . &amp;&amp; git commit -m &quot;[GREEN] implement &lt;対象&gt;&quot;
+git add . &amp;&amp; git commit -m &quot;[REFACTOR] &lt;改善点&gt;&quot;
+</code></pre>
+<hr />
+<hr />
+<p class="prereq-line wiki-lead">Phase 4 の設計 docs に沿う。完了 → <a href="guide-implement.html#phase-6-crosscut">Phase 6</a></p>
+<p>Phase 5 では、Phase 4 で固めたコアを使うアプリ層・インタフェースを実装します。ユースケース単位で進めるのが基本です。</p>
+
+<h3 id="phase-5-app"><a class="toclink" href="#phase-5-app">Phase 5 — アプリ層</a></h3>
+<h4 id="81-layer-guide"><a class="toclink" href="#81-layer-guide">層の役割とテスト</a></h4>
+<p class="callout">次はレイヤード / ユースケース駆動の例です。Vertical Slice など別構成なら <code>02_design.md</code> のモジュール名に読み替えてください。恒久ルール（rules）と設計 docs の境界は守ります。</p>
+<p>層の依存関係は、だいたい次のイメージです。</p>
+<div class="mermaid">
+flowchart TD
+    IF[interface 層] --> APP[application 層]
+    APP --> DOM[domain 層]
+    APP --> INF[infrastructure 層]
+    INF -.->|Repository 実装| APP
+    DOM -.->|不変条件| APP
+</div>
+<p>各層の責務と、どこでテストするかは次の表のとおりです。</p>
+<table>
+<thead>
+<tr><th>層</th><th>責務</th><th>テスト方針</th></tr>
+</thead>
+<tbody>
+<tr><td>application</td><td>ユースケース 運用</td><td>依存を Protocol でモック</td></tr>
+<tr><td>domain</td><td>業務ルール・不変条件</td><td>Phase 4 で単体済み</td></tr>
+<tr><td>infrastructure</td><td>永続化・外部 API</td><td>Phase 6 で結合</td></tr>
+<tr><td>interface</td><td>HTTP / CLI 等</td><td>E2E / 結合</td></tr>
+</tbody>
+</table>
+<h4 id="82-usecase-prompt"><a class="toclink" href="#82-usecase-prompt">ユースケース実装プロンプト</a></h4>
+<p>Phase 4 のコアが通ったあと、軽量 TDD を採用するチーム向けのプロンプト例です。対象ユースケース名を埋めてから貼り付けます。</p>
+<pre><code class="language-text">ユースケース単位で実装します。チームが TDD する場合は RED→GREEN を基本とし、Refactorは時間あれば。
+
+対象: &lt;UseCase名&gt;
+=== RED ===
+tests/unit/application/test_&lt;usecase&gt;.py に3〜5ケース:
+1. ハッピーパス
+2. 主要な業務エラー (バリデーション違反 等)
+3. 主要な技術エラー (外部依存失敗 等)
+
+依存 (Repository, ExternalService 等) は Protocol/Interface で定義し
+モックで差し替え可能に。既存の依存定義パターンに合わせる。
+
+=== GREEN ===
+src/application/&lt;usecase&gt;.py で最小実装。
+Repository等は Protocol のみ定義、実体はインフラ層で別途実装。
+</code></pre>
+<hr />
+<hr />
+<p class="prereq-line wiki-lead">共通作業は初期 + 必要時。完了 → <a href="guide-ship.html#phase-7-pr">Phase 7</a></p>
+<p>Phase 6 は、機能の「全体共通」要素をまとめて足す段階です。テスト・ログ・インフラ・API 定義・デプロイ手順など、1 ユースケースだけでは片付かないものをここで揃えます。</p>
+
+<h3 id="phase-6-crosscut"><a class="toclink" href="#phase-6-crosscut">Phase 6 — 共通作業</a></h3>
+<h4 id="91-crosscut-scope"><a class="toclink" href="#91-crosscut-scope">共通作業の範囲</a></h4>
+<p>新規プロジェクトの初期は共通作業一式を用意します。既存プロジェクトへの機能追加では、影響のあるカテゴリだけ更新します。</p>
+<p>カテゴリごとの成果物は次の表にまとめています。</p>
+<table>
+<thead>
+<tr><th>カテゴリ</th><th>成果物</th><th>新規 / 差分</th></tr>
+</thead>
+<tbody>
+<tr><td>テスト</td><td><code>05_test_plan.md</code> / integration / e2e</td><td>機能追加時は差分</td></tr>
+<tr><td>ログ</td><td><code>06_logging.md</code> + 業務イベントログ</td><td>新規エンドポイントは差分</td></tr>
+<tr><td>メトリクス</td><td>latency / error rate</td><td>既存基盤に追従</td></tr>
+<tr><td>インフラ</td><td>Repository 実装 / マイグレーション</td><td>DB 変更時</td></tr>
+<tr><td>IF</td><td>OpenAPI / Schema 更新</td><td>API 変更時</td></tr>
+<tr><td>デプロイ</td><td><code>07_deployment.md</code> / 環境変数</td><td>新規は全文、既存は差分</td></tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-api-1-openapi">
+<h4 class="info-panel__title" id="scenario-api-1-openapi">API 1 本追加：結合テストと OpenAPI 差分</h4>
+<div class="info-panel__body"><p>既存 API にエンドポイント 1 本追加：結合テストと OpenAPI 差分は必須。<code>07_deployment.md</code> には新しい環境変数 2 件とマイグレーション手順だけ追記。ログ方針は <code>06_logging.md</code> に「注文キャンセル時は order_id を INFO」と 1 行足す。</p></div>
+</aside>
+
+<h4 id="92-crosscut-prompt"><a class="toclink" href="#92-crosscut-prompt">一括プロンプト</a></h4>
+<p>貼り付けタイミング：コアとユースケースの単体が通り、手元で主要パスを確認したあと。リポジトリのログルール（<code><a href="flow-rules-samples.html#rules-samples-index">.cursor/rules/</a></code> や <code><a href="flow-rules-samples.html#sample-claude-md">CLAUDE.md</a></code>）をコンテキストに含めた状態で送ってください。</p>
+<pre><code class="language-text">横断的事項を一括で追加してください。
+
+【テスト】
+- docs/&lt;feature-name&gt;/05_test_plan.md (戦略・カバレッジ・観点表)
+- tests/integration/: 結合テスト (実DB / 実外部依存)
+- tests/e2e/: API経由のハッピーパス + 主要異常系
+
+【ログ】
+- docs/&lt;feature-name&gt;/06_logging.md (.cursor/rules/40-logging.mdc / CLAUDE.md のログ方針に準拠)
+- 既存ロガーを再利用 (新規プロジェクトのみ実装)
+- 業務イベント (作成/更新/削除/状態遷移) にログを差し込む
+
+【メトリクス・トレース】
+- 既存基盤に従う (Datadog/OpenTelemetry/Prometheus等)
+- 新規エンドポイントの latency / error rate を追加
+
+【インフラ実装】
+- src/infrastructure/repositories/ 配下に永続化実装
+- 既存マイグレーションツール (Alembic/Flyway/Knex等) でファイル生成
+
+【インタフェース実装】
+- 既存ルータ/コントローラ規約に従う
+- OpenAPI/Schema更新
+
+【デプロイ】
+- 新規プロジェクト時のみ docs/&lt;feature-name&gt;/07_deployment.md を生成
+- 既存プロジェクトは差分のみ追記:
+  - 環境変数追加
+  - マイグレーション手順
+  - 機能フラグ (gradual rollout)
+  - ロールバック手順
+
+変更ファイルのリストを最後に出してください。
+</code></pre>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-scenario">
+<h4 class="info-panel__title" id="scenario-scenario">テスト観点の追記をプロンプトで強制</h4>
+<div class="info-panel__body"><p>プロンプト末尾で「変更ファイル一覧」を必ず出させる。integration が 3 ファイル増えたら、<code>05_test_plan.md</code> の観点表にその 3 本の目的（正常/異常/権限）を 1 行ずつ追記する。</p></div>
+</aside>
+<hr />
+    <details class="archive-fold">
+<summary>2026年6月時点の X 上の話題（記録）</summary>
+<p class="archive-fold__note">当時の投稿の要点を記録として残しています。現在の状況は公式の Docs / changelog と <a href="trends-2026.html">2026年11月のトレンド</a> を確認してください。</p>
+<table>
+<thead><tr><th>出典</th><th>要点</th><th>この章</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/leerob/status/1929727742821413331">@leerob</a></td><td>Software 1.0（テスト・型・lint）が 2.0（エージェント）の前提。<strong>失敗ログを読んで自己修正</strong></td><td><a href="#phase-4-core">Phase 4 TDD</a></td></tr>
+<tr><td><a href="https://x.com/samueljmcd/status/2066524627585634765">@samueljmcd</a></td><td>inner loop = タスク内検証 · outer loop = 同じミスを繰り返さない。Bun port は 99.8% でも<strong>本番未投入</strong></td><td><a href="#phase-6-crosscut">共通作業</a></td></tr>
+<tr><td><a href="https://x.com/bcherny/status/2017742741636321619">@bcherny</a></td><td>PostToolUse で format · 検証コマンド列挙が品質の要</td><td><a href="guide-rules-phase1.html#42-claude-code">CLAUDE テンプレ</a></td></tr>
+<tr><td><a href="https://x.com/steipete/status/2063697162748260627">@steipete</a></td><td>プロンプト最適化より<strong>実行ループ</strong>（テスト・CI を閉じる）</td><td><a href="guide-ops-orchestration.html#18-4-verify">18章 検証</a></td></tr>
+</tbody>
+</table>
+</details>
+</div><nav class="flow-pager" aria-label="前後の章"><a href="guide-design.html">← 設計</a><a class="flow-pager__next" href="guide-ship.html">提出 →</a></nav>
+  </article>
+</div>

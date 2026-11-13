@@ -1,0 +1,140 @@
+<!--meta {"title": "開発・実装(TDD)", "desc": "TDD(Red-Green-Refactor)、コーディング規約、フロントエンド実装(型/a11y/Core Web Vitals)、バックエンド実装(バリデーション/冪等/N+1)、セキュアコーディング。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Chapter 05</div>
+    <h1>⚙️ 開発・実装(TDD)</h1>
+    <p class="hb-lead">設計を、テストを安全網にしながらコードへ落とす。TDDを土台に、フロント・バック・セキュアコーディングを一貫した規律で実装する。</p>
+    <img class="hb-hero-img" src="/assets/handbook/development.svg" alt="開発・実装のイメージ">
+
+    <h2 id="s-1">TDD — Red / Green / Refactor</h2>
+    <p>テストを先に書き（Red）、最小実装で通し（Green）、整える（Refactor）。<strong>テストなしの実装コミットを作らない</strong>。AIに実装させる場合も、先にテスト（仕様）を固めると生成の正しさを機械的に判定できる。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  R["🔴 Red<br/>失敗するテストを書く"] --> G["🟢 Green<br/>最小実装で通す"]
+  G --> RF["🔵 Refactor<br/>重複除去・整理"]
+  RF --> R
+      </pre>
+      <figcaption>図: Red→Green→Refactorのサイクル。テストが仕様であり安全網になる。</figcaption>
+    </figure>
+    <p><strong>バグ修正は「再現テストを先に書く」</strong>ことから始める。再現できないバグは直したと言えない。修正後にそのテストが緑になることで「直った」を証明する。当てずっぽうの修正をしない。</p>
+
+    <h2 id="s-2">コーディングの規律</h2>
+    <ul>
+      <li><strong>1コミット=1論理変更</strong>。テストと実装は同じコミットに含める。</li>
+      <li><strong>秘密情報・接続文字列のハードコード禁止</strong>。必ず環境変数経由。</li>
+      <li>リンタ・フォーマッタ・型チェックを<strong>CIとローカルの両方で同じコマンド</strong>で実行できるようにする。</li>
+      <li>モックは外部境界（HTTP / DB / 時刻 / 乱数）のみ。内部ロジックをモックしない。</li>
+      <li>ローカルのミドルウェアは Docker Compose（<code>compose.yaml</code>）で起動。アプリ本体はホストで動かす（ホットリロード優先）。</li>
+    </ul>
+
+    <h2 id="s-3">ディレクトリ構成（実装とテスト）</h2>
+    <p>設計のレイヤー（<a href="design.html">03 設計</a>）をそのままディレクトリに写す。<strong>ドメイン層は外部依存を持たない純粋なコード</strong>に保つ。テストは <code>tests/</code> にピラミッド（単体→統合→E2E）で分ける。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">📁 リポジトリ構成</div>
+<pre>&lt;repo&gt;/
+├── src/
+│   ├── routes/            <span class="hb-c">← ルーティング層（入力バリデーション）</span>
+│   ├── usecases/          <span class="hb-c">← ユースケース層（トランザクション境界）</span>
+│   ├── domain/            <span class="hb-c">← ドメイン層（純粋・外部依存なし）</span>
+│   ├── infra/             <span class="hb-c">← DB / 外部API（副作用はここに寄せる）</span>
+│   └── lib/               <span class="hb-c">← 共通（型・ユーティリティ）</span>
+├── tests/
+│   ├── unit/              <span class="hb-c">← 単体（多）: domain 中心</span>
+│   ├── integration/       <span class="hb-c">← 統合: DB / API</span>
+│   └── e2e/               <span class="hb-c">← E2E（少）: ユーザー操作の通し</span>
+├── compose.yaml           <span class="hb-c">← DB等のミドルウェア（docker compose up -d）</span>
+├── .env.example           <span class="hb-c">← キー名のみ（実値は .env / gitignore）</span>
+└── package.json</pre>
+      <div class="hb-cap">図: ディレクトリ = 設計レイヤー。テストはピラミッド構造に対応。</div>
+    </figure>
+
+    <p>実行系は <code>package.json</code> の scripts に集約し、<strong>ローカルとCIで同じコマンド</strong>を叩けるようにする。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">package.json（抜粋）</div>
+<pre>{
+  <span class="hb-k">"scripts"</span>: {
+    <span class="hb-s">"dev"</span>:       "next dev",
+    <span class="hb-s">"db:up"</span>:     "docker compose up -d",   <span class="hb-c">// 開発開始</span>
+    <span class="hb-s">"test"</span>:      "vitest run",
+    <span class="hb-s">"test:watch"</span>: "vitest",
+    <span class="hb-s">"lint"</span>:      "eslint . &amp;&amp; prettier -c .",
+    <span class="hb-s">"typecheck"</span>: "tsc --noEmit",
+    <span class="hb-s">"verify"</span>:    "npm run lint &amp;&amp; npm run typecheck &amp;&amp; npm run test"  <span class="hb-c">// CIと同一</span>
+  }
+}</pre>
+      <div class="hb-cap">図: <code>npm run verify</code> をローカルとCIの共通ゲートにする。</div>
+    </figure>
+
+    <h2 id="s-4">フロントエンド実装</h2>
+    <div class="hb-grid hb-cols-2">
+      <div class="hb-card"><h4>コンポーネント設計</h4>表示(presentational)とロジック(hooks)を分離。状態は最小・近接配置。</div>
+      <div class="hb-card"><h4>型安全をAPI境界まで</h4>OpenAPI / tRPC / zod でサーバ⇄クライアントの型を一致。APIの変更がコンパイルエラーで伝わる状態に。</div>
+      <div class="hb-card"><h4>4つの画面状態</h4>ローディング / エラー / 空 / 権限なし を全画面で実装。AI生成はハッピーパスに偏る。</div>
+      <div class="hb-card"><h4>a11y</h4>セマンティックHTML・キーボード操作・コントラストAA・alt/label。</div>
+    </div>
+    <h3 id="s-5">Core Web Vitals</h3>
+    <table>
+      <tr><th>指標</th><th>意味</th><th>目標(良好)</th></tr>
+      <tr><td><strong>LCP</strong></td><td>最大要素の表示時間</td><td>&le; 2.5s</td></tr>
+      <tr><td><strong>INP</strong></td><td>操作への応答性</td><td>&le; 200ms</td></tr>
+      <tr><td><strong>CLS</strong></td><td>レイアウトのずれ</td><td>&le; 0.1</td></tr>
+    </table>
+    <p>手段: 画像最適化（サイズ指定・遅延読込）、コード分割、不要JSの削減、レンダリング戦略（SSR/SSG/ISR/PPR）の使い分け。</p>
+
+    <h2 id="s-6">バックエンド実装</h2>
+    <ul>
+      <li><strong>入力バリデーションを境界で必須化</strong>（zod / pydantic）。型と実行時検証を一致させ、信頼できない入力を内部へ通さない。</li>
+      <li><strong>冪等性・タイムアウト・リトライ・サーキットブレーカ</strong> — 特に決済や外部API連携。</li>
+      <li><strong>N+1回避</strong>、トランザクション境界の明確化、インデックス活用（EXPLAINで確認）。</li>
+      <li><strong>エラーを握りつぶさない</strong>。構造化ログ + 相関ID(trace id)で全リクエストを追跡可能に（<a href="operations.html">08 運用・監視・保守</a>）。</li>
+    </ul>
+    <figure class="hb-snippet">
+      <div class="hb-fname">例: N+1 を潰す</div>
+<pre><span class="hb-c">// ❌ N+1: ループ内でクエリ発行（商談N件 → クエリ N+1 回）</span>
+const orders = await db.orders.findMany({ where: { userId } });
+for (const o of orders) {
+  o.items = await db.items.findMany({ where: { orderId: o.id } });
+}
+
+<span class="hb-c">// ✅ 関連をまとめて取得（1クエリ）</span>
+const orders = await db.orders.findMany({
+  where: { userId },
+  include: { items: true },
+});</pre>
+      <div class="hb-cap">図: 一覧取得でループ内クエリを避け、eager loading / JOIN でまとめる。</div>
+    </figure>
+    <div class="hb-callout hb-gotcha"><b>落とし穴:</b> 論理削除テーブルは全クエリに <code>WHERE deleted_at IS NULL</code>。AIは集計・JOIN・ユニークチェックで削除済み行を巻き込みやすい。生成コードには N+1 / トランザクション漏れ / 削除済み行の巻き込みが混入しやすく、レビューで定型チェックする。</div>
+
+    <h2 id="s-7">セキュアコーディング</h2>
+    <p>実装時に最も混入しやすい脆弱性を、書く段階で潰す（横断の全体像は <a href="security.html">09 セキュリティ</a>）。</p>
+    <ul>
+      <li>SQLは文字列連結せずプレースホルダ/ORM。出力は必ずエスケープ（XSS対策、<code>dangerouslySetInnerHTML</code>を避ける）。</li>
+      <li>認可はリソースごとに所有者チェック（IDOR対策）。「ログイン済み＝全権限」にしない。</li>
+      <li>秘密は環境変数経由。LLMの出力をそのまま実行・DB書き込み・外部送信しない。</li>
+    </ul>
+    <figure class="hb-snippet">
+      <div class="hb-fname">例: SQLインジェクション と 認可漏れ(IDOR)</div>
+<pre><span class="hb-c">// ❌ 文字列連結（インジェクション） + 所有者を確認していない（IDOR）</span>
+const row = await db.query(
+  `SELECT * FROM orders WHERE id = ${req.params.id}`
+);
+
+<span class="hb-c">// ✅ プレースホルダ + 所有者(userId)で絞る</span>
+const row = await db.query(
+  `SELECT * FROM orders WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+  [req.params.id, req.user.id]
+);</pre>
+      <div class="hb-cap">図: 入力は必ずパラメータ化し、認可は「自分の行か」をクエリ条件に含める。</div>
+    </figure>
+
+    <h2 id="s-8">完了条件（チェックリスト）</h2>
+    <ul class="hb-chk">
+      <li>対象機能にテストがあり全件グリーン（TDDで実装）</li>
+      <li>lint / format / 型チェックが通る</li>
+      <li>秘密情報のハードコードがない</li>
+      <li>（UI）4状態とa11yを満たす / （API）境界バリデーションがある</li>
+      <li><code>docker compose up -d</code> から開発開始までの手順が README にある / STATUS.md 更新済み</li>
+    </ul>
+
+    <div class="hb-callout hb-ai"><b>AI活用:</b> 先にテスト（仕様）を固めてから実装をAIに任せると、生成の正しさをテストで機械判定できる。ただし「テストを通して」と頼むと実装でなくテストを緩める挙動が出るため、緑になった理由を必ず確認する（<a href="qa.html">06 テスト・レビュー・QA</a>）。</div>
+</div>

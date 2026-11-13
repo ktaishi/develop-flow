@@ -1,0 +1,188 @@
+<!--meta {"title": "ハーネスとマルチエージェント", "desc": "文脈エンジニアリングと協調。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-ops-harness">ハーネスとマルチエージェント</h1>
+      <p class="lead">文脈エンジニアリングと協調。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>ハーネス＝ループを統治する実行環境</li>
+<li>検証ループ優先 — 完了条件を先に固定</li>
+<li>ファンアウトは2体から</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-ops.html">↑ 章トップ</a> <a href="guide-ops-orchestration.html">← エージェント運用</a> <a href="guide-ops-history.html">履歴・記録 →</a></p>
+</aside>
+<h3 id="18-harness-2026"><a class="toclink" href="#18-harness-2026">ハーネスと文脈エンジニアリング（2026）</a></h3>
+<p>出典: <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Anthropic — Effective context engineering</a>（公式） · <a href="https://www.philschmid.de/agent-harness-2026">The importance of Agent Harness（2026）</a>（コミュニティ解説）。<strong>ハーネス</strong>＝エージェントの実行環境（何を見せ・何ができ・何を完了とし・失敗をどう改善に回すか）。<em>モデルが推論し、ハーネスが実行を統治する</em>。コンテキストは有限資源なので、入れる情報を絞るほど精度が上がる。</p>
+<h4 id="18-loop-anatomy"><a class="toclink" href="#18-loop-anatomy">ハーネスが統治する「ループ」</a></h4>
+<p>エージェントは <strong>gather context → act → verify → iterate</strong> を自分で回す。<a href="guide-rules-prompt.html#17-loop">プロンプト設計</a>がループの<em>中身</em>（ゴール・検証可能な完了条件）を与えるのに対し、ハーネスはその<em>回り方</em>を統治する — 各手で何を読ませ、何を実行させ、いつ止めるか。下表は各局面とこのページの対応箇所。</p>
+<table>
+<thead><tr><th>ループの局面</th><th>ハーネスの役割</th><th>本ページの実装</th></tr></thead>
+<tbody>
+<tr><td>gather（文脈収集）</td><td>必要な情報だけ載せ、残りは退避・都度取得</td><td><a href="#18-harness-2026">文脈戦略表</a>・<a href="#18-plan-patterns">Plan の置き場所</a></td></tr>
+<tr><td>act（実行）</td><td>atomic なツールを渡しモデルに計画させる</td><td><a href="#18-harness-principles">ハーネス設計の原則</a>・<a href="#18-multiagent">委譲</a></td></tr>
+<tr><td>verify（検証）</td><td>完了条件を実装前に固定し、出力で判定</td><td><a href="guide-ops-orchestration.html#18-4-verify">完了前検証</a>・<a href="guide-implement.html#73-agent-tdd-2026">エージェント TDD</a></td></tr>
+<tr><td>iterate（修正）</td><td>ズレたら follow-up より計画からやり直す。停止条件で暴走を防ぐ</td><td><a href="#18-plan-revert">Plan からやり直す</a></td></tr>
+</tbody>
+</table>
+<p class="callout">2026年に入り「プロンプトの言い回し調整」より「ルール・rules ファイル・実行環境の設計」を主軸に置く論調が広がっている（<a href="https://datasciencedojo.com/blog/harness-engineering/">Data Science Dojo — Harness Engineering</a>、<a href="https://www.sdggroup.com/en/insights/blog/the-evolution-of-prompt-engineering-to-context-design-in-2026">SDG Group — Context design in 2026</a> など、いずれも未検証のコミュニティ解説）。理由は「モデルの意図理解が向上し、文面の工夫より<strong>何を継続的に読ませるか</strong>の設計が出力品質を左右するようになったため」とされる。プロンプト技術が無効になったわけではなく、<a href="guide-rules-prompt.html#17-prompt">プロンプト設計</a>で固めた指示を rules / Skills に昇格させる土台として位置づけるのが実務的。</p>
+<table>
+<thead><tr><th>文脈戦略</th><th>内容</th><th>本リポでの実践</th></tr></thead>
+<tbody>
+<tr><td>削減 / 要約（Compaction）</td><td>上限に近づいたら会話を要約して継続する</td><td>新規チャット + <a href="guide-rules-cursor.html#17-past-chats">@Past Chats</a> で選択参照</td></tr>
+<tr><td>退避（Offload）</td><td>状態をコンテキスト外（ファイル）へ。進捗・todo を保存する</td><td><code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code>・docs・作業ログ</td></tr>
+<tr><td>隔離（Isolate）</td><td>subagent が独自コンテキストで作業し、<strong>蒸留サマリ（1〜2k tokens）だけ</strong>返す</td><td><a href="#18-multiagent-cursor">Task（explore）</a> + <a href="#18-multiagent-handoff">受け渡し JSON</a></td></tr>
+<tr><td>都度取得（Retrieve）</td><td>必要なときだけ just-in-time に読む</td><td>総 <code>@</code> しない・1 ファイルだけ <code>@</code>（<a href="guide-ops-orchestration.html#18-context">文脈管理</a>）</td></tr>
+</tbody>
+</table>
+<h4 id="18-harness-principles"><a class="toclink" href="#18-harness-principles">ハーネス設計の原則</a></h4>
+<ul>
+<li><strong>Start Simple</strong> — 巨大な制御フローを組まない。<code>bash</code> など atomic なツールを渡してモデルに計画させ、guardrails・retry・検証を実装する</li>
+<li><strong>Build to Delete</strong> — モデル更新で最適な構造は変わる。あとで作り直せるモジュール設計にする</li>
+<li><strong>goal drift 防止</strong> — 長丁場では高レベルの目的を <code>tasks/todo.md</code> に書き、コンテキストへ繰り返し再掲して目標のブレを防ぐ</li>
+<li><strong>テストは不可侵の制約</strong> — 受け入れテストを実装前に固定し、エージェントに要件を書き換えさせない（<a href="guide-implement.html#73-agent-tdd-2026">エージェント TDD</a>）</li>
+</ul>
+<p>ルール側の入口: <a href="guide-rules-skills-3.html#17-rules-activation-2026">ルールの発火モードとポータビリティ</a>。委譲の進め方: <a href="#18-multiagent">マルチエージェント協調</a>。</p>
+
+<h4 id="18-cloud-harness"><a class="toclink" href="#18-cloud-harness">Cursor 3 — cloud agent と harness</a></h4>
+<p><strong>未確認の速報扱い</strong>。出典は <a href="https://x.com/cursor_ai">Cursor 公式 X（@cursor_ai）</a> で、正式仕様は Cursor Docs / changelog を正とする。Cursor 3 の cloud agent について公式Xでは「ローカルの agent をサーバへ移すだけでは不十分で、<strong>durable execution platform・powerful harness・現実的な開発環境</strong>が要る」と紹介されている。ハーネスは実行を統治する基盤という位置づけ（<a href="#18-harness-2026">上の文脈戦略表</a>）。</p>
+<span id="18-1-plan-default" class="redirect-anchor" aria-hidden="true"></span>
+<h3 id="18-plan"><a class="toclink" href="#18-plan">Plan の運用</a></h3>
+<h4 id="18-plan-patterns"><a class="toclink" href="#18-plan-patterns">Plan の置き場所（チャット / ファイル）</a></h4>
+<p class="wiki-lead">3 ステップ以上は Plan をファイル化。<code>tasks/todo.md</code> がチーム正本。Cursor は <code>.cursor/plans/</code> が下書き。</p>
+<h4 id="18-plan-revert"><a class="toclink" href="#18-plan-revert">Plan — ズレたら follow-up ではなく計画からやり直す</a></h4>
+<p>公式 BP: 意図と違う出力が出たら、追加入力で直すより<strong>変更を revert → Plan を具体化 → 再 Build</strong>の方が速くきれいなことが多い。</p>
+<ol class="steps">
+<li>Checkpoint / git で安全な地点に戻す</li>
+<li>Plan（チャット or <code>.cursor/plans/</code>）に不足コンテキスト・完了条件を追記</li>
+<li>ユーザー承認後に Agent で再実行</li>
+<li>検証コマンド（<a href="guide-ops-orchestration.html#18-4-verify">完了前検証</a>）を Plan に含める</li>
+</ol>
+<p class="callout">同じ失敗を繰り返すなら<strong>停止条件</strong>を設ける（リトライ 2〜3 回で自走を止め、失敗を表に出す）。場当たり修正を重ねるより、計画に戻った方が速い。</p>
+<h3 id="18-multiagent"><a class="toclink" href="#18-multiagent">マルチエージェント協調</a></h3>
+<p class="wiki-lead">開発セッションでは、1つの会話にすべてを詰め込まず、<strong>別の AI 担当（Task / Subagent）に調査・分析を委譲</strong>し、メインは実装と判断に集中する。プロダクト実装（LangGraph・SDK）の詳細は <a href="memo-ai-reference-tools.html#21-ref-multi-agent">Tool Use 参考 — マルチエージェント</a>、RAG 統合は <a href="memo-ai-reference-rag.html#21-ref-agentic-rag">RAG 参考 — Agentic RAG</a>。</p>
+
+<span id="18-2-subagents" class="redirect-anchor" aria-hidden="true"></span>
+<h4 id="18-multiagent-basics"><a class="toclink" href="#18-multiagent-basics">基本 — 開発文脈でのマルチエージェント</a></h4>
+<p>マルチエージェントとは、<strong>役割とコンテキストを分けた複数の AI 実行単位</strong>が協調すること。Cursor では Task ツール、Claude Code では Subagents が相当する。</p>
+<ol class="steps">
+<li><strong>Plan</strong> — メインがゴール・サブタスク・並列可否を書く（<a href="#18-plan-patterns">Plan の置き場所</a>）</li>
+<li><strong>調査委譲</strong> — 広い grep・複数ディレクトリ探索は Subagent に任せ、結果だけ戻す（<a href="#18-2-subagents">調査の任せ方</a>）</li>
+<li><strong>執筆・実装</strong> — メインが構造化された調査結果をもとにコード・ドキュメントを書く</li>
+<li><strong>検証</strong> — テスト・curl・本番 HEAD など完了条件を満たす（<a href="guide-ops-orchestration.html#18-4-verify">完了前の検証</a>）</li>
+</ol>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-18-multiagent-example">
+<h4 class="info-panel__title" id="scenario-18-multiagent-example">具体例 — 呼び出し元洗い出し</h4>
+<div class="info-panel__body">
+<p>メイン: 「この API の呼び出し元を特定して修正して」。Task（explore）: <code>src/</code> のみ grep、<code>{ "paths": [...], "summary": "..." }</code> を返す。メイン: 返却 JSON だけを見て修正。全文ログはメインのコンテキストに入れない。</p>
+</div>
+</aside>
+
+<h4 id="18-multiagent-cursor"><a class="toclink" href="#18-multiagent-cursor">Cursor Task — subagent_type の使い分け</a></h4>
+<table>
+<thead>
+<tr><th>subagent_type</th><th>向く場面</th><th>避けること</th></tr>
+</thead>
+<tbody>
+<tr><td><code>explore</code></td><td>コードベース探索・「どこにある？」・パス一覧</td><td>同一機能の反復デバッグ（メインで続ける）</td></tr>
+<tr><td><code>generalPurpose</code></td><td>複数ステップの調査・分析・執筆前の下準備</td><td>出力形式を指定しない長文ダンプ</td></tr>
+<tr><td><code>shell</code></td><td>git status / ビルド / テスト実行</td><td>破壊的操作（ユーザー許可ルールに従う）</td></tr>
+</tbody>
+</table>
+<p>並列: 独立タスクは複数 Task を同時起動（ファンアウト）。集約ロジックを Plan に先に書く。</p>
+<h3 id="18-parallel"><a class="toclink" href="#18-parallel">並列とハンドオフ</a></h3>
+<h4 id="18-worktree-parallel"><a class="toclink" href="#18-worktree-parallel">worktree 並列 · 複数モデル比較（Cursor 2026）</a></h4>
+<p>出典: <a href="https://cursor.com/ja/blog/agent-best-practices">公式 BP</a>。</p>
+<ul>
+<li><strong>Git worktree</strong> — Agent ドロップダウンから worktree を選ぶと、ファイル変更が分離された作業ツリーで実行。完了後 <strong>Apply</strong> で現在ブランチへマージ</li>
+<li><strong>複数モデル</strong> — 同一プロンプトを複数モデルに送り、結果を横並び比較。難問・エッジケースの探索向け</li>
+<li><strong>通知</strong> — 並列実行時は完了通知を有効化（長時間タスク）</li>
+</ul>
+<p>調査だけ委譲する場合は <a href="#18-multiagent-cursor">Task / Subagent</a>。実装の並列は worktree + Plan で衝突を防ぐ。</p>
+
+
+<h4 id="18-multiagent-handoff"><a class="toclink" href="#18-multiagent-handoff">受け渡しスキーマ（データ契約）</a></h4>
+<p>Subagent からメインへ戻すのは<strong>構造化結果だけ</strong>。全文ダンプ・長い grep 出力は避ける。</p>
+<pre><code class="language-json">{
+  "paths": ["src/domain/order.ts", "src/api/routes/order.ts"],
+  "summary": "OrderService.create が POST /orders から呼ばれる。認可は middleware/auth.ts。"
+}</code></pre>
+<ul>
+<li><strong>paths</strong> — 触るべきファイル（最大10件程度）</li>
+<li><strong>summary</strong> — 3〜5文の要点（メインが次のアクションを決めるのに足る量）</li>
+<li>必要なら <strong>blockers</strong> — 調査だけでは解決できない不明点</li>
+</ul>
+<h4 id="18-multiagent-patterns"><a class="toclink" href="#18-multiagent-patterns">協調パターン</a></h4>
+<div class="mermaid">
+flowchart LR
+    subgraph pipe [パイプライン]
+        P1[調査] --> P2[分析] --> P3[執筆] --> P4[レビュー]
+    end
+    subgraph fan [ファンアウト]
+        F0[タスク] --> F1[Item1]
+        F0 --> F2[Item2]
+        F0 --> F3[Item3]
+        F1 --> FM[集約]
+        F2 --> FM
+        F3 --> FM
+    end
+    subgraph team [スペシャリスト]
+        T1[市場] --> TM[統合]
+        T2[技術] --> TM
+        T3[財務] --> TM
+    end
+</div>
+<p>下表はパターンごとの向き不向き。</p>
+<table>
+<thead>
+<tr><th>パターン</th><th>向く場面</th><th>注意点</th></tr>
+</thead>
+<tbody>
+<tr><td>パイプライン</td><td>段階依存が明確</td><td>受け渡しスキーマを固定</td></tr>
+<tr><td>ファンアウト</td><td>独立アイテムの並列処理</td><td>集約ロジックを先に定義</td></tr>
+<tr><td>スペシャリスト</td><td>多ドメイン統合</td><td>出力形式を標準化</td></tr>
+</tbody>
+</table>
+<h4 id="18-multiagent-checklist"><a class="toclink" href="#18-multiagent-checklist">チェックリスト</a></h4>
+<ol class="steps">
+<li>ゴール・サブタスク・並列可否を書く</li>
+<li>各エージェントに役割・ツール・構造化出力（データ契約）を割り当てる</li>
+<li>並列/直列の境界と受け渡しを固定する</li>
+<li>失敗時フォールバックを文章化する</li>
+<li>まず 2 体パイプラインで固めてから段階的に増やす</li>
+<li>ハンドオフ失敗・重複作業・品質低下・トークン肥大を監視する</li>
+</ol>
+
+<h4 id="18-multiagent-failures"><a class="toclink" href="#18-multiagent-failures">よくある失敗</a></h4>
+<ul>
+<li>汎用エージェントだらけで特化のメリットが消える</li>
+<li>出力形式未標準化で次段がパースできない</li>
+<li>並列を早まりで増やし観測不能になる</li>
+<li>段間エラー処理がなく連鎖失敗する</li>
+<li>トークンコストを軽視する</li>
+</ul>
+
+<hr />
+
+
+
+
+<!-- page-related:start -->
+<aside class="info-panel info-panel--related" role="complementary" aria-label="関連ページ">
+<h4 class="info-panel__title">関連ページ</h4>
+<ul class="info-panel__body info-panel__cases">
+  <li><a href="guide-ops-pitfalls.html#16-ai-pitfalls">AIの誤り</a></li>
+  <li><a href="guide-ops-pitfalls.html#19-ops">運用の注意</a></li>
+  <li><a href="guide-ops-history.html#15-history">履歴</a></li>
+  <li><a href="flow-rules-samples.html">ルールサンプル</a></li>
+</ul>
+</aside>
+<!-- page-related:end -->
+<hr />
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-ops-orchestration.html">← エージェント運用</a><a class="flow-pager__next" href="guide-ops-history.html">履歴・記録 →</a></nav>" aria-label="前後の章"><a href="guide-implement.html">← 実装</a><a class="flow-pager__next" href="guide-repo.html">リポジトリ →</a></nav>" aria-label="前後の章"><a href="guide-implement.html">← 実装</a><a class="flow-pager__next" href="guide-repo.html">リポジトリ →</a></nav>" aria-label="前後の章"><a href="guide-workflow.html">← 全体像</a><a class="flow-pager__next" href="guide-glossary.html">用語集 →</a></nav>
+  </article>
+</div>

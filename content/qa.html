@@ -1,0 +1,101 @@
+<!--meta {"title": "テスト・レビュー・QA", "desc": "テストピラミッド、テストを弱めない、全件報告、デバッグ手順、レビュー観点の優先順、セキュリティレビューゲート。デプロイ前の品質ゲート。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Chapter 06</div>
+    <h1>🧪 テスト・レビュー・QA</h1>
+    <p class="hb-lead">デプロイ前の品質ゲート。テストを弱めずに品質を担保し、レビューで機械が見られない欠陥を捕まえる。テストはAIのガードレールの中核。</p>
+    <img class="hb-hero-img" src="/assets/handbook/qa.svg" alt="テスト・レビュー・QAのイメージ">
+
+    <h2 id="s-1">テストピラミッド</h2>
+    <p>下層（速い・安い・多い）から上層（遅い・高い・少ない）へ。TDDの実務は <a href="development.html">05 開発・実装</a> を参照。</p>
+    <table>
+      <tr><th>層</th><th>対象</th><th>量</th><th>速度</th></tr>
+      <tr><td><strong>単体</strong></td><td>関数・ドメインロジック</td><td>多い</td><td>速い</td></tr>
+      <tr><td><strong>統合</strong></td><td>DB・API・モジュール連携</td><td>中</td><td>中</td></tr>
+      <tr><td><strong>E2E</strong></td><td>ユーザー操作の通し</td><td>少ない</td><td>遅い</td></tr>
+    </table>
+    <p>ディレクトリはピラミッドの3層に対応させ、<strong>対象コードと同じ構造</strong>で並べる。命名は <code>&lt;対象&gt;.test.ts</code> に統一すると、どのコードのテストか一目で分かる。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">📁 テストの配置（src と鏡写し）</div>
+<pre>tests/
+├── unit/                       <span class="hb-c">← 単体（多）: src/domain を鏡写しに</span>
+│   └── domain/
+│       └── order.test.ts       <span class="hb-c">→ src/domain/order.ts のテスト</span>
+├── integration/                <span class="hb-c">← 統合: DB/API 境界</span>
+│   └── usecases/
+│       └── create-order.test.ts
+├── e2e/                        <span class="hb-c">← E2E（少）: 主要動線のみ</span>
+│   └── checkout.spec.ts
+└── fixtures/                   <span class="hb-c">← テストデータ・ファクトリ</span></pre>
+      <div class="hb-cap">図: テスト構造を src と鏡写しにすると、対応関係と抜けが見つけやすい。</div>
+    </figure>
+    <figure class="hb-snippet">
+      <div class="hb-fname">tests/unit/domain/order.test.ts（単体・仕様を表現する）</div>
+<pre>import { test, expect } from "vitest";
+import { totalPrice } from "../../../src/domain/order";
+
+test("空の注文は合計0", () => {
+  expect(totalPrice([])).toBe(0);
+});
+
+test("数量×単価を合算する", () => {
+  const items = [{ price: 100, qty: 2 }, { price: 50, qty: 1 }];
+  expect(totalPrice(items)).toBe(250);   <span class="hb-c">// 仕様: 2*100 + 1*50</span>
+});</pre>
+      <div class="hb-cap">図: テストは「実装のなぞり」でなく<strong>仕様の宣言</strong>。境界値（空）と正常系を書く。</div>
+    </figure>
+
+    <h2 id="s-2">テストを弱めない</h2>
+    <p>「テストを通す」が目的化すると、AIも人間もアサーションを緩めたりskipを足して緑にする。これは検証の放棄。</p>
+    <ul class="hb-bad">
+      <li>アサーションを削除/緩めて通す</li>
+      <li>失敗するテストに安易に <code>skip</code> を付ける</li>
+      <li>「ほぼ通った」と報告して落ちたテストを隠す</li>
+    </ul>
+    <ul class="hb-chk">
+      <li>やむを得ない skip は<strong>理由と期限をコメント</strong>に書く</li>
+      <li><strong>落ちたテストは省略せず全件報告</strong>する</li>
+      <li>テストが実装ではなく<strong>仕様</strong>を表現しているか人間が確認する</li>
+    </ul>
+
+    <h2 id="s-3">デバッグの手順</h2>
+    <p><strong>再現 → 仮説 → 検証 → 再現テスト作成 → 修正</strong> の順で進める。当てずっぽうの修正をしない。<strong>なぜ直ったか説明できない修正は採用しない</strong>。</p>
+
+    <h2 id="s-4">レビュー観点の優先順</h2>
+    <p>限られたレビュー時間は、影響の大きい順に使う。</p>
+    <figure>
+      <pre class="mermaid">
+flowchart LR
+  S["🛡️ セキュリティ"] --> C["✅ 正しさ"] --> P["⚡ 性能"] --> T["🧪 テスト品質"] --> R["📖 可読性"]
+      </pre>
+      <figcaption>図: レビュー観点の優先順位。上位ほど見逃しの代償が大きい。</figcaption>
+    </figure>
+    <ul>
+      <li>レビュー指摘は<strong>具体的な修正案とセット</strong>で出す。</li>
+      <li>生成役と批評役を分ける（別セッション/別エージェント）と質が上がる（<a href="ai-collaboration.html">01 AIとの協働</a>）。</li>
+    </ul>
+    <figure class="hb-io">
+      <div class="hb-seg"><span class="hb-lbl hb-u">プロンプト（AIに批評させる）</span><pre>この差分を優先順（セキュリティ&gt;正しさ&gt;性能）でレビューして。
+各指摘に修正案を付けて。</pre></div>
+      <div class="hb-seg"><span class="hb-lbl hb-a">AIの出力</span><pre>[high/セキュリティ] GET /orders/:id が所有者を確認していない(IDOR)。
+  → WHERE user_id = req.user.id を条件に追加。
+[mid/正しさ] 一覧が deleted_at を除外していない。
+  → where に deletedAt: null を追加。
+[low/可読性] 関数名 doIt が意図不明 → listUserOrders に改名。</pre></div>
+      <div class="hb-cap">図: 観点の優先順を指示すると、重大度付き＋修正案の形で返る。</div>
+    </figure>
+
+    <h2 id="s-5">セキュリティレビュー・ゲート</h2>
+    <p>本番前にセキュリティレビューを必須化する。差分に対して「認可漏れ・インジェクション・秘密混入・古い依存」を定型で確認する（詳細は <a href="security.html">09 セキュリティ</a>）。<strong>high 指摘ゼロ</strong>を満たすまでリリースしない。</p>
+
+    <h2 id="s-6">QAゲート（デプロイ前の必須条件）</h2>
+    <div class="hb-grid hb-cols-3">
+      <div class="hb-card"><h4>✅ テスト全件グリーン</h4>1件でも赤なら止める</div>
+      <div class="hb-card"><h4>✅ 静的解析/型チェック通過</h4>lint・型エラーゼロ</div>
+      <div class="hb-card"><h4>✅ high指摘ゼロ</h4>セキュリティ含む重大指摘なし</div>
+    </div>
+    <p class="hb-sub">mid/low の持ち越し指摘は申し送りとして記録し、次サイクルへ。</p>
+
+    <div class="hb-callout hb-gotcha"><b>落とし穴:</b> AIに「テストを通して」と頼むと、実装を直すのではなくテストを実装に合わせて書き換えることがある。緑になった理由（実装が正しくなったのか、テストが緩んだのか）を必ず確認する。説明できない緑は信用しない。</div>
+
+    <div class="hb-callout hb-ai"><b>AI活用:</b> AIはテストの量産とレビューの両方が得意。生成テストは「現在の実装をなぞるだけ」になりやすいので、エッジケース・異常系・境界値を明示的に要求し、テストが仕様を語っているかを確認する。</div>
+</div>

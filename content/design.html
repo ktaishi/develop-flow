@@ -1,0 +1,151 @@
+<!--meta {"title": "設計", "desc": "データ設計・UI/情報設計・API/レイヤー設計・アーキテクチャ選定・セキュアバイデザイン。Mermaidで管理し全要件を設計に対応づける。", "kind": "handbook", "scripts": []} -->
+<div class="hb">
+<div class="hb-eyebrow">Chapter 03</div>
+    <h1>📐 設計</h1>
+    <p class="hb-lead">承認済み要件を、実装可能な構造へ落とす。データ・API・UI・アーキテクチャを一貫した方針で決め、全要件を設計に対応づける。AIが盛りがちな過剰設計を意図的に抑える。</p>
+    <img class="hb-hero-img" src="/assets/handbook/design.svg" alt="設計のイメージ">
+
+    <h2 id="s-1">図はすべてMermaidでテキスト管理</h2>
+    <p>ER図・シーケンス図・構成図は<strong>Mermaidで書き、リポジトリに置く</strong>。画像ファイル（PNG/draw.io等）は差分管理できずレビューできないため禁止。テキストならPRで差分が見え、AIも読んで更新できる。</p>
+
+    <h2 id="s-2">ディレクトリ構成</h2>
+    <p>設計資料は <code>docs/02_design/</code> にまとめる。データ・API・シーケンスを種類ごとに分け、シーケンス図はユースケース単位でファイル分割する。</p>
+    <figure class="hb-snippet">
+      <div class="hb-fname">📁 設計フェーズの配置</div>
+<pre>docs/
+└── 02_design/
+    ├── design.md            <span class="hb-c">← 設計方針・アーキ判断・トレーサビリティ表</span>
+    ├── er-diagram.md        <span class="hb-c">← ER図（Mermaid erDiagram）</span>
+    ├── api-spec.yaml        <span class="hb-c">← API契約の正（OpenAPI）</span>
+    ├── api-spec.md          <span class="hb-c">← エンドポイント一覧・エラー形式（人間向け）</span>
+    ├── architecture.md      <span class="hb-c">← 構成図（Mermaid flowchart）</span>
+    └── sequences/           <span class="hb-c">← シーケンス図をユースケース単位で分割</span>
+        ├── create-order.md
+        ├── auth-login.md
+        └── payment.md</pre>
+      <div class="hb-cap">図: 「契約の正」は <code>api-spec.yaml</code>（機械可読）。<code>.md</code> は人間向けの補足。</div>
+    </figure>
+
+    <h2 id="s-3">データ設計</h2>
+    <ul>
+      <li><strong>第3正規形をデフォルト</strong>。非正規化（性能目的の冗長保持等）は理由を明記する。</li>
+      <li><strong>論理削除（<code>deleted_at</code>）をデフォルト</strong>。物理削除は理由を明記（監査・復旧要件と衝突しないか確認）。</li>
+    </ul>
+    <figure>
+      <pre class="mermaid">
+erDiagram
+  USERS ||--o{ ORDERS : places
+  ORDERS ||--|{ ORDER_ITEMS : contains
+  PRODUCTS ||--o{ ORDER_ITEMS : "ordered as"
+  USERS {
+    uuid id PK
+    string email
+    timestamptz deleted_at "論理削除"
+  }
+  ORDERS {
+    uuid id PK
+    uuid user_id FK
+    string status
+    timestamptz deleted_at
+  }
+  ORDER_ITEMS {
+    uuid id PK
+    uuid order_id FK
+    uuid product_id FK
+    int quantity
+  }
+      </pre>
+      <figcaption>図: MermaidのER図例。差分レビュー可能で、論理削除カラムも明示できる。</figcaption>
+    </figure>
+    <div class="hb-callout hb-gotcha"><b>落とし穴:</b> 論理削除を採用したら、全参照クエリに <code>WHERE deleted_at IS NULL</code> が必要。AIは集計・JOIN・ユニーク制約で削除済み行を巻き込みやすい。共通スコープ/ビューで強制すると漏れにくい。</div>
+
+    <h3 id="s-4">具体例: 方針を渡してER図を生成させる</h3>
+    <figure class="hb-io">
+      <div class="hb-seg"><span class="hb-lbl hb-u">プロンプト</span><pre>users と orders の関係を Mermaid の erDiagram で。
+論理削除がデフォルト、主キーは uuid。</pre></div>
+      <div class="hb-seg"><span class="hb-lbl hb-a">AIの出力（そのまま docs/02_design/er-diagram.md へ）</span><pre>erDiagram
+  USERS ||--o{ ORDERS : places
+  USERS { uuid id PK
+          string email
+          timestamptz deleted_at }
+  ORDERS { uuid id PK
+           uuid user_id FK
+           timestamptz deleted_at }</pre></div>
+      <div class="hb-cap">図: 方針（論理削除・uuid）を渡すと、規約に沿った差分管理可能な図が返る。</div>
+    </figure>
+
+    <h2 id="s-5">API / レイヤー設計</h2>
+    <p>バックエンドの構造は実装前に決める。<strong>ルーティング / ユースケース / ドメイン / インフラ</strong>の層を分け、副作用を外周（インフラ層）に寄せる。下図は1リクエストが各層をどう通るかの責務分担。</p>
+    <figure>
+      <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant C as クライアント
+  participant R as ルーティング層
+  participant U as ユースケース層
+  participant D as ドメイン層
+  participant I as インフラ層(DB)
+  C->>R: POST /orders (JSON)
+  R->>R: 入力バリデーション(zod)
+  R->>U: createOrder(dto)
+  U->>D: 業務ルール検証
+  D-->>U: OK / ドメインエラー
+  U->>I: トランザクション開始→保存→コミット
+  I-->>U: 結果
+  U-->>R: 結果(または失敗)
+  R-->>C: 201 / 4xx (相関ID付き)
+      </pre>
+      <figcaption>図: 入力検証は最外周、副作用(DB)は最内周。層の責務を分離する。</figcaption>
+    </figure>
+    <ul>
+      <li>REST/RPCのスタイルを統一。バージョニング・ページネーション方式（cursor/offset）・エラー形式（<code>{code, message, traceId}</code>）を最初に決める。後から変えると破壊的変更になる。</li>
+      <li>型安全をAPI境界まで貫通させる（OpenAPI / tRPC / zod）。サーバ⇄クライアントで型を二重管理しない。</li>
+    </ul>
+
+    <h2 id="s-6">UI / 情報設計</h2>
+    <p>フロントを持つなら、画面に入る前に情報構造とUIの土台を決める。</p>
+    <ul>
+      <li><strong>情報設計</strong>: 画面階層・ナビゲーション・主要導線を決める。</li>
+      <li><strong>デザインシステムを先に決める</strong>（shadcn/ui 等）。トークン（色・余白・タイポ）と共通コンポーネントがあれば、AIが一貫したUIを量産できる土台になる。</li>
+      <li><strong>4つの画面状態</strong>（ローディング / エラー / 空 / 権限なし）を設計段階で各画面に織り込む。実装で抜けやすい（<a href="development.html">05 開発・実装</a>）。</li>
+    </ul>
+
+    <h2 id="s-7">アーキテクチャは複雑さに見合わせる</h2>
+    <figure>
+      <pre class="mermaid">
+flowchart TD
+  Q{"ドメインロジックは複雑か?<br/>(状態遷移・業務ルールが多い)"}
+  Q -->|Yes| CA["クリーンアーキテクチャ<br/>ドメイン層を独立させる"]
+  Q -->|No / CRUD中心| LY["シンプルなレイヤード<br/>route→service→repo"]
+  CA --> R["判断理由を設計書に記録"]
+  LY --> R
+      </pre>
+      <figcaption>図: アーキテクチャ選定の判断フロー。どちらを選んでも理由を残す。</figcaption>
+    </figure>
+
+    <h2 id="s-8">セキュア・バイ・デザイン</h2>
+    <p>セキュリティは後付けでなく設計に織り込む（横断テーマの詳細は <a href="security.html">09 セキュリティ</a>）。</p>
+    <ul>
+      <li><strong>認証と認可を分離</strong>して設計する。認可はリソース単位でチェックする前提を、API設計に最初から入れる（IDOR対策）。</li>
+      <li>機密データの保存（暗号化・最小保持）と、ログに出さない方針を決める。</li>
+      <li>信頼境界を明確化（外部入力をどこで検証するか）。</li>
+    </ul>
+
+    <h2 id="s-9">トレーサビリティと YAGNI</h2>
+    <ul>
+      <li><strong>トレーサビリティ表</strong>（全機能要件 → 設計のどの部分で実現するか）を含める。要件と設計の抜け漏れを機械的に検出できる。</li>
+      <li><strong>YAGNI</strong> — 要件にない機能を設計に入れない。将来案は「拡張余地」メモに留める。AIの「念のため」の汎用化は、各抽象に「今の要件のどれを満たすか」を問うて削る。</li>
+    </ul>
+
+    <h2 id="s-10">完了条件（チェックリスト）</h2>
+    <ul class="hb-chk">
+      <li>ER図・API/レイヤー図・主要シーケンス図がMermaidで存在する</li>
+      <li>正規化方針・削除方針が明記されている</li>
+      <li>API契約（形式・バージョニング・ページネーション）が決まっている</li>
+      <li>（UIあり）情報設計とデザインシステム方針がある</li>
+      <li>トレーサビリティ表で全要件が設計に対応づいている</li>
+      <li>アーキテクチャ選定の理由が書かれている / STATUS.md 更新済み</li>
+    </ul>
+
+    <div class="hb-callout hb-ai"><b>AI活用:</b> 設計レビューでAIに「カバーできていない要件」「過剰な抽象」「認可が漏れる箇所」を問うと、トレーサビリティの穴・オーバーエンジニアリング・設計段階のセキュリティ欠陥を同時に洗い出せる。</div>
+</div>

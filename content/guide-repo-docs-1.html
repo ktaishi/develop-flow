@@ -1,0 +1,133 @@
+<!--meta {"title": "docs と履歴（1/2）", "desc": "docs/ と ADR。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-docs-1">docs と履歴（1/2）</h1>
+      <p class="lead">docs/ と ADR。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li><code>docs/</code> をチーム共有の仕様正本と決め、コミット対象にする</li>
+<li>作業履歴は <code>z_docs/</code> / Obsidian に置き、棲み分けを固定する</li>
+<li>設計判断は ADR（<code>docs/adr/</code>）に連番で残す</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-cicd-2.html">← CI/CD（2/2）</a> <a href="guide-repo-docs-2.html">docs と履歴（2/2） →</a></p>
+</aside>
+<h3 id="11-6-docs-z-docs"><a class="toclink" href="#11-6-docs-z-docs"><code>docs/</code> と <code>z_docs/</code>（作業履歴）</a></h3>
+<blockquote>
+<p><strong>作業履歴の正本</strong>: Obsidian Vault <code>03_Operations/history/YYYY-MM/yymmdd-hhMM.md</code>（MCP 連携可）。</p>
+<p><strong>リポ内 <code>z_docs/history/</code></strong>: ローカル退避・任意（Vault 未接続時）。新規書き込みは Vault を優先。</p>
+<p><strong><code>docs/</code></strong>: チーム公式。新規追加はユーザー明示時のみ（<code>documentation-z-docs.mdc</code> 参照）。</p>
+</blockquote>
+
+<h4 id="docs-vs-memo-roles"><a class="toclink" href="#docs-vs-memo-roles">立ち位置の違い</a></h4>
+<table>
+<thead>
+<tr>
+<th>観点</th>
+<th><code>docs/</code></th>
+<th><code>z_docs/</code></th>
+</tr>
+</thead>
+<tbody>
+<tr><td>位置づけ</td><td>チーム公式（既存）</td><td>作業履歴・個人メモ</td></tr>
+<tr><td>新規追加</td><td>原則禁止（ユーザー明示時のみ）</td><td>セッションごとに自由</td></tr>
+<tr><td>主な読者</td><td>チーム・新メンバー</td><td>主に自分</td></tr>
+<tr><td>品質バー</td><td>レビュー必須</td><td>再現できれば OK</td></tr>
+<tr><td>PR 対象</td><td>はい（既存更新時）</td><td>原則いいえ</td></tr>
+<tr><td>代表的内容</td><td>要件・設計・ADR・運用</td><td>作業ログ・調査・下書き</td></tr>
+</tbody>
+</table>
+
+<h4 id="11-6-tasks"><a class="toclink" href="#11-6-tasks"><code>tasks/</code>（Plan・振り返り）</a></h4>
+<table>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>書くこと</th>
+<th>更新タイミング</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code></td><td>チェックリスト、Plan メモ、レビュー・結果</td><td>タスク着手時・Plan 確定時・完了時（<a href="guide-design.html#phase-2-plan">Phase 2</a>）</td></tr>
+<tr><td><code><a href="flow-rules-samples.html#sample-tasks-lessons-md">tasks/lessons.md</a></code></td><td>ユーザー指摘・修正パターン・再発防止</td><td>指摘を受けた直後、セッション開始前に読む（<a href="guide-ops-orchestration.html#18-orchestration">エージェント運用</a>）</td></tr>
+</tbody>
+</table>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-plan-tasks-todo">
+<h4 class="info-panel__title" id="scenario-plan-tasks-todo">Plan・todo・lessons の使い分け</h4>
+<div class="info-panel__body"><p>チームで追う Plan → <code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code> にチェック項目。個人のたたき台 → <code>z_docs/order-api/00_plan.md</code>。レビューで「デプロイ後 HEAD 確認漏れ」→ <code><a href="flow-rules-samples.html#sample-tasks-lessons-md">tasks/lessons.md</a></code> に1行追記 → ルールへ恒久化。</p></div>
+</aside>
+
+<h3 id="docs-placement"><a class="toclink" href="#docs-placement">配置と判断フロー</a></h3>
+<h4 id="docs-placement-rule"><a class="toclink" href="#docs-placement-rule">配置ルール</a></h4>
+<pre><code class="language-text">docs/                              # チーム公式（新規追加はユーザー明示時のみ）
+├── README.md                      # docs/ 全体の索引
+├── architecture.md                # システム全体アーキ
+├── glossary.md                    # 用語集
+├── setup.md                       # 開発環境セットアップ
+├── adr/                           # ADR（詳細: 11.7）
+├── operations/                    # 運用手順
+└── &lt;feature&gt;/                     # 機能単位（既存）
+
+tasks/                             # Plan・振り返り（リポジトリ直下・テンプレ同梱）
+├── todo.md
+└── lessons.md
+
+z_docs/
+├── history/                       # 作業履歴（必須）
+│   ├── yymmdd-hhMM.md             # セッション単位
+│   └── yymmdd-hhMM-{概要}.md      # 概要を明示したい場合
+├── &lt;feature&gt;/                     # 任意: 機能別の検討メモ
+└── （直下のインデックス・長期メモはプロジェクトの慣習に従う）
+</code></pre>
+
+<h4 id="docs-decision-flow"><a class="toclink" href="#docs-decision-flow">判断フロー</a></h4>
+<div class="mermaid">
+flowchart TD
+    A[書こうとしている文書] --> B{セッションの作業ログか}
+    B -->|はい| H[z_docs/history/yymmdd-hhMM.md]
+    B -->|いいえ| C{チームの公式成果物か}
+    C -->|いいえ| Z[z_docs/ の任意の場所]
+    C -->|はい| D{ユーザーから docs 明示の指示があるか}
+    D -->|いいえ| W[まずユーザーに確認]
+    D -->|はい| E{意思決定の根拠か}
+    E -->|はい| F[docs/adr/]
+    E -->|いいえ| G[docs/&lt;feature&gt;/]
+</div>
+
+<h4 id="docs-ops-tips"><a class="toclink" href="#docs-ops-tips">運用のコツ</a></h4>
+<ul>
+<li>履歴の正本は Obsidian <code>03_Operations/history/YYYY-MM/</code>。ファイル名 <code>yymmdd-hhMM.md</code>（概要付きは <code>yymmdd-hhMM-{概要}.md</code>）。リポ内 <code>z_docs/history/</code> は任意のローカル退避</li>
+<li><code>docs/</code> への新規追加はユーザー明示時のみ: 既存 <code>docs/</code> の修正・更新は通常のフローでよい。削除や移行はユーザー依頼時のみ</li>
+<li>個人グローバルルール（<code>~/.cursor/rules/documentation-z-docs.mdc</code>）が常時適用される前提</li>
+<li>MCP（Obsidian）: Vault 内 <code>03_Operations/history/</code> を参照・追記。ボルトとリポ <code>z_docs/</code> の二重化は任意（正本は Vault）</li>
+<li>長期メモ・索引: <code>z_docs/</code> 直下に置くかはプロジェクトの慣習またはユーザーの明示に従う</li>
+</ul>
+
+<h4 id="gitignore-112"><a class="toclink" href="#gitignore-112"><code>.gitignore</code> での扱い（11.2 への追補）</a></h4>
+<ul>
+<li><code>docs/</code> はコミット対象（チーム共有の正式な記録）</li>
+<li><code>z_docs/</code> はプロジェクトの慣習に従う: ローカル限定にするなら <code>.gitignore</code> へ。チームで履歴を共有するならコミット対象でもよい</li>
+</ul>
+<pre><code class="language-gitignore"># 例: 個人メモをローカル限定にする場合
+z_docs/
+# 例: 履歴だけ共有したい場合
+# z_docs/*
+# !z_docs/history/
+</code></pre>
+<h3 id="11-7-adr"><a class="toclink" href="#11-7-adr">ADR (Architecture Decision Records)</a></h3>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-docs-adr-0001-use-postgres-2">
+<h4 class="info-panel__title" id="scenario-docs-adr-0001-use-postgres-2">ADR の Accepted/Superseded 管理</h4>
+<div class="info-panel__body"><p><code>docs/adr/0001-use-postgres.md</code>（Accepted）→ <code>docs/adr/0005-migrate-to-aurora.md</code>（Superseded by ADR-0005）/ 索引は <code>docs/adr/README.md</code></p></div>
+</aside>
+<h4 id="adr"><a class="toclink" href="#adr">ADR とは</a></h4>
+<p>Michael Nygard 提唱のフォーマットが事実上の標準。</p>
+<blockquote>
+<p>用語集の <a href="#11-7-adr">ADR / Architecture Decision Records</a> も参照。</p>
+</blockquote>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo-cicd-2.html">← CI/CD（2/2）</a><a class="flow-pager__next" href="guide-repo-docs-2.html">docs と履歴（2/2） →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

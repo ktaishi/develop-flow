@@ -1,0 +1,116 @@
+<!--meta {"title": "Skills 実践 — 設計と記述", "desc": "いつ Skill 化するか・description・ワークフロー。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-rules-skills-1">Skills 実践 — 設計と記述</h1>
+      <p class="lead">いつ Skill 化するか・description・ワークフロー。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>繰り返す多段手順だけ Skill 化</li>
+<li><code>description</code> がトリガー</li>
+<li>500行超は references/ へ</li>
+</ul>
+<p class="page-brief__tasks">Skill 候補を1つ — 完了: Skill vs Rules を説明できる</p>
+<p class="page-brief__nav"><a href="guide-rules.html">↑ 章トップ</a> <a href="guide-rules-codex.html">← Codex 設定早見</a> <a href="guide-rules-skills-2.html">Skills 実践 — 配置と評価 →</a></p>
+</aside>
+<h3 id="17-skills-guide"><a class="toclink" href="#17-skills-guide">Skills 実践ガイド（2026）</a></h3>
+<p>Skill = 必要なときだけ読む手順。サンプル: <a href="flow-rules-samples.html#sample-skill-pr-review">pr-review</a> · <a href="guide-rules-skills-2.html#17-skills-dirs">置き場</a>。</p>
+
+<h4 id="17-skills-when"><a class="toclink" href="#17-skills-when">いつ Skill 化するか</a></h4>
+<table>
+<thead><tr><th>シグナル</th><th>昇格先</th><th>例</th></tr></thead>
+<tbody>
+<tr><td>毎日 1 ショットで済む</td><td><strong>Command</strong>（<code>.cursor/commands/</code>）</td><td><code>/review</code> · <code>/verify</code></td></tr>
+<tr><td>週 2 回以上・多段チェックリスト</td><td><strong>Skill</strong></td><td>PR 前 lint+test+docs 整合 · デプロ手順</td></tr>
+<tr><td>毎セッション必須の禁止・下限</td><td><strong>Rule</strong>（<code>alwaysApply</code> / <code>globs</code>）</td><td>git 安全 · ドメイン不変条件</td></tr>
+<tr><td>同じミスが 2 回以上</td><td><strong>lessons → Rule 1 条</strong></td><td><code>tasks/lessons.md</code> から <code>.mdc</code> へ</td></tr>
+<tr><td>広い調査・grep だけ</td><td><strong>Task / Subagent</strong>（Skill にしない）</td><td><a href="guide-ops-harness.html#18-multiagent">別 AI への任せ方</a></td></tr>
+</tbody>
+</table>
+
+<h4 id="17-skills-vs-agents"><a class="toclink" href="#17-skills-vs-agents">Skills と Subagents（Task）の使い分け</a></h4>
+<div class="mermaid">
+flowchart TD
+  ask[依頼内容] --> repeat{同じ手順を<br/>繰り返す?}
+  repeat -->|はい| skill[Skill SKILL.md]
+  repeat -->|いいえ| wide{広い調査<br/>だけ?}
+  wide -->|はい| task[Task explore 等]
+  wide -->|いいえ| rule[Rules / Plan / docs]
+  skill --> impl[メインが実装]
+  task --> impl
+</div>
+<table>
+<thead><tr><th>種類</th><th>役割</th><th>向く場面</th><th>向かない場面</th></tr></thead>
+<tbody>
+<tr><td><strong>Skill</strong></td><td>再利用ワークフロー（チェックリスト・scripts）</td><td>PR レビュー · ADR 執筆 · デプロ</td><td>「どこにある？」だけの grep</td></tr>
+<tr><td><strong>Subagent / Task</strong></td><td>別コンテキストで調査・実行（<code>.claude/agents/</code> で定義）</td><td>パス一覧 · 複数 dir 探索 · セキュリティレビュー</td><td>直前の実装の続きデバッグ</td></tr>
+<tr><td><strong>Rule</strong></td><td>毎回の下限</td><td>禁止 · 参照順 · globs 規約</td><td>10 ステップの手順全文</td></tr>
+</tbody>
+</table>
+
+<h4 id="17-skills-workflow"><a class="toclink" href="#17-skills-workflow">初めて Skill を 1 つ作る（手順）</a></h4>
+<ol class="steps">
+<li><strong>対象を決める</strong> — 直近 2 週間で 2 回以上頼んだ多段手順（例: PR 前確認）</li>
+<li><strong>ディレクトリ</strong> — チーム共有なら <code>.agents/skills/&lt;name&gt;/</code>、Cursor のみなら <code>.cursor/skills/&lt;name&gt;/</code>（<a href="guide-rules-skills-2.html#17-skills-dirs">配置表</a>）</li>
+<li><strong>SKILL.md</strong> — frontmatter の <code>name</code>（フォルダ名一致）と <code>description</code>（命令形・ユースケース）を書く（<a href="guide-rules-skills-2.html#17-skills-frontmatter">フロントマター</a> · <a href="guide-rules-skills-3.html#17-skill-template">テンプレ</a>）</li>
+<li><strong>本文</strong> — チェックリスト + 出力形式。500 行超えたら <code>references/</code> へ分割</li>
+<li><strong>任意 scripts/</strong> — 非対話・<code>--help</code> 必須（<a href="https://agentskills.io/specification">Agent Skills 仕様</a>）</li>
+<li><strong>AGENTS.md に 1 行</strong> — 「PR 前: .agents/skills/pr-review/SKILL.md」</li>
+<li><strong>発火確認</strong> — Agent に「PR 前のセルフレビューして」と依頼し Skill が読まれるか確認</li>
+<li><strong>既存資産から</strong> — Cursor なら <code>/create-skill</code> または <code>/migrate-to-skills</code>（<a href="guide-rules-skills-2.html#17-skills-migrate">移行</a>）</li>
+</ol>
+
+<h3 id="17-skills-write"><a class="toclink" href="#17-skills-write">記述とトラブル回避</a></h3>
+<h4 id="17-skills-description"><a class="toclink" href="#17-skills-description">description の書き方と評価</a></h4>
+<p><code>description</code> は Skill の<strong>トリガー</strong>。曖昧な 1 行は発火しない。</p>
+<ul>
+<li><strong>命令形</strong> — 「〜の場合に使用してください」（agentskills.io 推奨）</li>
+<li><strong>ユースケース列挙</strong> — 「PR 前」「デプロ」「ADR ドラフト」など具体語</li>
+<li><strong>暗黙の依頼もカバー</strong> — 「レビュー準備」「提出前チェック」等の言い換え</li>
+</ul>
+<p>評価ループ（目安）:</p>
+<ol class="steps">
+<li>should-trigger 10 件 · should-not-trigger 10 件のプロンプトを用意</li>
+<li>各 3 回 Agent に依頼し、Skill が読まれたか確認</li>
+<li>過少トリガー → description を広げる / 過剰トリガー → 絞る</li>
+</ol>
+
+<h4 id="17-skills-disable-invocation"><a class="toclink" href="#17-skills-disable-invocation">副作用ありの Skill — 手動呼び出し専用にする</a></h4>
+<p>デプロや DB マイグレーションなど副作用があるワークフローは <code>disable-model-invocation: true</code> を付ける。description によるオート発火を防ぎ、<code>/deploy</code> のように明示的に呼び出した時だけ実行される。</p>
+<pre><code class="language-markdown">---
+name: deploy-staging
+description: ステージング環境にデプロイする
+disable-model-invocation: true
+---
+1. `make test` で全テスト確認
+2. `vercel deploy` でプレビュー URL 取得
+3. HEAD の 200 を curl で確認
+</code></pre>
+
+<h4 id="17-skills-gotchas"><a class="toclink" href="#17-skills-gotchas">よくある失敗</a></h4>
+<ul>
+<li>手順を Rule（<code>alwaysApply: true</code>）に入れてトークン浪費</li>
+<li><code>description</code> が「この Skill は〜します」だけ（トリガーにならない）</li>
+<li>副作用ある Skill に <code>disable-model-invocation: true</code> を付け忘れて意図せず発火</li>
+<li>仕様全文を Skill に複製（正本は <code>docs/</code>）</li>
+<li>調査だけの Task を Skill 化（grep 手順は <code>.claude/agents/</code> Subagent 向き）</li>
+<li><code>name</code> とフォルダ名不一致（検出・読み込み失敗）</li>
+</ul>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-17-skills-first">
+<h4 class="info-panel__title" id="scenario-17-skills-first">例）pr-review Skill を初めて置く</h4>
+<div class="info-panel__body">
+<ol class="steps">
+<li><code>mkdir -p .agents/skills/pr-review/scripts</code></li>
+<li><a href="flow-rules-samples.html#sample-skill-pr-review">サンプル SKILL.md</a> をコピー · テストコマンドを自分のリポ用に差し替え</li>
+<li><code>AGENTS.md</code> の「手順（Skills）」に 1 行追加</li>
+<li>Agent: 「このブランチを PR 前レビューして。Skill に従って」</li>
+</ol>
+</div>
+</aside>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-rules-codex.html">← Codex 設定早見</a><a class="flow-pager__next" href="guide-rules-skills-2.html">Skills 実践 — 配置と評価 →</a></nav>" aria-label="前後の章"><a href="guide-repo.html">← リポジトリ</a><a class="flow-pager__next" href="guide-setup.html">セットアップ →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>" aria-label="前後の章"><a href="index.html#playbook-hub">← ガイドをまとめる</a><a class="flow-pager__next" href="flow-rules-samples.html">設定サンプル →</a></nav>
+  </article>
+</div>

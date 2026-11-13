@@ -1,0 +1,646 @@
+<!--meta {"title": "メモ — MCP・連携参考", "desc": "LLMにツール実行能力を与えるTool Use設計と、MCPサーバー実装の実例。DB・API・ファイル操作をエージェントから安全に呼ぶ。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<header class="memo-page-head">
+    <h1>MCP・連携参考</h1>
+    <p>Tool Use 設計と MCP サーバー実装の参考。<a href="memo-ai-reference-rag.html">RAG・実装参考</a> と併せて読む。</p>
+  </header>
+  <div class="memo-content memo-ref-content">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>ツールは役割を明確にし、機能の重複を避けて設計する</li>
+<li>MCP サーバーは最小の権限・最小のツール集合で始める</li>
+<li>RAG と組む場合は RAG 参考と併せて読む</li>
+</ul>
+<p class="page-brief__nav"><a href="memo-ai-tools.html">↑ メモ目次</a> <a href="memo-ai-reference-rag.html">← RAG 参考</a> <a href="memo-ai-tools.html">AIツール →</a></p>
+</aside>
+<div class="memo-ref-section" data-source-id="ai-agent-tools">
+<h3 id="21-ref-ai-agent-tools"><a class="toclink" href="#21-ref-ai-agent-tools">Tool Use・MCP 実装</a></h3>
+  <p class="wiki-lead">LLMにツール実行能力を与えるTool Use設計と、MCPサーバー実装の実例。DB・API・ファイル操作をエージェントから安全に呼ぶ。</p>
+
+  <!-- ══ 1. Tool Use 設計原則 ══ -->
+  <div>
+    <h4>Tool Use 設計原則</h4>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-header"><span class="badge">① 説明を詳細に書く</span></div>
+        <div class="card-desc">ツールの description が不明確だと LLM が誤用する。<strong>いつ使うか・何を返すか・制限事項</strong>を明記する。</div>
+        <div class="card-example"><div class="card-example-label">Bad vs Good</div><code>// ❌ 不明確<br>"description": "DBを検索する"<br><br>// ✅ 明確<br>"description": "注文DBから顧客IDで<br>注文履歴を検索する。最大30件返す。<br>存在しない場合は空配列を返す。"</code></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="badge">② スキーマを厳密に</span></div>
+        <div class="card-desc">input_schema で型・enum・必須項目を明示する。<strong>LLMが自由に値を作れる余地を減らす</strong>ことでハルシネーションを防ぐ。</div>
+        <div class="card-example"><div class="card-example-label">enum の活用</div><code>"status": {<br>  "type": "string",<br>  "enum": ["PENDING","CONFIRMED",<br>           "SHIPPED","CANCELLED"],<br>  "description": "注文ステータス"<br>}</code></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="badge">③ エラーを構造化</span></div>
+        <div class="card-desc">ツールがエラーを返す際は<strong>LLMが次のアクションを決められる</strong>形式で返す。生の例外スタックトレースは渡さない。</div>
+        <div class="card-example"><div class="card-example-label">エラー形式</div><code>// ✅ 構造化エラー<br>{"error": "NOT_FOUND",<br> "message": "注文ID ord-123 は存在しません",<br> "suggestion": "get_orders で一覧を確認してください"}</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 2. Tool 実装例 ══ -->
+  <div>
+    <h4>実装例 — 実務でよく使うツールセット</h4>
+    <div class="bp-block">
+      <div class="bp-tabs">
+        <button class="bp-tab active">DB検索ツール</button>
+        <button class="bp-tab">外部API連携</button>
+        <button class="bp-tab">MCPサーバー</button>
+      </div>
+
+      <div class="bp-pane active" id="tool-impl-pane-db">
+        <div class="bp-header"><span class="bp-header-label">PostgreSQL 検索ツール（安全なSQL生成付き）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="tool-db-code">import anthropic
+import asyncpg
+import json
+from typing import Any
+
+# ── ツール定義 ────────────────────────────────────────────────
+DB_TOOLS = [
+    {
+        "name": "search_orders",
+        "description": "注文データベースを検索する。顧客ID・ステータス・日付範囲での絞り込みが可能。最大50件を返す。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "customer_id": {
+                    "type": "string",
+                    "description": "顧客ID（例: cust_123）。指定しない場合は全顧客対象"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": ["PENDING", "CONFIRMED", "SHIPPED", "CANCELLED"],
+                    "description": "注文ステータスで絞り込み"
+                },
+                "date_from": {
+                    "type": "string",
+                    "description": "検索開始日 (YYYY-MM-DD形式)"
+                },
+                "date_to": {
+                    "type": "string",
+                    "description": "検索終了日 (YYYY-MM-DD形式)"
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 20,
+                    "maximum": 50,
+                    "description": "取得件数（最大50）"
+                }
+            }
+        }
+    },
+    {
+        "name": "get_order_detail",
+        "description": "注文IDで注文の詳細情報（明細・配送状況・支払い情報）を取得する",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "order_id": {"type": "string", "description": "注文ID（例: ord_abc123）"}
+            },
+            "required": ["order_id"]
+        }
+    }
+]
+
+# ── ツール実行（パラメータバインディングでSQLインジェクション防止） ─
+async def execute_search_orders(params: dict, db: asyncpg.Connection) -> str:
+    conditions = ["1=1"]
+    args = []
+
+    if customer_id := params.get("customer_id"):
+        args.append(customer_id)
+        conditions.append(f"customer_id = ${len(args)}")
+
+    if status := params.get("status"):
+        args.append(status)
+        conditions.append(f"status = ${len(args)}")
+
+    if date_from := params.get("date_from"):
+        args.append(date_from)
+        conditions.append(f"created_at >= ${len(args)}::date")
+
+    if date_to := params.get("date_to"):
+        args.append(date_to)
+        conditions.append(f"created_at &lt;= ${len(args)}::date")
+
+    limit = min(params.get("limit", 20), 50)  # 上限を強制
+
+    sql = f"""
+        SELECT id, customer_id, status, total_amount, created_at
+        FROM orders
+        WHERE {' AND '.join(conditions)}
+        ORDER BY created_at DESC
+        LIMIT {limit}
+    """
+
+    rows = await db.fetch(sql, *args)
+
+    if not rows:
+        return json.dumps({"orders": [], "message": "条件に一致する注文が見つかりませんでした"})
+
+    return json.dumps({
+        "orders": [dict(row) for row in rows],
+        "count": len(rows),
+    }, default=str)  # datetime を文字列化
+
+# ── エージェント実行ループ ─────────────────────────────────────
+async def run_db_agent(question: str, db: asyncpg.Connection) -> str:
+    client = anthropic.Anthropic()
+    messages = [{"role": "user", "content": question}]
+
+    while True:
+        response = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=2048,
+            tools=DB_TOOLS,
+            system="あなたは注文管理DBのアシスタントです。ユーザーの質問に答えるためにツールを使ってDBを検索してください。",
+            messages=messages,
+        )
+
+        if response.stop_reason == "end_turn":
+            return next(b.text for b in response.content if hasattr(b, "text"))
+
+        tool_results = []
+        for block in response.content:
+            if block.type == "tool_use":
+                if block.name == "search_orders":
+                    result = await execute_search_orders(block.input, db)
+                elif block.name == "get_order_detail":
+                    result = json.dumps({"error": "NOT_IMPLEMENTED"})
+                else:
+                    result = json.dumps({"error": "UNKNOWN_TOOL"})
+
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": result,
+                })
+
+        messages.append({"role": "assistant", "content": response.content})
+        messages.append({"role": "user", "content": tool_results})</pre>
+        <div class="bp-note">💡 DBツールの安全対策：① SQLはパラメータバインディング（$1, $2）で SQLインジェクション完全防止 ② limit を強制上限でキャップ ③ 書き込み系ツール（UPDATE/DELETE）は確認ステップを必ず挟む ④ 返り値の JSON は default=str で型変換エラーを防ぐ</div>
+      </div>
+
+      <div class="bp-pane" id="tool-impl-pane-api">
+        <div class="bp-header"><span class="bp-header-label">外部API連携ツール（Slack・Calendar・GitHub）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="tool-api-code">import httpx
+import json
+
+# ── Slack投稿ツール ───────────────────────────────────────────
+SLACK_TOOL = {
+    "name": "post_slack_message",
+    "description": "指定Slackチャンネルにメッセージを投稿する。承認が必要な重要メッセージに使う。",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "channel": {"type": "string", "description": "チャンネル名（例: #general）"},
+            "message": {"type": "string", "description": "投稿するメッセージ内容"},
+            "mention_users": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "メンションするユーザーIDのリスト"
+            }
+        },
+        "required": ["channel", "message"]
+    }
+}
+
+async def post_slack_message(channel: str, message: str, mention_users: list = None) -> str:
+    text = message
+    if mention_users:
+        mentions = " ".join(f"&lt;@{uid}&gt;" for uid in mention_users)
+        text = f"{mentions}
+{message}"
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://slack.com/api/chat.postMessage",
+            headers={"Authorization": f"Bearer {SLACK_TOKEN}"},
+            json={"channel": channel, "text": text},
+        )
+        data = response.json()
+        if not data.get("ok"):
+            return json.dumps({"error": data.get("error"), "suggestion": "チャンネル名とbot権限を確認してください"})
+        return json.dumps({"success": True, "ts": data["ts"], "channel": channel})
+
+# ── GitHub Issue作成ツール ────────────────────────────────────
+GITHUB_TOOL = {
+    "name": "create_github_issue",
+    "description": "GitHubリポジトリにIssueを作成する。バグ報告・機能要望・タスク管理に使う。",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "repo": {"type": "string", "description": "リポジトリ名（例: org/repo）"},
+            "title": {"type": "string", "description": "Issueのタイトル"},
+            "body": {"type": "string", "description": "Issue本文（Markdown対応）"},
+            "labels": {"type": "array", "items": {"type": "string"}, "description": "ラベルのリスト"},
+            "assignees": {"type": "array", "items": {"type": "string"}, "description": "担当者GitHubユーザー名"}
+        },
+        "required": ["repo", "title", "body"]
+    }
+}
+
+async def create_github_issue(repo: str, title: str, body: str,
+                               labels: list = None, assignees: list = None) -> str:
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"https://api.github.com/repos/{repo}/issues",
+            headers={
+                "Authorization": f"Bearer {GITHUB_TOKEN}",
+                "Accept": "application/vnd.github.v3+json",
+            },
+            json={"title": title, "body": body,
+                  "labels": labels or [], "assignees": assignees or []},
+        )
+        if response.status_code == 201:
+            data = response.json()
+            return json.dumps({"success": True, "issue_url": data["html_url"], "issue_number": data["number"]})
+        return json.dumps({"error": "CREATION_FAILED", "status": response.status_code})</pre>
+        <div class="bp-note">💡 外部API連携の注意点：① 書き込み系API（Slack投稿・Issue作成）は人間確認ステップを挟む設計にする ② レート制限に引っかかった場合のエラーを suggestion 付きで返す ③ 機密情報（APIキー）はツールの input/output に含めない</div>
+      </div>
+
+      <div class="bp-pane" id="tool-impl-pane-mcp">
+        <div class="bp-header"><span class="bp-header-label">MCPサーバー実装（TypeScript）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="tool-mcp-code">// MCPサーバー: エージェントからDBやAPIをツールとして呼べるようにする
+// npm install @modelcontextprotocol/sdk
+
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+
+const server = new McpServer({
+  name: "order-management-mcp",
+  version: "1.0.0",
+});
+
+// ── ツール登録 ────────────────────────────────────────────────
+server.tool(
+  "search_orders",
+  "注文データベースを検索する",
+  {
+    customer_id: z.string().optional().describe("顧客ID"),
+    status: z.enum(["PENDING", "CONFIRMED", "SHIPPED", "CANCELLED"]).optional(),
+    limit: z.number().int().min(1).max(50).default(20),
+  },
+  async ({ customer_id, status, limit }) => {
+    try {
+      const conditions: string[] = [];
+      const params: unknown[] = [];
+
+      if (customer_id) { params.push(customer_id); conditions.push(`customer_id = $${params.length}`); }
+      if (status)      { params.push(status);      conditions.push(`status = $${params.length}`); }
+
+      const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+      const rows = await db.query(
+        `SELECT id, customer_id, status, total_amount, created_at FROM orders ${where} ORDER BY created_at DESC LIMIT $${params.length + 1}`,
+        [...params, limit]
+      );
+
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({ orders: rows.rows, count: rows.rowCount }),
+        }],
+      };
+    } catch (err) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: "DB_ERROR", message: String(err) }) }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ── リソース登録（読み取り専用データ） ────────────────────────
+server.resource(
+  "order-schema",
+  "postgres://orders/schema",
+  async (uri) => ({
+    contents: [{
+      uri: uri.href,
+      mimeType: "application/json",
+      text: JSON.stringify({
+        table: "orders",
+        columns: ["id", "customer_id", "status", "total_amount", "created_at"],
+        statuses: ["PENDING", "CONFIRMED", "SHIPPED", "CANCELLED"],
+      }),
+    }],
+  })
+);
+
+// ── サーバー起動（stdio transport）───────────────────────────
+const transport = new StdioServerTransport();
+await server.connect(transport);
+
+// ── claude_desktop_config.json に追加する設定 ─────────────────
+// {
+//   "mcpServers": {
+//     "order-management": {
+//       "command": "node",
+//       "args": ["/path/to/mcp-server/dist/index.js"],
+//       "env": { "DATABASE_URL": "postgresql://..." }
+//     }
+//   }
+// }</pre>
+        <div class="bp-note">💡 MCPの使い分け：① Claude Desktop/Cowork に接続してローカル開発環境で使う ② プロダクションエージェントには Anthropic Tool Use を直接実装する方がシンプル ③ MCPは「再利用可能なツールサーバー」として複数プロジェクトから共有できる利点がある</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 2b. マルチエージェント ══ -->
+  <div>
+    <h4 id="21-ref-multi-agent"><a class="toclink" href="#21-ref-multi-agent">マルチエージェント</a></h4>
+    <p class="wiki-lead">単一の ReAct ループでは長タスク・多ドメイン統合が難しいとき、<strong>役割分担した複数エージェント</strong>が協調する。<a href="guide-ops-harness.html#18-multiagent">flow-18 マルチエージェント協調</a> は <strong>Cursor / Claude Code の開発セッション運用</strong>が正本。本節は <strong>プロダクト / バックエンド実装</strong>（LangGraph・SDK）向け。Agentic RAG との統合は <a href="memo-ai-reference-rag.html#21-ref-agentic-rag">RAG 参考 — Agentic RAG</a>。</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-header"><span class="badge">ReAct ループ</span></div>
+        <div class="card-desc">Thought → Action（ツール）→ Observation を繰り返す基本パターン。1エージェント・短〜中タスク向き。LangChain / Anthropic SDK の標準形。</div>
+        <div class="card-example"><div class="card-example-label">ループ</div><code>Thought: 売上データが必要<br>Action: get_sales(month)<br>Obs: total 1200000<br>Thought: グラフ化して報告<br>Action: generate_chart(...)</code></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="badge">Plan-and-Execute</span></div>
+        <div class="card-desc">先に全体計画を立て、サブタスクを順次実行。複雑な多ステップに向く。LangGraph StateGraph や extended thinking と相性が良い。</div>
+        <div class="card-example"><div class="card-example-label">使い所</div><code>「競合調査レポートを作って」<br>→ Plan: 検索×5, 要約, 比較表, 執筆<br>→ 各ステップを順次実行</code></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="badge">Orchestrator + Subagents</span></div>
+        <div class="card-desc">Orchestrator が Subagent に指示し、並列実行・結果統合を行う。Researcher / Coder / Reviewer など役割固定が典型。</div>
+        <div class="card-example"><div class="card-example-label">構成</div><code>Orchestrator<br>├── Researcher（検索）<br>├── Coder（実装）<br>└── Reviewer（レビュー）</code></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>パターン</th>
+            <th>向くユースケース</th>
+            <th>主な実装</th>
+            <th>難易度</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>シンプル RAG</td>
+            <td>社内文書 Q&amp;A・FAQ</td>
+            <td>LlamaIndex / LangChain</td>
+            <td>★★☆☆☆</td>
+          </tr>
+          <tr>
+            <td>Tool-use Agent</td>
+            <td>DB 検索・API 連携・レポート生成</td>
+            <td>Anthropic SDK / AI SDK</td>
+            <td>★★★☆☆</td>
+          </tr>
+          <tr>
+            <td>Plan-and-Execute</td>
+            <td>複雑な調査・コード生成・長タスク</td>
+            <td>LangGraph / Claude SDK</td>
+            <td>★★★★☆</td>
+          </tr>
+          <tr>
+            <td>マルチエージェント</td>
+            <td>並列リサーチ・専門役割分担・大規模自動化</td>
+            <td>LangGraph Supervisor / asyncio Orchestrator</td>
+            <td>★★★★★</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure class="memo-ref-figure">
+      <figcaption>協調パターン（flow-18 と同じ用語）</figcaption>
+      <div class="mermaid">
+flowchart LR
+  subgraph pipe [Pipeline]
+    P1[Research] --> P2[Analyze] --> P3[Write] --> P4[Review]
+  end
+  subgraph fan [Fanout]
+    F0[Task] --> F1[Item1]
+    F0 --> F2[Item2]
+    F0 --> F3[Item3]
+    F1 --> FM[Merge]
+    F2 --> FM
+    F3 --> FM
+  end
+      </div>
+    </figure>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>パターン</th>
+            <th>向く場面</th>
+            <th>注意点</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>パイプライン</td>
+            <td>段階依存が明確（調査→執筆→レビュー）</td>
+            <td>受け渡しスキーマを固定</td>
+          </tr>
+          <tr>
+            <td>ファンアウト</td>
+            <td>独立アイテムの並列処理</td>
+            <td>集約ロジックを先に定義</td>
+          </tr>
+          <tr>
+            <td>スペシャリスト</td>
+            <td>多ドメイン統合（市場・技術・財務）</td>
+            <td>出力形式を標準化</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+        <div class="bp-block">
+      <div class="bp-tabs">
+        <button class="bp-tab active">LangGraph</button>
+        <button class="bp-tab">Anthropic SDK</button>
+        <button class="bp-tab">開発運用</button>
+      </div>
+
+      <div class="bp-pane active" id="multi-agent-pane-langgraph">
+        <div class="bp-header"><span class="bp-header-label">Supervisor パターン（LangGraph）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="multi-agent-langgraph-code">from typing import Literal, TypedDict
+from langgraph.graph import StateGraph, END
+
+class TeamState(TypedDict):
+    task: str
+    next_worker: str
+    research: str
+    draft: str
+    final: str
+
+def supervisor(state: TeamState) -> TeamState:
+    # LLM が次の worker を選ぶ（structured output 推奨）
+    worker = llm_pick_worker(state["task"], state)
+    return {**state, "next_worker": worker}
+
+def researcher(state: TeamState) -> TeamState:
+    out = run_research_agent(state["task"])  # RAG tool 可
+    return {**state, "research": out}
+
+def writer(state: TeamState) -> TeamState:
+    out = run_writer_agent(state["research"])
+    return {**state, "draft": out}
+
+def route(state: TeamState) -> Literal["researcher", "writer", "end"]:
+    w = state["next_worker"]
+    if w == "researcher":
+        return "researcher"
+    if w == "writer":
+        return "writer"
+    return "end"
+
+graph = StateGraph(TeamState)
+graph.add_node("supervisor", supervisor)
+graph.add_node("researcher", researcher)
+graph.add_node("writer", writer)
+graph.set_entry_point("supervisor")
+graph.add_conditional_edges("supervisor", route, {
+    "researcher": "researcher", "writer": "writer", "end": END,
+})
+graph.add_edge("researcher", "supervisor")
+graph.add_edge("writer", "supervisor")
+team = graph.compile()</pre>
+        <div class="bp-note">💡 Researcher に <a href="memo-ai-reference-rag.html#21-ref-agentic-rag">Agentic RAG</a> の search ツールを渡すと、調査専門エージェントが自律的に retrieve / grade できる。</div>
+      </div>
+
+      <div class="bp-pane" id="multi-agent-pane-sdk">
+        <div class="bp-header"><span class="bp-header-label">Orchestrator + Subagents（asyncio）</span><button class="bp-copy-btn">コピー</button></div>
+        <pre class="bp-code" id="multi-agent-sdk-code">import anthropic
+import asyncio
+
+client = anthropic.Anthropic()
+
+async def researcher_agent(topic: str) -> str:
+    resp = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=2048,
+        system="調査専門。重要ポイントを箇条書きで返す。",
+        messages=[{"role": "user", "content": f"調査: {topic}"}],
+    )
+    return resp.content[0].text
+
+async def writer_agent(research: str) -> str:
+    resp = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=4096,
+        system="技術ブログ調で記事化する。",
+        messages=[{"role": "user", "content": research}],
+    )
+    return resp.content[0].text
+
+async def orchestrator(topic: str) -> str:
+    # ファンアウト: 並列調査
+    parts = await asyncio.gather(
+        researcher_agent(f"{topic} - 技術"),
+        researcher_agent(f"{topic} - ビジネス"),
+    )
+    combined = "
+
+".join(parts)
+    return await writer_agent(combined)
+
+# asyncio.run(orchestrator("AIエージェント開発"))</pre>
+        <div class="bp-note">💡 サブタスクは軽量モデル（Haiku）、統合・執筆は高性能モデル（Sonnet）。max_iterations とタイムアウトで暴走を防ぐ。</div>
+      </div>
+
+      <div class="bp-pane" id="multi-agent-pane-dev">
+        <div class="bp-header"><span class="bp-header-label">Cursor / Claude Code — 開発セッションでの委譲</span></div>
+        <pre class="bp-code"># メイン会話は実装に集中。広い調査は Task に委譲する。
+
+# プロンプト例（Cursor Agent）
+「src/domain/ のみ調査。呼び出し元一覧を { paths, summary } JSON で返す。
+ 全文ダンプは不要。」
+
+# subagent_type の目安
+# explore     — コードベース探索（readonly）
+# generalPurpose — 汎用・複数ステップ
+# shell       — git / コマンド実行
+
+# 受け渡し契約（flow-18 と同じ）
+# { "paths": ["src/foo.ts"], "summary": "3行以内" }</pre>
+              </div>
+    </div>
+
+    <h5 class="memo-ref-subhead">プロダクト向けチェックリスト</h5>
+    <ol class="steps">
+      <li><strong>ゴールと完了条件</strong>を文章化（テスト・評価指標を含む）</li>
+      <li><strong>役割分割</strong> — 汎用エージェント1体より Researcher / Writer / Reviewer など2〜3体から</li>
+      <li><strong>出力スキーマ固定</strong> — JSON Schema / Pydantic で次段がパースできる形に</li>
+      <li><strong>2体パイプライン</strong>で動作確認してからファンアウトを増やす</li>
+      <li><strong>観測</strong> — Langfuse / LangSmith でトレース、トークン・latency をダッシュボード化</li>
+    </ol>
+
+    <h5 class="memo-ref-subhead">よくある失敗と対策</h5>
+    <div class="table-wrap">
+      <table class="memo-ref-failure-table">
+        <thead>
+          <tr>
+            <th scope="col">失敗パターン</th>
+            <th scope="col">対策</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fail-problem"><strong>❌ 汎用エージェントだらけ</strong> — 役割が曖昧で特化のメリットが消える</td>
+            <td class="fail-fix"><strong>✅</strong> system prompt とツールセットを役割ごとに分離。Orchestrator のみ全体を見る</td>
+          </tr>
+          <tr>
+            <td class="fail-problem"><strong>❌ 出力形式未標準化</strong> — 次段が free text をパースできず連鎖失敗</td>
+            <td class="fail-fix"><strong>✅</strong> structured output / JSON mode。受け渡し契約を README または型定義に固定</td>
+          </tr>
+          <tr>
+            <td class="fail-problem"><strong>❌ 並列を早まりで増やす</strong> — 観測不能・重複作業・コスト肥大</td>
+            <td class="fail-fix"><strong>✅</strong> まず直列パイプライン2体。ファンアウトは集約ロジック確定後</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+        <div class="bp-block">
+      <div class="bp-header"><span class="bp-header-label">マルチエージェントを AI に依頼するプロンプト例</span></div>
+      <div class="bp-prompt-list">
+        <div class="bp-prompt-row bp-prompt-row--purple">
+          <span class="bp-prompt-label">競合調査レポート</span>
+          <pre class="bp-prompt-text">競合3社の調査レポートを自動生成するマルチエージェントを設計してください。
+・Orchestrator が全体管理
+・Researcher を asyncio.gather で並列実行
+・Writer が最終レポート、Reviewer が品質チェック
+・各 Subagent の入出力を JSON スキーマで定義</pre>
+        </div>
+        <div class="bp-prompt-row">
+          <span class="bp-prompt-label">RAG 統合</span>
+          <pre class="bp-prompt-text">LangGraph Supervisor に Researcher ノードを追加してください。
+Researcher は Agentic RAG（retrieve → grade → rewrite）をサブグラフとして持つ。
+Writer は research フィールドのみから執筆する。</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 3. AIへの指示パターン ══ -->
+  <div>
+    <h4>AIへの指示パターン</h4>
+    <div class="bp-block">
+      <div class="bp-header"><span class="bp-header-label">Tool Use実装をAIに依頼するプロンプト例</span></div>
+      <div>
+        <div>
+          <span>ツール定義生成</span>
+          <code>以下のAPIドキュメントから Anthropic Tool Use 形式のツール定義を生成してください。<br>【API】Stripe の charge・refund・list_charges エンドポイント<br>条件：① description は「いつ使うか」を明記 ② input_schema に enum・format・description を付ける ③ 返り値の型もコメントで示す</code>
+        </div>
+        <div>
+          <span>MCPサーバー生成</span>
+          <code>以下のDBスキーマに対するMCPサーバーを TypeScript で実装してください。<br>【DB】PostgreSQL（users, orders, products テーブル）<br>・search/get_by_id/create の3ツールを実装<br>・Zod でバリデーション ・エラーは構造化して返す ・stdio transport</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>

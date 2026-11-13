@@ -1,0 +1,117 @@
+<!--meta {"title": "ディレクトリ構成", "desc": "実業務向けフォルダ配置。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="guide-repo-directory">ディレクトリ構成</h1>
+      <p class="lead">実業務向けフォルダ配置。</p>
+    </header>
+    <div class="flow-body">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li><code>tasks/todo.md</code> を Plan の正本と決める</li>
+<li><code>docs/</code> を仕様の置き場に固定する</li>
+<li>AI・CI・Docker 関連ファイルの配置を先に揃える</li>
+</ul>
+<p class="page-brief__nav"><a href="guide-repo.html">↑ 章トップ</a> <a href="guide-repo-gitignore.html">.gitignore →</a></p>
+</aside>
+<h3 id="11-1-directory"><a class="toclink" href="#11-1-directory">ディレクトリ構成 (実業務向け)</a></h3>
+<aside class="info-panel info-panel--example info-panel--scenario" role="complementary" aria-labelledby="scenario-docs-adr-0001-use-postgres">
+<h4 class="info-panel__title" id="scenario-docs-adr-0001-use-postgres">関連ドキュメントの参照先一覧</h4>
+<div class="info-panel__body"><p><code>docs/adr/0001-use-postgres.md</code> / <code><a href="flow-rules-samples.html#sample-tasks-todo-md">tasks/todo.md</a></code> / <code>docs/order-api/02_design.md</code> / <code>z_docs/history/260529-1430.md</code> / <code><a href="flow-rules-samples.html#sample-10-domain-rules-mdc">.cursor/rules/10-domain-rules.mdc</a></code></p></div>
+</aside>
+<pre><code class="language-text">project/
+├── AGENTS.md
+├── CLAUDE.md
+├── README.md
+├── .gitignore
+├── .editorconfig
+├── .claude/
+│   ├── skills/
+│   │   └── phase4-domain-tdd/
+│   │       └── SKILL.md
+│   ├── agents/                     # 任意: 複雑調査を定型化する場合
+│   └── settings.json               # 任意: Hooks を使う場合
+├── .cursor/
+│   └── rules/
+│       ├── 00-project.mdc
+│       ├── 10-domain-rules.mdc
+│       ├── 20-coding-style.mdc
+│       ├── 30-testing.mdc
+│       ├── 40-logging.mdc
+│       ├── 50-documentation.mdc
+│       ├── 60-ai-workflow.mdc
+│       ├── 61-tdd-loop.mdc
+│       └── 70-local-env.mdc       # Docker前提の運用ルール
+├── docs/                          # チーム公式ドキュメント (詳細: 11.6)
+│   ├── README.md                  # ドキュメント索引
+│   ├── architecture.md            # 全体アーキテクチャ (常時更新)
+│   ├── glossary.md                # 用語集
+│   ├── setup.md                   # セットアップ手順
+│   ├── adr/                       # ADR (詳細: 11.7)
+│   │   ├── README.md              # ADR索引
+│   │   ├── template.md            # ADR雛形
+│   │   ├── 0001-use-postgres.md
+│   │   ├── 0002-adopt-fastapi.md
+│   │   └── ...
+│   ├── operations/                # 運用手順・ランブック
+│   │   ├── deployment.md
+│   │   └── incident-response.md
+│   └── &lt;feature-A&gt;/               # 機能単位の公式ドキュメント
+│       ├── README.md              # 機能ドキュメント索引
+│       ├── 01_requirements.md
+│       ├── 02_design.md
+│       ├── 03_db_schema.md
+│       ├── 04_tech_decisions.md
+│       ├── 05_test_plan.md
+│       ├── 06_logging.md
+│       └── 07_deployment.md
+├── tasks/                         # Plan・振り返り（詳細: 11.6 / flow-18）
+│   ├── todo.md                    # チェック可能な Plan・進捗・結果
+│   └── lessons.md                 # 指摘・修正パターンの蓄積
+├── z_docs/                        # 任意: 個人メモを置く場合のみ (詳細: 11.6)
+│   ├── &lt;feature-A&gt;/
+│   │   ├── 00_plan.md             # 任意: 個人用のタスク分解メモ
+│   │   └── history/
+│   │       └── yymmdd-hhMM-summary.md  # 任意: 個人用の作業ログ
+│   ├── scratch/                   # 試行錯誤・調査メモ
+│   └── notes/                     # 個人メモ
+├── src/
+│   ├── domain/
+│   ├── application/
+│   ├── infrastructure/
+│   └── interface/
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── migrations/
+├── docker/
+│   ├── app/
+│   │   ├── Dockerfile         # 本番用 (マルチステージ)
+│   │   └── Dockerfile.dev     # 開発用 (hot-reload等)
+│   └── db/
+│       └── init.sql           # DB初期化スクリプト
+├── docker-compose.yml           # 開発環境定義 (app + db + redis + minio)
+├── docker-compose.override.yml.example  # 個人カスタマイズ雛形
+├── Makefile                     # コマンド集約
+├── .aws/
+│   └── task-definition.json   # ECS Task Definition (デプロイで使用)
+├── .github/
+│   └── workflows/
+│       ├── ci.yml             # PR/push時のテスト・lint
+│       └── deploy.yml         # mainマージ時のECSデプロイ
+├── .env.example
+└── pyproject.toml (or go.mod / package.json)
+</code></pre>
+<h3 id="11-1-key-dirs"><a class="toclink" href="#11-1-key-dirs">主要ディレクトリの役割</a></h3>
+<ul>
+<li><code>docs/</code> — 仕様・ADR の正本。チーム共有でコミットする</li>
+<li><code>tasks/</code> — Plan・todo・振り返りの置き場</li>
+<li><code>.cursor/rules/</code> — AI が毎回読む規約</li>
+<li><code>.github/workflows/</code> — CI / デプロイ定義</li>
+</ul>
+    </div>
+    <nav class="flow-pager" aria-label="章内の前後"><a href="guide-repo.html">← 章トップ</a><a class="flow-pager__next" href="guide-repo-gitignore.html">.gitignore →</a></nav>" aria-label="前後の章"><a href="guide-ops.html">← 運用</a><a class="flow-pager__next" href="guide-rules.html">ルール / Skills →</a></nav>" aria-label="前後の章"><a href="guide-ship.html">← 提出</a><a class="flow-pager__next" href="guide-ops.html">運用 →</a></nav>
+  </article>
+</div>

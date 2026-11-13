@@ -1,0 +1,173 @@
+<!--meta {"title": "AIニュース", "desc": "", "kind": "flow", "scripts": []} -->
+<h1 style="margin:0 0 .25rem;font-size:1.8rem;font-weight:900">AIニュース</h1>
+<p class="muted" aria-live="polite" style="margin:0 0 .5rem"><span id="last-updated">更新: --</span></p>
+<div class="dashboard">
+  <div class="container">
+    <div class="dashboard-controls">
+      <div class="tabs" role="tablist" aria-label="フィードカテゴリ">
+        <button type="button" class="tab-btn active" data-view="qiitazenn" role="tab" aria-selected="true" aria-controls="view-qiitazenn">Qiita / Zenn <span class="count">0</span></button>
+        <button type="button" class="tab-btn" data-view="tools" role="tab" aria-selected="false" aria-controls="view-tools">公式ソース <span class="count">0</span></button>
+        <button type="button" class="tab-btn" data-view="other" role="tab" aria-selected="false" aria-controls="view-other">その他国内 <span class="count">0</span></button>
+      </div>
+
+      <div id="tag-panel" class="tag-panel">
+        <div class="tag-panel-row">
+          <div class="platform-filter" role="group" aria-label="プラットフォーム">
+            <button type="button" class="tag-chip platform-chip is-active" data-platform="">すべて</button>
+            <button type="button" class="tag-chip platform-chip qiita" data-platform="Qiita">Qiita</button>
+            <button type="button" class="tag-chip platform-chip zenn" data-platform="Zenn">Zenn</button>
+          </div>
+          <span class="tag-divider" aria-hidden="true"></span>
+          <div class="topic-filter" id="tag-chip-row" role="group" aria-label="トピック"></div>
+        </div>
+      </div>
+
+      <div class="dashboard-meta">
+        <div class="stats-bar" id="stats-bar" aria-live="polite">
+          <span class="stat-shown-line"><span class="stat-value" id="stat-shown">—</span><span class="stat-label">件表示</span></span>
+          <span class="stat-pill stat-pill--warn" id="stat-failed-wrap" hidden>
+            <span class="stat-value" id="stat-failed">0</span>
+            <span class="stat-label">取得失敗</span>
+          </span>
+          <span class="stat-hint" id="load-status"></span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="translate-toggle">
+          <span class="toggle-track" aria-hidden="true"></span>
+          <span class="toggle-label">タイトル翻訳</span>
+        </label>
+      </div>
+    </div>
+
+    <div id="view-qiitazenn" class="view active" role="tabpanel" aria-labelledby="tab-qiitazenn">
+      <div class="view-panel">
+        <div id="stream-qiitazenn" class="article-stream" aria-busy="true">
+          <div class="stream-skeleton" aria-hidden="true">
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+          </div>
+          <p class="stream-loading-msg">記事を取得中…</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-tools" class="view" role="tabpanel">
+      <div class="view-panel">
+        <div id="stream-tools" class="article-stream" aria-busy="true">
+          <div class="stream-skeleton" aria-hidden="true">
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+          </div>
+          <p class="stream-loading-msg">記事を取得中…</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-other" class="view" role="tabpanel">
+      <div class="view-panel">
+        <div id="stream-other" class="article-stream" aria-busy="true">
+          <div class="stream-skeleton" aria-hidden="true">
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+          </div>
+          <p class="stream-loading-msg">記事を取得中…</p>
+        </div>
+      </div>
+    </div>
+
+<details class="official-links-fold" id="official-links">
+      <summary>公式リンク（RSS · ベストプラクティス）</summary>
+
+      <section class="official-links-group">
+        <h3 class="official-links-heading" id="s-1">Changelog · ニュース（RSS 取得）</h3>
+        <div class="quick-links">
+          <a class="quick-link" href="https://cursor.com/changelog" target="_blank" rel="noopener">Cursor Changelog</a>
+          <a class="quick-link" href="https://github.com/anthropics/claude-code/releases" target="_blank" rel="noopener">Claude Code Releases</a>
+          <a class="quick-link" href="https://github.com/openai/codex/releases" target="_blank" rel="noopener">Codex Releases</a>
+          <a class="quick-link" href="https://openai.com/news" target="_blank" rel="noopener">OpenAI News</a>
+          <a class="quick-link" href="https://www.anthropic.com/news" target="_blank" rel="noopener">Anthropic News</a>
+          <a class="quick-link" href="https://github.blog/changelog/" target="_blank" rel="noopener">GitHub Changelog</a>
+          <a class="quick-link" href="https://aws.amazon.com/blogs/machine-learning/" target="_blank" rel="noopener">AWS ML Blog</a>
+          <a class="quick-link" href="https://vercel.com/blog" target="_blank" rel="noopener">Vercel Blog</a>
+        </div>
+      </section>
+
+      <section class="official-links-group">
+        <h3 class="official-links-heading" id="s-2">ベストプラクティス（一次情報）</h3>
+        <dl class="official-bp-list">
+          <div class="official-bp-row">
+            <dt>Cursor</dt>
+            <dd>
+              <a href="https://cursor.com/ja/blog/agent-best-practices" target="_blank" rel="noopener">エージェント BP</a>
+              · <a href="https://cursor.com/docs" target="_blank" rel="noopener">Docs</a>
+              · <a href="https://cursor.com/docs/context/skills" target="_blank" rel="noopener">Skills</a>
+            </dd>
+          </div>
+          <div class="official-bp-row">
+            <dt>Claude Code</dt>
+            <dd>
+              <a href="https://code.claude.com/docs/en/best-practices" target="_blank" rel="noopener">Best practices</a>
+              · <a href="https://code.claude.com/docs/en/hooks" target="_blank" rel="noopener">Hooks</a>
+              · <a href="https://code.claude.com/docs/en/features-overview" target="_blank" rel="noopener">Extend</a>
+              · <a href="https://claude.com/blog/how-claude-code-works-in-large-codebases-best-practices-and-where-to-start" target="_blank" rel="noopener">大規模コードベース</a>
+            </dd>
+          </div>
+          <div class="official-bp-row">
+            <dt>Codex</dt>
+            <dd>
+              <a href="https://developers.openai.com/codex/learn/best-practices" target="_blank" rel="noopener">Best practices</a>
+              · <a href="https://developers.openai.com/codex/concepts/customization" target="_blank" rel="noopener">Customization</a>
+              · <a href="https://developers.openai.com/codex/guides/agents-md/" target="_blank" rel="noopener">AGENTS.md</a>
+            </dd>
+          </div>
+          <div class="official-bp-row">
+            <dt>GitHub Copilot</dt>
+            <dd>
+              <a href="https://docs.github.com/en/copilot/tutorials/coding-agent/get-the-best-results" target="_blank" rel="noopener">Cloud agent BP</a>
+              · <a href="https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent" target="_blank" rel="noopener">Coding agent</a>
+            </dd>
+          </div>
+          <div class="official-bp-row">
+            <dt>AWS</dt>
+            <dd>
+              <a href="https://docs.aws.amazon.com/wellarchitected/latest/generative-ai-lens/generative-ai-lens.html" target="_blank" rel="noopener">Generative AI Lens</a>
+              · <a href="https://aws.amazon.com/blogs/machine-learning/category/artificial-intelligence/generative-ai/" target="_blank" rel="noopener">生成 AI 記事</a>
+              · <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/generative-ai.html" target="_blank" rel="noopener">SageMaker GenAI</a>
+            </dd>
+          </div>
+          <div class="official-bp-row">
+            <dt>Anthropic API</dt>
+            <dd>
+              <a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank" rel="noopener">Prompt engineering</a>
+              · <a href="https://www.anthropic.com/engineering" target="_blank" rel="noopener">Engineering Blog</a>
+            </dd>
+          </div>
+          <div class="official-bp-row">
+            <dt>Vercel AI SDK</dt>
+            <dd>
+              <a href="https://ai-sdk.dev/docs/agents/building-agents" target="_blank" rel="noopener">Building Agents</a>
+              · <a href="https://vercel.com/blog/ai-sdk-6" target="_blank" rel="noopener">AI SDK 6</a>
+            </dd>
+          </div>
+          <div class="official-bp-row">
+            <dt>横断</dt>
+            <dd>
+              <a href="https://agentskills.io/specification" target="_blank" rel="noopener">Agent Skills 仕様</a>
+              · <a href="guide-rules-tools-intro.html#17-official-sources-quick" target="_blank" rel="noopener">17章 公式ドキュメント</a>
+            </dd>
+          </div>
+        </dl>
+      </section>
+    </details>
+
+  </div>
+
+  <footer>
+    <a href="/">AI利用開発フロー</a> · RSS 集約ダッシュボード
+  </footer>
+</div>
+

@@ -1,0 +1,1358 @@
+<!--meta {"title": "コピー用 Rules / Skills", "desc": "ドキュメント内で言及する全 Rules・Skills・AGENTS・CLAUDE・Plan ファイルのコピー用サンプル。", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<article class="flow-article">
+    <header>
+      <h1 id="17-rules-samples">コピー用 Rules / Skills</h1>
+      <p class="lead">ドキュメント内で言及する全 Rules・Skills・AGENTS・CLAUDE・Plan ファイルのコピー用サンプル。</p>
+    </header>
+    <div class="flow-body">
+<h3 id="rules-samples-starter"><a class="toclink" href="#rules-samples-starter">まずこれだけ（最小セット）</a></h3><div class="table-wrap rules-samples-starter"><table><thead><tr><th>優先</th><th>ファイル</th><th>ツール</th><th>目的</th><th>コピー先</th></tr></thead><tbody><tr><td>1</td><td><a href="#sample-00-project-mdc">00-project.mdc</a></td><td><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span></td><td>毎セッションの土台。docs 正本・推測での API/DB 断定禁止。</td><td><code>your-repo/.cursor/rules/00-project.mdc</code></td></tr><tr><td>2</td><td><a href="#sample-git-safety-mdc">git-safety.mdc</a></td><td><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span></td><td>git 操作は明示許可後のみ。</td><td><code>your-repo/.cursor/rules/git-safety.mdc</code></td></tr><tr><td>3</td><td><a href="#sample-tasks-todo-md">tasks/todo.md</a></td><td><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span></td><td>Plan 正本。Done when を書く。</td><td><code>your-repo/tasks/todo.md</code></td></tr></tbody></table></div>
+<h3 id="rules-samples-where"><a class="toclink" href="#rules-samples-where">どこにコピーするか（ツール別）</a></h3>
+<div class="rules-samples-tool-map">
+<aside class="info-panel rules-samples-tool-panel" role="note">
+<h4 class="info-panel__title">Cursor</h4>
+<div class="info-panel__body">
+<pre><code class="language-text">your-repo/
+├── AGENTS.md              # Codex 併用時の索引（任意）
+├── tasks/
+│   ├── todo.md            # Plan 正本
+│   └── lessons.md
+└── .cursor/
+    ├── rules/*.mdc        # Rules（ここが中心）
+    ├── commands/*.md
+    ├── skills/&lt;name&gt;/SKILL.md
+    └── plans/YYYYMMDD-feature.md</code></pre>
+</div></aside>
+<aside class="info-panel rules-samples-tool-panel" role="note">
+<h4 class="info-panel__title">Claude Code</h4>
+<div class="info-panel__body">
+<pre><code class="language-text">your-repo/
+├── CLAUDE.md              # 短い Rules 入口
+├── tasks/{todo,lessons}.md
+├── docs/
+└── .claude/
+    ├── skills/&lt;name&gt;/SKILL.md
+    └── settings.json      # Hooks（任意）</code></pre>
+</div></aside>
+<aside class="info-panel rules-samples-tool-panel" role="note">
+<h4 class="info-panel__title">Codex</h4>
+<div class="info-panel__body">
+<pre><code class="language-text">your-repo/
+├── AGENTS.md              # 短い索引（必須に近い）
+├── tasks/todo.md
+└── .agents/skills/&lt;name&gt;/SKILL.md
+
+（任意）your-repo/.codex/config.toml</code></pre>
+</div></aside>
+</div>
+<p class="rules-samples-see-also">手順: <a href="guide-rules-tools-intro.html#17-three-tools">3ツール早見</a> · <a href="guide-rules-cursor.html#17-rules-tree">配置ツリー</a></p>
+<aside class="info-panel" role="note">
+<h4 class="info-panel__title">使い方・読み方</h4>
+<div class="info-panel__body"><ul>
+<li><code>~/</code> で始まるパスは <strong>PC 全体（User）</strong>。それ以外は <strong>リポジトリ（Project）</strong> 直下</li>
+<li>フォルダが無ければ自分で作成（例: <code>mkdir -p .cursor/rules</code>）</li>
+<li>コピー後はプロジェクト名・テストコマンド・ドメイン用語を必ず差し替える</li>
+<li><code>alwaysApply: true</code> は最小限（トークン節約）</li>
+<li>仕様の正本は <code>docs/</code>。Rules に PRD 全文を複製しない</li>
+<li>バッジ（Cursor / Claude Code / Codex）で利用ツールを確認</li>
+</ul></div></aside>
+<h3 id="rules-samples-tree"><a class="toclink" href="#rules-samples-tree">ツール別ツリー（サンプルリンク付き）</a></h3>
+<ul class="rules-samples-index rules-samples-index--tree">
+<li><strong>Cursor</strong><ul>
+<li><span class="rules-samples-tree-path">.cursor/rules/</span><ul>
+<li><a href="#sample-00-project-mdc">00-project.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/00-project.mdc</span></li>
+<li><a href="#sample-10-domain-rules-mdc">10-domain-rules.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/10-domain-rules.mdc</span></li>
+<li><a href="#sample-20-coding-style-mdc">20-coding-style.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/20-coding-style.mdc</span></li>
+<li><a href="#sample-30-testing-mdc">30-testing.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/30-testing.mdc</span></li>
+<li><a href="#sample-40-logging-mdc">40-logging.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/40-logging.mdc</span></li>
+<li><a href="#sample-50-documentation-mdc">50-documentation.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/50-documentation.mdc</span></li>
+<li><a href="#sample-60-ai-workflow-mdc">60-ai-workflow.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/60-ai-workflow.mdc</span></li>
+<li><a href="#sample-61-tdd-loop-mdc">61-tdd-loop.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/61-tdd-loop.mdc</span></li>
+<li><a href="#sample-70-local-env-mdc">70-local-env.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/70-local-env.mdc</span></li>
+<li><a href="#sample-agent-workflow-orchestration-mdc">agent-workflow-orchestration.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/agent-workflow-orchestration.mdc</span></li>
+<li><a href="#sample-api-errors-mdc">api-errors.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/api-errors.mdc</span></li>
+<li><a href="#sample-git-safety-mdc">git-safety.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/git-safety.mdc</span></li>
+<li><a href="#sample-html-doc-site-mdc">html-doc-site.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/html-doc-site.mdc</span></li>
+<li><a href="#sample-ui-list-mdc">ui-list.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/ui-list.mdc</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">.cursor/commands/</span><ul>
+<li><a href="#sample-command-investigate">Command: investigate</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/commands/investigate.md</span></li>
+<li><a href="#sample-command-plan">Command: plan</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/commands/plan.md</span></li>
+<li><a href="#sample-command-review">Command: review</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/commands/review.md</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">.cursor/plans/</span><ul>
+<li><a href="#sample-cursor-plan-md">Cursor Plan 下書き</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/plans/YYYYMMDD-feature.md</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">AGENTS.md</span><ul>
+<li><a href="#sample-agents-md">AGENTS.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex rules-samples-tool-badge--muted">Codex</span></span> <span class="muted">— AGENTS.md（リポ直下）</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">.agents/skills/</span><ul>
+<li><a href="#sample-codex-skills">Codex Skill</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex rules-samples-tool-badge--muted">Codex</span></span> <span class="muted">— .agents/skills/&lt;name&gt;/SKILL.md</span></li>
+<li><a href="#sample-skill-pr-review">Skill: pr-review</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex rules-samples-tool-badge--muted">Codex</span></span> <span class="muted">— .agents/skills/pr-review/SKILL.md</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">tasks/</span><ul>
+<li><a href="#sample-tasks-lessons-md">tasks/lessons.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--claude rules-samples-tool-badge--muted">Claude Code</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex rules-samples-tool-badge--muted">Codex</span></span> <span class="muted">— tasks/lessons.md</span></li>
+<li><a href="#sample-tasks-todo-md">tasks/todo.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--claude rules-samples-tool-badge--muted">Claude Code</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex rules-samples-tool-badge--muted">Codex</span></span> <span class="muted">— tasks/todo.md</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">~/.cursor/rules/</span><ul>
+<li><a href="#sample-design-document-format-mdc">design-document-format.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— ~/.cursor/rules/design-document-format.mdc（グローバル例）</span></li>
+</ul></li>
+</ul></li>
+<li><strong>Claude Code</strong><ul>
+<li><span class="rules-samples-tree-path">CLAUDE.md</span><ul>
+<li><a href="#sample-claude-local-md">CLAUDE.local.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— CLAUDE.local.md（gitignore・個人のみ）</span></li>
+<li><a href="#sample-claude-md">CLAUDE.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— CLAUDE.md（Project）</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">.claude/skills/</span><ul>
+<li><a href="#sample-claude-skills">Claude Skill（SKILL.md）</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— .claude/skills/&lt;name&gt;/SKILL.md</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">.claude/</span><ul>
+<li><a href="#sample-claude-hooks">Claude Hooks</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— .claude/settings.json（Hooks）</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">tasks/</span><ul>
+<li><a href="#sample-tasks-lessons-md">tasks/lessons.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor rules-samples-tool-badge--muted">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex rules-samples-tool-badge--muted">Codex</span></span> <span class="muted">— tasks/lessons.md</span></li>
+<li><a href="#sample-tasks-todo-md">tasks/todo.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor rules-samples-tool-badge--muted">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex rules-samples-tool-badge--muted">Codex</span></span> <span class="muted">— tasks/todo.md</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">~/.claude/</span><ul>
+<li><a href="#sample-claude-user-md">User CLAUDE.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— ~/.claude/CLAUDE.md</span></li>
+</ul></li>
+</ul></li>
+<li><strong>Codex</strong><ul>
+<li><span class="rules-samples-tree-path">AGENTS.md</span><ul>
+<li><a href="#sample-agents-md">AGENTS.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor rules-samples-tool-badge--muted">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— AGENTS.md（リポ直下）</span></li>
+<li><a href="#sample-agents-md-codex">AGENTS.md（Codex 向け補足）</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— AGENTS.md</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">.agents/skills/</span><ul>
+<li><a href="#sample-codex-skills">Codex Skill</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor rules-samples-tool-badge--muted">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— .agents/skills/&lt;name&gt;/SKILL.md</span></li>
+<li><a href="#sample-skill-pr-review">Skill: pr-review</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor rules-samples-tool-badge--muted">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— .agents/skills/pr-review/SKILL.md</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">.codex/</span><ul>
+<li><a href="#sample-codex-config-toml">Codex config</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— .codex/config.toml</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">tasks/</span><ul>
+<li><a href="#sample-tasks-lessons-md">tasks/lessons.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor rules-samples-tool-badge--muted">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--claude rules-samples-tool-badge--muted">Claude Code</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— tasks/lessons.md</span></li>
+<li><a href="#sample-tasks-todo-md">tasks/todo.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor rules-samples-tool-badge--muted">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--claude rules-samples-tool-badge--muted">Claude Code</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— tasks/todo.md</span></li>
+</ul></li>
+<li><span class="rules-samples-tree-path">~/.codex/</span><ul>
+<li><a href="#sample-codex-agents-global">Codex 個人 AGENTS.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— ~/.codex/AGENTS.md</span></li>
+</ul></li>
+</ul></li>
+</ul>
+<h3 id="rules-samples-index"><a class="toclink" href="#rules-samples-index">一覧（カテゴリ別）</a></h3>
+<ul class="rules-samples-index">
+<li><strong>Cursor Rules（.mdc）</strong><ul>
+<li><a href="#sample-00-project-mdc">00-project.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/00-project.mdc</span> <span class="rules-samples-index-purpose">毎セッションの土台。docs 正本・推測での API/DB 断定禁止。</span></li>
+<li><a href="#sample-10-domain-rules-mdc">10-domain-rules.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/10-domain-rules.mdc</span> <span class="rules-samples-index-purpose">金額・状態遷移・用語など業務の不変条件だけを書く。一般論や長い手順は他…</span></li>
+<li><a href="#sample-20-coding-style-mdc">20-coding-style.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/20-coding-style.mdc</span> <span class="rules-samples-index-purpose">言語・フレームワーク固有のコーディング規約。globs で対象ファイル…</span></li>
+<li><a href="#sample-30-testing-mdc">30-testing.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/30-testing.mdc</span> <span class="rules-samples-index-purpose">テストコマンド・カバレッジ方針・Docker 経由の実行方法を固定する。</span></li>
+<li><a href="#sample-40-logging-mdc">40-logging.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/40-logging.mdc</span> <span class="rules-samples-index-purpose">ログレベル・構造化ログ・request_id の付け方を統一する。</span></li>
+<li><a href="#sample-50-documentation-mdc">50-documentation.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/50-documentation.mdc</span> <span class="rules-samples-index-purpose">docs/ や ADR の置き場・書式。仕様の正本を docs に置く…</span></li>
+<li><a href="#sample-60-ai-workflow-mdc">60-ai-workflow.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/60-ai-workflow.mdc</span> <span class="rules-samples-index-purpose">AI 運用の入口。詳細手順は guide-ops.html と Ski…</span></li>
+<li><a href="#sample-61-tdd-loop-mdc">61-tdd-loop.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/61-tdd-loop.mdc</span> <span class="rules-samples-index-purpose">Red → Green → Refactor の TDD ループと完了…</span></li>
+<li><a href="#sample-70-local-env-mdc">70-local-env.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/70-local-env.mdc</span> <span class="rules-samples-index-purpose">Docker・ローカル DB・環境変数など開発環境の起動・検証手順。</span></li>
+<li><a href="#sample-git-safety-mdc">git-safety.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/git-safety.mdc</span> <span class="rules-samples-index-purpose">git 操作は明示許可後のみ。</span></li>
+<li><a href="#sample-api-errors-mdc">api-errors.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/api-errors.mdc</span> <span class="rules-samples-index-purpose">API のエラーレスポンス形式と HTTP ステータスの対応を揃える。</span></li>
+<li><a href="#sample-ui-list-mdc">ui-list.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/ui-list.mdc</span> <span class="rules-samples-index-purpose">管理画面の一覧・テーブル UI を既存パターンに合わせて追加するときの…</span></li>
+</ul></li>
+<li><strong>共有入口・CLAUDE / Codex</strong><ul>
+<li><a href="#sample-agents-md">AGENTS.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— AGENTS.md（リポ直下）</span> <span class="rules-samples-index-purpose">Codex（と Cursor 併用時）が最初に読む短い索引。ビルド・テ…</span></li>
+<li><a href="#sample-agents-md-codex">AGENTS.md（Codex 向け補足）</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— AGENTS.md</span> <span class="rules-samples-index-purpose">Codex 専用の補足・検証コマンドを AGENTS.md に追記する…</span></li>
+<li><a href="#sample-claude-md">CLAUDE.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— CLAUDE.md（Project）</span> <span class="rules-samples-index-purpose">Claude Code がプロジェクト開始時に読む短いルール入口（目安…</span></li>
+<li><a href="#sample-claude-local-md">CLAUDE.local.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— CLAUDE.local.md（gitignore・個人のみ）</span> <span class="rules-samples-index-purpose">個人だけのメモ（ショートカット・好み）。チームには共有しない。</span></li>
+<li><a href="#sample-claude-skills">Claude Skill（SKILL.md）</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— .claude/skills/&lt;name&gt;/SKILL.md</span> <span class="rules-samples-index-purpose">Claude Code 向けの多段手順。description でトリ…</span></li>
+<li><a href="#sample-claude-hooks">Claude Hooks</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— .claude/settings.json（Hooks）</span> <span class="rules-samples-index-purpose">Claude Code の Hooks（停止時テスト等）。任意だが品質…</span></li>
+<li><a href="#sample-codex-skills">Codex Skill</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— .agents/skills/&lt;name&gt;/SKILL.md</span> <span class="rules-samples-index-purpose">Codex / Cursor 併用時の共有 Skills。長い手順はこ…</span></li>
+<li><a href="#sample-codex-config-toml">Codex config</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— .codex/config.toml</span> <span class="rules-samples-index-purpose">Codex CLI の承認ポリシー等。リポまたはユーザーホームに置く。</span></li>
+</ul></li>
+<li><strong>Skills / Commands / Plan</strong><ul>
+<li><a href="#sample-skill-pr-review">Skill: pr-review</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— .agents/skills/pr-review/SKILL.md</span> <span class="rules-samples-index-purpose">PR レビュー手順を Skill 化した例。複数ツールで共有しやすい。</span></li>
+<li><a href="#sample-command-review">Command: review</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/commands/review.md</span> <span class="rules-samples-index-purpose">Cursor の /review 用プロンプト。レビュー観点を固定する。</span></li>
+<li><a href="#sample-command-plan">Command: plan</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/commands/plan.md</span> <span class="rules-samples-index-purpose">Cursor の /plan 用。調査のみ・Plan 保存の指示をテン…</span></li>
+<li><a href="#sample-command-investigate">Command: investigate</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/commands/investigate.md</span> <span class="rules-samples-index-purpose">障害調査用コマンド。ログ・再現手順の観点を揃える。</span></li>
+<li><a href="#sample-tasks-todo-md">tasks/todo.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— tasks/todo.md</span> <span class="rules-samples-index-purpose">Plan 正本。Done when を書く。</span></li>
+<li><a href="#sample-tasks-lessons-md">tasks/lessons.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— tasks/lessons.md</span> <span class="rules-samples-index-purpose">指摘・修正パターンの蓄積。再発時はルールや ADR に昇格する。</span></li>
+<li><a href="#sample-cursor-plan-md">Cursor Plan 下書き</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/plans/YYYYMMDD-feature.md</span> <span class="rules-samples-index-purpose">Cursor Plan モードの保存先例。ワークスペース内の下書き P…</span></li>
+</ul></li>
+<li><strong>補助ルール・グローバル</strong><ul>
+<li><a href="#sample-design-document-format-mdc">design-document-format.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— ~/.cursor/rules/design-document-format.mdc（グローバル例）</span> <span class="rules-samples-index-purpose">設計書 Markdown の見出し・必須セクションを全プロジェクトで共…</span></li>
+<li><a href="#sample-claude-user-md">User CLAUDE.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--claude">Claude Code</span></span> <span class="muted">— ~/.claude/CLAUDE.md</span> <span class="rules-samples-index-purpose">全リポ共通の文体・言語・推測実装禁止など。業務ルールはリポ側へ。</span></li>
+<li><a href="#sample-codex-agents-global">Codex 個人 AGENTS.md</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--codex">Codex</span></span> <span class="muted">— ~/.codex/AGENTS.md</span> <span class="rules-samples-index-purpose">Codex の個人グローバル設定。文体・確認の好みのみ（リポ AGEN…</span></li>
+</ul></li>
+<li><strong>本リポジトリ正本（AI_Doc）</strong><ul>
+<li><a href="#sample-agent-workflow-orchestration-mdc">agent-workflow-orchestration.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/agent-workflow-orchestration.mdc</span> <span class="rules-samples-index-purpose">AI_Doc 用。Plan・サブエージェント・検証・tasks 記録の…</span></li>
+<li><a href="#sample-html-doc-site-mdc">html-doc-site.mdc</a><span class="rules-samples-tool-badges"><span class="rules-samples-tool-badge rules-samples-tool-badge--cursor">Cursor</span></span> <span class="muted">— .cursor/rules/html-doc-site.mdc</span> <span class="rules-samples-index-purpose">AI_Doc HTML サイト編集時の正本（scripts 再生成・V…</span></li>
+</ul></li>
+</ul>
+<div id="rule-sample-store" class="rule-sample-store" hidden aria-hidden="true">
+<h3 id="cat-cursor-rules-mdc"><a class="toclink" href="#cat-cursor-rules-mdc">Cursor Rules（.mdc）</a></h3>
+<section class="rule-sample" id="sample-00-project-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-00-project-mdc">00-project.mdc</a><span class="rule-sample__badges"><span class="rule-sample__badge rule-sample__badge--starter">最小セット</span></span></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/00-project.mdc</code></dd><dt>目的</dt><dd>毎セッションの土台。docs 正本・推測での API/DB 断定禁止。</dd><dt>使うツール</dt><dd>Cursor</dd><dt>適用</dt><dd>alwaysApply: true（毎セッション自動適用）</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> Cursor 利用時は最初に置く。10-domain-rules より先に作成する。</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: プロジェクト共通。毎セッション適用。
+alwaysApply: true
+---
+
+# プロジェクト共通
+
+## 参照順
+1. tasks/todo.md（今回の Plan）
+2. docs/&lt;feature&gt;/（仕様）
+3. 既存 src/ の同種実装
+
+## 禁止
+- 仕様を Rules に複製しない（docs を読む）
+- 推測で API / DB スキーマを断定しない</code></pre></section>
+<section class="rule-sample" id="sample-10-domain-rules-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-10-domain-rules-mdc">10-domain-rules.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/10-domain-rules.mdc</code></dd><dt>目的</dt><dd>金額・状態遷移・用語など業務の不変条件だけを書く。一般論や長い手順は他ファイルへ。</dd><dt>使うツール</dt><dd>Cursor</dd><dt>適用</dt><dd>globs で業務ロジックに限定（alwaysApply は避ける）</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: プロジェクト固有のドメイン制約。全実装・全レビューで参照する。
+alwaysApply: true
+---
+
+# ドメインルール (違反厳禁)
+
+&gt; NOTE: ここにはプロジェクト固有の事実だけを書く。一般論や長い手順は他ファイルへ寄せる。
+
+## 数値計算 (該当する場合)
+- 金額/数量/単価/利率/物理量など、誤差が許容できない値は固定小数 (Decimal等) 必須
+- float の使用箇所と禁止箇所を明示
+- 丸めポリシー: ROUND_HALF_EVEN / HALF_UP / DOWN のどれを使うか
+- 単位系の統一 (SI/カスタム)
+
+## 業務不変条件
+ここにプロジェクト固有の不変条件を列挙する。例:
+- ユーザは同時に複数のアクティブセッションを持てない
+- 注文金額は0より大きい
+- 在庫数量は0以上
+
+## 業務ルール (具体的な処理ルール)
+ここに業務処理のルールを記載。例:
+- A状態からB状態への遷移は管理者のみ可能
+- イベント Z の発生時は通知 Y を必ず送る
+- データ X は論理削除のみ、物理削除禁止
+- 外部通知 / メール / 課金 / ジョブ投入など副作用は、発火条件・順序・再実行可否を明示
+- 取消不能な操作や公開処理は、事前条件と監査要件を明示
+
+## 例外設計
+- 業務例外は `domain/errors` などプロジェクトで定めた場所に集約
+- `BusinessRuleError` 等の業務例外と、技術例外 (DB接続失敗等) を明確に分離
+- 業務例外はログレベル WARNING、技術例外は ERROR
+
+## 用語統一 (日↔英マッピング)
+ここに業務用語と英訳のマッピングを記載。例:
+- 顧客 → customer
+- 注文 → order
+- 担当者 → assignee</code></pre></section>
+<section class="rule-sample" id="sample-20-coding-style-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-20-coding-style-mdc">20-coding-style.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/20-coding-style.mdc</code></dd><dt>目的</dt><dd>言語・フレームワーク固有のコーディング規約。globs で対象ファイルを限定する。</dd><dt>使うツール</dt><dd>Cursor</dd><dt>適用</dt><dd>globs で **/*.ts 等に限定（alwaysApply は false 推奨）</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> スタックに合わせて globs と本文を差し替える（Next.js / Go 等）。</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: TypeScript / React のコーディング下限
+globs: apps/web/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TS/React
+
+- Server Component をデフォルト。Client は必要なときのみ
+- 新規 API は src/lib/api/ の既存ラッパに合わせる</code></pre></section>
+<section class="rule-sample" id="sample-30-testing-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-30-testing-mdc">30-testing.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/30-testing.mdc</code></dd><dt>目的</dt><dd>テストコマンド・カバレッジ方針・Docker 経由の実行方法を固定する。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: テスト方針。変更に最も近い粒度から検証し、必要なときだけ外側へ広げる。
+globs: tests/**, **/*test*, **/*spec*
+---
+
+# Testing Rules (TDD)
+
+## 基本方針
+- 変更箇所に最も近いテストから追加・実行する
+- ドメイン / ロジック変更は unit or use-case tests を優先し、E2E は主要経路に絞る
+- リポジトリやタスクで厳格TDDが必要な場合は `61-tdd-loop.mdc` を併用する
+
+## TDD方針 (層別)
+| 層 | 方式 | 厳格度 |
+|---|---|---|
+| domain        | Inside-out TDD (Red-Green-Refactor 厳守) | 高 |
+| application   | ユースケース単位TDD (Refactorは時間次第) | 中 |
+| infrastructure| 結合テスト先行 | 低 |
+| interface     | E2E でハッピーパス + 主要異常系 | 低 |
+
+## Red-Green-Refactor サイクル
+1. RED: 失敗する最小のテストを1つ書く。実装は一切書かない
+2. GREEN: テストが通る最小コードを書く。過度な抽象化禁止
+3. REFACTOR: テストを保ったまま設計改善。新規テスト追加は別サイクル
+
+## 1サイクルの粒度
+- 1サイクル = 1つの振る舞い / 失敗理由に絞る
+- failing test は「意図した理由」で失敗していることを確認する
+
+## カバレッジ (チーム基準に合わせる)
+- CI / リポジトリ設定に閾値がある場合はそれを正本とする
+- 数値だけを追わず、変更した分岐・例外・境界値・副作用の観点を優先する
+- 目安: 重要ドメインは C0 90% 前後、その他はチーム合意に合わせる
+
+## テスト命名
+test_&lt;対象&gt;_&lt;条件&gt;_&lt;期待結果&gt;
+
+## 必須カバー観点
+- 正常系
+- 境界値 (0, null, 空配列, 上限, 下限)
+- 異常系 (バリデーション違反, 外部依存失敗)
+- ドメイン特有 (業務不変条件を破ろうとするケース)
+- 並行性 (該当する箇所のみ)
+
+## アンチパターン
+- 実装に合わせてテストを後追いで書く
+- 1テストで複数assertを混ぜる
+- モック過多でドメインロジックがテストされない
+- テストをコメントアウトしてGREEN偽装
+- 既存テストが落ちたら理由を考えず修正する
+- 時刻 / 乱数 / 外部I/O に依存する flaky test を増やす</code></pre></section>
+<section class="rule-sample" id="sample-40-logging-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-40-logging-mdc">40-logging.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/40-logging.mdc</code></dd><dt>目的</dt><dd>ログレベル・構造化ログ・request_id の付け方を統一する。</dd><dt>使うツール</dt><dd>Cursor</dd><dt>適用</dt><dd>globs: バックエンド実装向け</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: ログ・機微情報規約
+alwaysApply: true
+---
+
+# Logging Rules
+
+## フォーマット
+- 構造化ログ (JSON) を優先。event 名は安定した識別子にする
+- 必須フィールド: timestamp / level / event / trace_id (or request_id)
+- 業務イベント時は主要識別子 (user_id, order_id 等) を含む
+- request / response / prompt / 添付本文の全量出力は原則しない
+
+## レベル
+- DEBUG: 開発時のみ、本番無効
+- INFO : 業務イベント (作成・更新・削除・状態遷移)
+- WARN : 業務例外、回復可能なエラー
+- ERROR: 技術例外、回復不能なエラー
+- CRITICAL: データ不整合検出、即時対応必要
+
+## マスキング (プロジェクトポリシーに合わせる)
+- 機密IDは部分マスキング (例: 下4桁のみ)
+- 個人氏名/住所/電話/メール/クレジットカード等: ログ出力禁止
+- 認証トークン・APIキー: ログ出力禁止
+- 例外メッセージや外部APIエラー本文にも機微情報を残さない
+
+## 出力先
+- 標準出力 (コンテナ環境前提、12-factor準拠)
+- 集約は基盤側 (Datadog/CloudWatch/Stackdriver等) に任せる</code></pre></section>
+<section class="rule-sample" id="sample-50-documentation-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-50-documentation-mdc">50-documentation.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/50-documentation.mdc</code></dd><dt>目的</dt><dd>docs/ や ADR の置き場・書式。仕様の正本を docs に置く方針を明示する。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: ドキュメント規約 (docs を正本、z_docs は任意の作業メモ)
+globs: [&quot;docs/**&quot;, &quot;z_docs/**&quot;]
+---
+
+# Documentation Rules
+
+## docs/ と個人メモ (z_docs/) の扱い
+
+### docs/ (チーム公式ドキュメント、レビュー必須、品質バー高)
+- docs/architecture.md            # 全体アーキテクチャ (常時更新)
+- docs/glossary.md                # 用語集 (常時更新)
+- docs/setup.md                   # セットアップ手順
+- docs/adr/&lt;NNNN&gt;-&lt;slug&gt;.md       # ADR (Architecture Decision Records)
+- docs/&lt;feature-name&gt;/README.md   # 機能ドキュメントの索引
+- docs/&lt;feature-name&gt;/01_requirements.md
+- docs/&lt;feature-name&gt;/02_design.md
+- docs/&lt;feature-name&gt;/03_db_schema.md
+- docs/&lt;feature-name&gt;/04_tech_decisions.md
+- docs/&lt;feature-name&gt;/05_test_plan.md
+- docs/&lt;feature-name&gt;/06_logging.md
+- docs/&lt;feature-name&gt;/07_deployment.md
+- docs/operations/&lt;runbook&gt;.md    # 運用手順・障害対応
+
+### z_docs/ (任意のローカル作業メモ)
+- z_docs/history/yymmdd-hhMM-summary.md                  # セッションごとの作業ログ
+- z_docs/&lt;feature-name&gt;/00_plan.md                       # 必要なら残す個人タスク分解
+- z_docs/scratch/                                        # 試行錯誤・調査メモ
+- z_docs/notes/                                          # 個人メモ
+
+### 判定基準
+| この文書は? | 配置先 |
+|---|---|
+| チームメンバー・将来の自分が必ず読む | docs/ |
+| レビュー対象、品質が問われる | docs/ |
+| 意思決定の根拠 (永続化したい) | docs/adr/ |
+| 個人用のドラフト・下書き (必要なら) | z_docs/ |
+| 個人用の作業ログ・振り返り (必要なら) | z_docs/history/ |
+| 個人的な試行錯誤・調査メモ | z_docs/scratch/ |
+
+&gt; z_docs は必要なときの個人メモ置き場。同じ情報を docs/ と二重管理しない。正式に残す内容は docs/ を正本として扱う。
+
+## 書式 (共通)
+- Mermaidは最小構文。erDiagram / sequenceDiagram / flowchart のみ
+- エッジラベル `|...|` に HTML を入れない
+- 表は意思決定の根拠を1列入れる
+- スクリーンショット・バイナリは原則禁止 (UIスクショは assets/ で別途管理)
+
+## トーン (docs/)
+- レビュアー (他人・将来の自分・新メンバー) が読む前提
+- 前提知識を仮定しない
+- 用語は docs/glossary.md と整合
+
+## トーン (z_docs/)
+- 自分用メモなので簡潔でよい
+- 共有する可能性がある場合だけ、後から自分が読める程度の文脈を残す</code></pre></section>
+<section class="rule-sample" id="sample-60-ai-workflow-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-60-ai-workflow-mdc">60-ai-workflow.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/60-ai-workflow.mdc</code></dd><dt>目的</dt><dd>AI 運用の入口。詳細手順は guide-ops.html と Skills に逃がす。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: AIエージェントの動き方の規約
+alwaysApply: true
+---
+
+# AI Workflow
+
+## このファイルの役割
+- 常時守る進め方だけを書く
+- 長い手順・フェーズ別チェックリストは Skill / prompt template に分ける（TDD 詳細は任意の Skill）
+
+## 進め方
+- 1チャット = 1タスクを基本とし、スコープがズレたら分割を提案する
+- 編集前に関連する既存コード・既存テスト・関連ドキュメントを読む
+- 既存規約と異なる選択をする場合は理由を明示する
+- 推測で埋めず、未確認事項は確認事項として残す
+
+## 検証
+- 変更後は最小の有効な確認 (テスト / lint / 型チェック / 画面確認) を実施する
+- 実行していない確認は「未実施」と明記する
+- 失敗した既存テストや lint を無言で握りつぶさない
+
+## 履歴整備
+- セッションの作業ログが必要な場合は z_docs/history/ に短く残す
+- チームで残すべき判断は docs/&lt;feature&gt;/04_tech_decisions.md または docs/adr/ に記録する
+- 正式な仕様を z_docs だけに閉じ込めない</code></pre></section>
+<section class="rule-sample" id="sample-61-tdd-loop-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-61-tdd-loop-mdc">61-tdd-loop.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/61-tdd-loop.mdc</code></dd><dt>目的</dt><dd>Red → Green → Refactor の TDD ループと完了条件をエージェントに守らせる。</dd><dt>使うツール</dt><dd>Cursor</dd><dt>適用</dt><dd>globs: テスト駆動が必要な実装タスク向け</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: 厳格なTDDを採るタスクで使う運用規約。テスト先行の進め方を揃える。
+---
+
+# TDD Loop Rules for AI
+
+## 使う場面
+- ユーザーが TDD を明示したとき
+- リポジトリ / 対象層が test-first を前提としているとき
+- docs / 単純リネーム / 設定変更など、挙動を増やさない作業では無理に使わない
+
+## 厳守事項
+- RED: 失敗する最小テストを先に追加し、失敗理由を確認する
+- GREEN: そのテストを通す最小実装に留める
+- REFACTOR: 振る舞いを変えずに重複削減・命名改善・構造整理を行う
+- 新しい振る舞いを足すときは次の RED に戻る
+- 各サイクルで実行したテストコマンドと結果を共有する
+
+## サイクル粒度
+- 1サイクル = 1つの振る舞い / 失敗理由に絞る
+- 大きすぎる変更はテストケース単位に分割する</code></pre></section>
+<section class="rule-sample" id="sample-70-local-env-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-70-local-env-mdc">70-local-env.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/70-local-env.mdc</code></dd><dt>目的</dt><dd>Docker・ローカル DB・環境変数など開発環境の起動・検証手順。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> docker compose 等、プロジェクトの実コマンドに必ず差し替える。</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: ローカル開発環境はDocker前提。コマンド提示時はコンテナ経由を必須とする。
+alwaysApply: true
+---
+
+# ローカル開発環境ルール
+
+## 原則
+- ホストOSに言語ランタイム・DB・キャッシュを直接インストールしない
+- 全ての開発コマンドはコンテナ内で実行する
+- 接頭辞: `docker compose exec &lt;service&gt; &lt;command&gt;`
+- 例外: `git` `docker` `make` 自体はホスト側で実行
+
+## AIエージェントへの指示
+実行系コマンドを提案する際は、必ず以下の形式で提示すること:
+
+- 悪い例: `pip install httpx`
+- 良い例: `docker compose exec app pip install httpx` (一時的) または
+  Dockerfile.dev / pyproject.toml に追加し `docker compose build app` (恒久)
+
+- 悪い例: `pytest tests/`
+- 良い例: `make test` または `docker compose exec app pytest tests/`
+
+- 悪い例: `psql -U app app_dev`
+- 良い例: `make shell-db` または `docker compose exec db psql -U app -d app_dev`
+
+## 新規依存追加時のフロー
+1. パッケージマネージャ定義ファイル (pyproject.toml / package.json / go.mod) に追記
+2. `docker compose build app` でイメージ再ビルド
+3. `docker compose up -d` で再起動
+4. 既存コンテナで一時的に試したい場合のみ `docker compose exec app &lt;install&gt;`
+
+## 環境変数
+- `.env.example` を雛形として配布
+- 各開発者は `.env` を作成 (gitignore対象)
+- 新規環境変数を追加した場合は `.env.example` も同時更新 + PR本文で言及
+
+## IDE統合
+- IDE実行 (Cursor/VS Code) は Dev Containers 経由を推奨
+- ホスト側のフォーマッタ/lintはCIで担保される前提なら使用可
+- ただしテスト・ビルド・マイグレーションは必ずコンテナ内で実行</code></pre></section>
+<section class="rule-sample" id="sample-git-safety-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-git-safety-mdc">git-safety.mdc</a><span class="rule-sample__badges"><span class="rule-sample__badge rule-sample__badge--starter">最小セット</span></span></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/git-safety.mdc</code></dd><dt>目的</dt><dd>git 操作は明示許可後のみ。</dd><dt>使うツール</dt><dd>Cursor</dd><dt>適用</dt><dd>alwaysApply: true 推奨</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: git push 等はユーザー許可後のみ
+alwaysApply: true
+---
+
+# Git 安全運用
+
+## 許可なしに実行しない
+- git add / commit / push / merge / rebase
+- docker exec（本番相当）
+
+## 完了報告前
+- 関連テストまたは再現手順で動いたことを示す</code></pre></section>
+<section class="rule-sample" id="sample-api-errors-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-api-errors-mdc">api-errors.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/api-errors.mdc</code></dd><dt>目的</dt><dd>API のエラーレスポンス形式と HTTP ステータスの対応を揃える。</dd><dt>使うツール</dt><dd>Cursor</dd><dt>適用</dt><dd>globs: API 実装ファイル向け（必要なときだけ）</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: API エラーレスポンスの形式と HTTP ステータスの対応
+globs: src/**/*.{ts,py,go}
+alwaysApply: false
+---
+
+# API エラー
+
+## レスポンス形
+- クライアント向け: `{ &quot;error&quot;: { &quot;code&quot;: &quot;...&quot;, &quot;message&quot;: &quot;...&quot; } }`
+- ログ用 request_id はレスポンスヘッダ `X-Request-Id` に載せる
+
+## ステータス
+- 400: バリデーション
+- 401/403: 認証・認可
+- 404: リソース不存在
+- 409: 競合（在庫不足など）
+- 500: 未分類（スタックはログのみ）</code></pre></section>
+<section class="rule-sample" id="sample-ui-list-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-ui-list-mdc">ui-list.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/ui-list.mdc</code></dd><dt>目的</dt><dd>管理画面の一覧・テーブル UI を既存パターンに合わせて追加するときの指針。</dd><dt>使うツール</dt><dd>Cursor</dd><dt>適用</dt><dd>globs: フロントエンド向け</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: 管理画面の一覧・テーブル UI を追加するとき
+globs: apps/web/**/*.{tsx,ts}
+alwaysApply: false
+---
+
+# 一覧 UI
+
+- 既存の DataTable / List コンポーネントを先に @ してパターンを合わせる
+- 列定義・ソート・ページネーションは Storybook または既存画面と同型
+- マージ前: Storybook 表示 + `npm test`（プロジェクト標準）</code></pre></section>
+<h3 id="cat-aux-global"><a class="toclink" href="#cat-aux-global">補助ルール・グローバル</a></h3>
+<section class="rule-sample" id="sample-design-document-format-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-design-document-format-mdc">design-document-format.mdc</a><span class="rule-sample__badges"><span class="rule-sample__badge">User・全リポ共通</span></span></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>~/.cursor/rules/design-document-format.mdc</code></dd><dt>目的</dt><dd>設計書 Markdown の見出し・必須セクションを全プロジェクトで共通化する。</dd><dt>使うツール</dt><dd>Cursor</dd><dt>補足</dt><dd>~/.cursor/rules/design-document-format.mdc（グローバル例）</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> mkdir -p ~/.cursor/rules してから配置。リポ固有の業務ルールは置かない。</p>
+<pre class="rule-sample__code"><code class="language-text"># ~/.cursor/rules/design-document-format.mdc（グローバル例）
+
+（リポジトリにファイルがありません: ~/.cursor/rules/design-document-format.mdc）</code></pre></section>
+<h3 id="cat-claude-codex"><a class="toclink" href="#cat-claude-codex">共有入口・CLAUDE / Codex</a></h3>
+<section class="rule-sample" id="sample-agents-md">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-agents-md">AGENTS.md</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/AGENTS.md</code></dd><dt>目的</dt><dd>Codex（と Cursor 併用時）が最初に読む短い索引。ビルド・テスト・禁止事項への入口。</dd><dt>使うツール</dt><dd>Cursor · Codex</dd><dt>補足</dt><dd>AGENTS.md（リポ直下）</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> リポジトリのルート（package.json や README と同じ階層）に置く。</p>
+<pre class="rule-sample__code"><code class="language-markdown"># AI Agent Instructions
+
+## このファイルの役割
+- `AGENTS.md` は入口。長い手順や詳細規約は `.cursor/rules/*.mdc`（Cursor）または `.agents/skills/`（Codex）に分ける
+- ここには「何を読むべきか」「どこに書くべきか」だけを短く残す
+
+## プロジェクト概要
+[1〜2段落でプロジェクトの目的・主要ユーザ・主要機能を記載]
+
+## ステークホルダー
+- PO/PM: [氏名]
+- テックリード: [氏名]
+- レビュアー: [氏名 or チーム]
+
+## 必読ルール
+- .cursor/rules/10-domain-rules.mdc  ← 業務制約。違反厳禁
+- .cursor/rules/20-coding-style.mdc
+- .cursor/rules/30-testing.mdc
+- .cursor/rules/40-logging.mdc
+- .cursor/rules/50-documentation.mdc
+- .cursor/rules/60-ai-workflow.mdc
+- .cursor/rules/61-tdd-loop.mdc      ← 厳格TDDを採るタスクのみ
+- .cursor/rules/70-local-env.mdc     ← ローカル環境の制約がある場合のみ
+
+## 出力先
+- **チーム公式ドキュメント** (要件・設計・ADR等): docs/
+- **セッション履歴・作業メモ**: z_docs/history/
+- **機能別の下書き・調査メモ** (必要なときだけ): z_docs/&lt;feature-name&gt;/ または z_docs/scratch/
+- 実装: src/
+- テスト: tests/
+- ADR (Architecture Decision Records): docs/adr/
+
+詳細な使い分けは `.cursor/rules/50-documentation.mdc` と `.cursor/rules/60-ai-workflow.mdc` を参照。
+
+## 既存パターンの参照
+新規実装時は以下を必ず先に確認:
+- 類似機能の実装例: [パスを記載]
+- 既存のドメインサービス: src/domain/
+- 既存テストパターン: tests/unit/
+- 既存ドキュメント / ADR: docs/
+
+## 禁止事項
+- [ドメインルールに違反する実装パターン]
+- ログ・エラー・監査イベントへの個人情報 / 機微情報 / secret の平文出力
+- 既存実装・既存テスト・既存ドキュメントを読まずに「最善実装」を提案すること</code></pre></section>
+<section class="rule-sample" id="sample-agents-md-codex">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-agents-md-codex">AGENTS.md（Codex 向け補足）</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/AGENTS.md</code></dd><dt>目的</dt><dd>Codex 専用の補足・検証コマンドを AGENTS.md に追記するときの例。</dd><dt>使うツール</dt><dd>Codex</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Codex で <code>codex --ask-for-approval never "Summarize the current instructions."</code> を試す</p>
+<pre class="rule-sample__code"><code class="language-markdown"># AI Agent Instructions（Codex 向け補足例）
+
+## このファイルの役割
+- 毎回守る方針・ビルド/テストコマンド・レビュー期待だけを書く
+- 長い手順は `.agents/skills/` へ。Cursor 併用時の詳細規約は `.cursor/rules/*.mdc` へ
+- サブツリー固有の規約は `packages/&lt;name&gt;/AGENTS.md` 等、適用範囲の近くに置く
+
+## ビルド・テスト（このディレクトリで使うコマンド）
+- 開発: [例: npm run dev]
+- テスト: [例: npm test --workspace=foo]
+- Lint: [例: npm run lint]
+
+## レビュー・禁止事項
+- [ドメイン不変条件]
+- [要確認コマンド: git push / docker exec / 本番操作]
+- [機微情報をログ・PR に出さない]
+
+## ルーティング（読みすぎ防止）
+- 設計の正: `docs/architecture.md`
+- 機能仕様: `docs/&lt;feature&gt;/`
+- 作業履歴: `z_docs/history/`（チーム規約で docs を使う場合はそちら）</code></pre></section>
+<section class="rule-sample" id="sample-claude-md">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-claude-md">CLAUDE.md</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/CLAUDE.md</code></dd><dt>目的</dt><dd>Claude Code がプロジェクト開始時に読む短いルール入口（目安 200 行以下）。</dd><dt>使うツール</dt><dd>Claude Code</dd><dt>補足</dt><dd>CLAUDE.md（Project）</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> /init で下書き生成後、短く削ってから保存。</p>
+<pre class="rule-sample__code"><code class="language-markdown"># Claude Code Instructions
+
+@AGENTS.md  ← AGENTS.md を併用する場合のみ
+
+## このファイルの役割
+- ルートは薄く（全体像・クリティカルな gotcha）。パッケージ固有は `packages/&lt;name&gt;/CLAUDE.md` 等のサブツリーへ
+- `AGENTS.md` と重複させず、Claude Code 固有の補足だけを書く
+- 長い手順は `.claude/skills/` へ、パス別 / 言語別の恒久ルールは `.claude/rules/` へ寄せる
+- 個人だけが使うプロジェクト固有メモは `CLAUDE.local.md` に分離し、コミットしない
+- この配下で使う test / lint コマンドを明示する（大規模リポでは全件実行を避ける）
+
+## User scope
+- 応答言語: [日本語 / 英語]
+- 要確認コマンド: [git push / docker exec / aws / 本番操作]
+- 個人環境共通の禁止事項: [例: bypass permissions を常用しない]
+
+## Project scope
+
+### Claude Code 固有の補足
+- Plan / execution の分岐条件: [例]
+- 追加の確認が必要な危険操作: [例]
+- Claude Code 専用の skill / hook / local memory 運用: [例]
+
+### Cursor ルールとの対応
+- ドメイン制約: [.cursor/rules/10-domain-rules.mdc と同旨]
+- 実装規約: [.cursor/rules/20-coding-style.mdc と同旨]
+- テスト方針: [.cursor/rules/30-testing.mdc と同旨]
+- 厳格TDDが必要なとき: [.cursor/rules/61-tdd-loop.mdc と同旨]
+- ログ / 機微情報: [.cursor/rules/40-logging.mdc と同旨]
+- ドキュメント配置 / 作業履歴: [.cursor/rules/50-documentation.mdc, 60-ai-workflow.mdc と同旨]
+
+### よく使うコマンド
+- 開発: [例: make up / npm run dev]
+- テスト: [例: make test / npm test]
+
+### 禁止事項
+- [ドメインルールに反する実装]
+- [未確認のまま本番操作]
+- [機微情報の出力]</code></pre></section>
+<section class="rule-sample" id="sample-claude-local-md">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-claude-local-md">CLAUDE.local.md</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/CLAUDE.local.md</code></dd><dt>目的</dt><dd>個人だけのメモ（ショートカット・好み）。チームには共有しない。</dd><dt>使うツール</dt><dd>Claude Code</dd><dt>補足</dt><dd>CLAUDE.local.md（gitignore・個人のみ）</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> .gitignore に CLAUDE.local.md を追加すること。</p>
+<pre class="rule-sample__code"><code class="language-markdown"># CLAUDE.local.md（コミットしない）
+
+- 個人だけのプロジェクト固有メモ（ショートカット・好みのコマンド）
+- `.gitignore` に `CLAUDE.local.md` を追加
+- チーム共有は `CLAUDE.md` または `docs/` / `tasks/`</code></pre></section>
+<section class="rule-sample" id="sample-claude-user-md">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-claude-user-md">User CLAUDE.md</a><span class="rule-sample__badges"><span class="rule-sample__badge">User・全リポ共通</span></span></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>~/.claude/CLAUDE.md</code></dd><dt>目的</dt><dd>全リポ共通の文体・言語・推測実装禁止など。業務ルールはリポ側へ。</dd><dt>使うツール</dt><dd>Claude Code</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> mkdir -p ~/.claude して配置。3〜6 ヶ月ごとに棚卸し。</p>
+<pre class="rule-sample__code"><code class="language-markdown"># ~/.claude/CLAUDE.md（User スコープ）
+
+- 全リポ共通の文体・言語・「推測で広く実装しない」等
+- プロジェクト固有の業務ルールはリポの `CLAUDE.md` / `.cursor/rules/` へ（重複禁止）
+- 3〜6 ヶ月ごとに棚卸し</code></pre></section>
+<section class="rule-sample" id="sample-codex-agents-global">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-codex-agents-global">Codex 個人 AGENTS.md</a><span class="rule-sample__badges"><span class="rule-sample__badge">User・全リポ共通</span></span></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>~/.codex/AGENTS.md</code></dd><dt>目的</dt><dd>Codex の個人グローバル設定。文体・確認の好みのみ（リポ AGENTS と重複禁止）。</dd><dt>使うツール</dt><dd>Codex</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p ~/.codex</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え</p>
+<pre class="rule-sample__code"><code class="language-markdown"># ~/.codex/AGENTS.md
+
+- 個人グローバル: 文体・確認の好みのみ
+- リポの `AGENTS.md` と重複させない
+- 手順の詳細は `$HOME/.agents/skills/` へ</code></pre></section>
+<section class="rule-sample" id="sample-claude-skills">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-claude-skills">Claude Skill（SKILL.md）</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.claude/skills/&lt;name&gt;/SKILL.md</code></dd><dt>目的</dt><dd>Claude Code 向けの多段手順。description でトリガーさせる。</dd><dt>使うツール</dt><dd>Claude Code</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> <name> を手順名（例: phase4-tdd）に置き換えてフォルダごと作成。</p>
+<pre class="rule-sample__code"><code class="language-markdown">.claude/skills/
+├── phase1-rules-sync/
+│   ├── SKILL.md
+│   └── checklist.md
+├── phase3-design-doc/
+│   └── SKILL.md
+└── phase4-domain-tdd/
+    ├── SKILL.md
+    └── examples/
+        └── red-green-refactor.md
+
+# 例: .claude/skills/phase4-domain-tdd/SKILL.md
+---
+description: ドメイン層の厳格なTDDを1サイクルずつ進めるときに使う
+disable-model-invocation: true
+---
+
+## 使う場面
+- ドメイン層の TDD を 1 サイクルずつ進めるとき
+
+## 入力
+- 対象ユースケース / 既存テスト / 関連ドメインルール
+
+## 手順
+1. RED: 失敗する最小テストを書く
+2. GREEN: 最小実装で通す
+3. REFACTOR: 設計改善のみ行う
+
+## 参照ルール
+- .cursor/rules/30-testing.mdc と同旨
+- .cursor/rules/61-tdd-loop.mdc と同旨</code></pre></section>
+<section class="rule-sample" id="sample-claude-hooks">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-claude-hooks">Claude Hooks</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.claude/settings.json</code></dd><dt>目的</dt><dd>Claude Code の Hooks（停止時テスト等）。任意だが品質安定に有効。</dd><dt>使うツール</dt><dd>Claude Code</dd><dt>補足</dt><dd>.claude/settings.json（Hooks）</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.claude</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Claude Code で <code>/init</code> 後、CLAUDE.md が短いか確認</p>
+<pre class="rule-sample__code"><code class="language-markdown">{
+  &quot;hooks&quot;: {
+    &quot;PreToolUse&quot;: [{
+      &quot;matcher&quot;: &quot;Bash&quot;,
+      &quot;hooks&quot;: [{ &quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;\&quot;$CLAUDE_PROJECT_DIR\&quot;/.claude/hooks/check-dangerous-command.sh&quot; }]
+    }]
+  }
+}</code></pre></section>
+<section class="rule-sample" id="sample-codex-skills">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-codex-skills">Codex Skill</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.agents/skills/&lt;name&gt;/SKILL.md</code></dd><dt>目的</dt><dd>Codex / Cursor 併用時の共有 Skills。長い手順はここに置く。</dd><dt>使うツール</dt><dd>Codex · Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> チーム共有なら .agents/skills/ をコミット対象にする。</p>
+<pre class="rule-sample__code"><code class="language-markdown">.agents/skills/
+└── phase4-domain-tdd/
+    ├── SKILL.md
+    └── scripts/
+        └── run-red-cycle.sh   # 任意
+
+# 例: .agents/skills/phase4-domain-tdd/SKILL.md
+---
+name: phase4-domain-tdd
+description: ドメイン層の厳格なTDDを1サイクルずつ進める。RED-GREEN-REFACTOR の順守が必要なときに使う。
+---
+
+1. RED: 失敗する最小テストを追加し、失敗理由を確認する
+2. GREEN: そのテストを通す最小実装に留める
+3. REFACTOR: 振る舞いを変えずに構造を改善する
+4. 各サイクルで実行したテストコマンドと結果を共有する
+
+## 参照
+- .cursor/rules/30-testing.mdc と同旨（Cursor 併用時）
+- docs/&lt;feature&gt;/05_test_plan.md</code></pre></section>
+<section class="rule-sample" id="sample-codex-config-toml">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-codex-config-toml">Codex config</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.codex/config.toml</code></dd><dt>目的</dt><dd>Codex CLI の承認ポリシー等。リポまたはユーザーホームに置く。</dd><dt>使うツール</dt><dd>Codex</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.codex</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え</p>
+<pre class="rule-sample__code"><code class="language-text"># .codex/config.toml（例・必要なキーのみ）
+# 詳細: https://developers.openai.com/codex/config-reference
+
+[approval_policy]
+# 対話実行: on-request / 非対話 CI: never など、チーム方針に合わせる
+
+[[hooks]]
+event = &quot;pre_tool_use&quot;
+# matcher / command はリポのポリシーに合わせて定義（パスは .codex/ 基準）</code></pre></section>
+<h3 id="cat-skills-commands-plan"><a class="toclink" href="#cat-skills-commands-plan">Skills / Commands / Plan</a></h3>
+<section class="rule-sample" id="sample-skill-pr-review">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-skill-pr-review">Skill: pr-review</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.agents/skills/pr-review/SKILL.md</code></dd><dt>目的</dt><dd>PR レビュー手順を Skill 化した例。複数ツールで共有しやすい。</dd><dt>使うツール</dt><dd>Cursor · Codex</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> mkdir -p .agents/skills/pr-review して SKILL.md を配置。Cursor 専用なら .cursor/skills/ でも可。</p>
+<pre class="rule-sample__code"><code class="language-markdown">---
+name: pr-review
+description: &gt;
+  PR 提出前のセルフレビュー。lint・テスト・PR description・docs 整合を確認する。
+  ユーザーが PR 前確認・レビュー準備を求めるときに使う。
+paths:
+  - &quot;**/*.{rb,ts,tsx}&quot;
+---
+
+# PR セルフレビュー
+
+## ワークフロー
+- [ ] make test（またはプロジェクト標準）
+- [ ] PR description にレビュー観点を 1 行以上
+- [ ] migration がある場合 forward / rollback を確認
+- [ ] tasks/todo.md の Done when と整合
+
+## 出力
+未完了があればブロッカーとして報告。すべて OK なら提出可と明示。</code></pre></section>
+<section class="rule-sample" id="sample-command-review">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-command-review">Command: review</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/commands/review.md</code></dd><dt>目的</dt><dd>Cursor の /review 用プロンプト。レビュー観点を固定する。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> mkdir -p .cursor/commands してから配置。</p>
+<pre class="rule-sample__code"><code class="language-markdown"># review
+
+PR 提出前のセルフレビュー。対象: $ARGUMENTS（未指定なら現在の差分・ブランチ）
+
+1. `git diff` / `git status` の要点を確認（commit/push は許可があるまで提案しない）
+2. flow-14-pr-check.html の 9 カテゴリ観点でブロッカー / 警告 / OK を分類
+3. `.cursor/rules/` と `AGENTS.md` への抵触がないか
+4. 結果は箇条書き。ブロッカーがあれば push / PR 作成を提案しない
+</code></pre></section>
+<section class="rule-sample" id="sample-command-plan">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-command-plan">Command: plan</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/commands/plan.md</code></dd><dt>目的</dt><dd>Cursor の /plan 用。調査のみ・Plan 保存の指示をテンプレ化。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/commands</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-markdown"># plan
+
+複雑な作業の着手前に Plan を書く。$ARGUMENTS があれば今回の機能名・スコープとして扱う。
+
+1. `tasks/todo.md` を読み、未完了があれば更新方針を示す
+2. チェック可能なタスク分解と **Done when** を書く（検証ステップまで含める）
+3. 3 ステップ以上または設計判断があるときは Plan モード推奨。承認後に実装
+4. 仕様の正本は `docs/`。推測で API / DB を断定しない
+5. 参照: guide-design.html#phase-2-plan、guide-ops.html#18-plan-patterns
+</code></pre></section>
+<section class="rule-sample" id="sample-command-investigate">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-command-investigate">Command: investigate</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/commands/investigate.md</code></dd><dt>目的</dt><dd>障害調査用コマンド。ログ・再現手順の観点を揃える。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/commands</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-markdown"># investigate
+
+次のスコープだけを調査し、構造化結果だけ返す: $ARGUMENTS
+
+- 返却: `{ &quot;paths&quot;: [...], &quot;summary&quot;: &quot;...&quot; }` または表
+- 長い grep ログは貼らない
+- git add/commit/push はしない</code></pre></section>
+<section class="rule-sample" id="sample-tasks-todo-md">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-tasks-todo-md">tasks/todo.md</a><span class="rule-sample__badges"><span class="rule-sample__badge rule-sample__badge--starter">最小セット</span></span></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/tasks/todo.md</code></dd><dt>目的</dt><dd>Plan 正本。Done when を書く。</dd><dt>使うツール</dt><dd>Cursor · Claude Code · Codex</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> mkdir -p tasks して配置。セッション開始時に AI に最初に読ませる。</p>
+<pre class="rule-sample__code"><code class="language-markdown"># tasks/todo.md — &lt;feature-slug&gt;
+
+## タスク
+- [ ] docs/prd/&lt;slug&gt;.md の Must → 01_requirements.md（ID トレース）
+- [ ] ADR ドラフト
+- [ ] ユースケース実装 + 結合テスト
+- [ ] PR 前: pr-review Skill でセルフチェック
+
+## Done when
+- staging / 手元で受け入れ条件を手動確認（手順を PR に記載）
+- CI green
+
+## リスク・未決
+- 未決の設計判断 → ADR で決める
+
+## レビュー・結果
+（実装後: 変更概要、検証コマンド、残課題）</code></pre></section>
+<section class="rule-sample" id="sample-tasks-lessons-md">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-tasks-lessons-md">tasks/lessons.md</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/tasks/lessons.md</code></dd><dt>目的</dt><dd>指摘・修正パターンの蓄積。再発時はルールや ADR に昇格する。</dd><dt>使うツール</dt><dd>Cursor · Claude Code · Codex</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/tasks</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-markdown"># tasks/lessons.md
+
+| 日付 | 状況 | 教訓 | 再発防止 |
+|------|------|------|----------|
+| 2026-05-29 | push 許可なしで commit 提案 | 危険操作は必ず確認 | git-safety.mdc |</code></pre></section>
+<section class="rule-sample" id="sample-cursor-plan-md">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-cursor-plan-md">Cursor Plan 下書き</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/plans/YYYYMMDD-feature.md</code></dd><dt>目的</dt><dd>Cursor Plan モードの保存先例。ワークスペース内の下書き Plan。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> YYYYMMDD-feature を実タスク名に変えて .cursor/plans/ に保存。</p>
+<pre class="rule-sample__code"><code class="language-markdown"># Plan: &lt;feature&gt; Phase 3
+
+## スコープ
+- PRD Must の範囲のみ（Won&#x27;t は触らない）
+
+## タスク分解
+1. 01_requirements.md — PRD Must → 要件 ID
+2. 02_design.md — API / ジョブ / エラー型
+3. ADR — 主要な設計判断
+
+## 検証（省略しない）
+- [ ] 01_requirements.md をレビュアーに渡せる
+- [ ] 未決は tasks/todo.md「リスク」に列挙
+
+## 参照
+- docs/prd/&lt;slug&gt;.md
+- .cursor/rules/10-domain-rules.mdc</code></pre></section>
+<h3 id="cat-ai-doc"><a class="toclink" href="#cat-ai-doc">本リポジトリ正本（AI_Doc）</a></h3>
+<section class="rule-sample" id="sample-agent-workflow-orchestration-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-agent-workflow-orchestration-mdc">agent-workflow-orchestration.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/agent-workflow-orchestration.mdc</code></dd><dt>目的</dt><dd>AI_Doc 用。Plan・サブエージェント・検証・tasks 記録の運用正本。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: エージェント運用（Plan・調査の任せ方・検証・タスク記録）
+alwaysApply: true
+---
+
+# エージェント運用オーケストレーション
+
+`index.html`（Playbook Hub）・`guide-ops.html#18-orchestration`・`tasks/todo.md` / `tasks/lessons.md` と整合させる。HTML サイト編集時は `html-doc-site.mdc` も併用する。
+
+## 1. まず Plan モードで始める
+
+- **複雑な作業**（手順が3つ以上、または設計の判断が必要）では Plan モード（同じような計画の段階）で始める。
+- 方針がずれたら無理に続けず、**すぐ計画をやり直す**。
+- Plan には実装だけでなく**確認ステップ**（テスト・本番 HEAD・リンク確認など）まで含める。
+- 曖昧さを減らすため、**先に詳細な仕様・完了条件**を書く。
+- Plan の置き場は状況で選ぶ — **チャット Plan モード** / `.cursor/plans/` / `tasks/todo.md`（詳細: `guide-ops.html#18-plan-patterns`）。
+
+## 2. 調査は別の AI に任せる
+
+正本の詳細・シナリオ: `guide-ops.html#18-2-subagents` / `#18-multiagent`
+
+- メインの会話を散らかさないよう、**別の AI 担当（Task ツール等）を積極的に使う**。
+- 調査・探索・並列分析は別の AI 担当に任せる。
+- 複雑な問題は、担当を増やして切り分ける。
+- **1 担当 = 1 タスク**で焦点を絞る。
+
+### 任せる場面（メインがやらない）
+
+- コードベースの広い調査・「どこにある？」・並列分析
+- 複数ディレクトリにまたがる ripgrep / 探索（メインに長いログを流さない）
+- 執筆・実装の**前段**の調査だけ（結果を構造化して返す）
+
+### 任せない場面（メインで続ける）
+
+- 同一機能の反復デバッグ（直前の実装文脈が必要）
+- 特定 1〜2 ファイルの読み取り・小さな修正
+- ユーザーが指定したファイルを `@` してすぐ触る作業
+
+### 委譲の約束（データ契約）
+
+- プロンプトに **スコープ**（例: `src/domain/` のみ）と **返却形式** を書く
+- メインに戻すのは**構造化結果だけ**（全文ダンプ・長い grep 出力を貼らない）
+- 例: ファイルパス一覧、`{ &quot;paths&quot;: [...], &quot;summary&quot;: &quot;...&quot; }`、表形式の早見表
+- コードベースを総 `@` しない。自然言語で領域を指定し、必要なら 1 ファイルだけ `@`
+
+### 協調パターン（段階的に増やす）
+
+| パターン | 向く場面 | 約束 |
+|----------|----------|------|
+| 単発調査 | 呼び出し元洗い出し等 | Task に grep 調査だけ任せ、パス一覧のみ返却 |
+| パイプライン | 調査 → 執筆・設計 doc | 受け渡しスキーマを先に固定（調査 JSON → 執筆） |
+| ファンアウト | 独立アイテムの並列 | 集約ロジックを先に定義。最初は 2 体で固めてから増やす |
+
+### マルチエージェント時のチェック
+
+- [ ] ゴール・サブタスク・並列可否を Plan（チャット or `tasks/todo.md`）に書いた
+- [ ] 各担当に役割・ツール・構造化出力を割り当てた
+- [ ] 失敗時フォールバック（再調査・メインへ戻す条件）を 1 行でも書いた
+- [ ] 汎用担当だらけ・出力形式未標準・並列の早まり・トークン肥大を避ける
+
+## 3. ミスから学ぶ仕組み
+
+- ユーザーからの**修正・指摘のたび**に `tasks/lessons.md` へパターンを追記する。
+- 同じミスを防ぐルール（`.cursor/rules/` 等）を、再発防止として書く。
+- ミス率が下がるまで lessons を磨き続ける。
+- **セッション開始時**に、関連プロジェクトの `tasks/lessons.md` を読む。
+
+## 4. 完了前の確認
+
+- **テスト等で動いたことを示すまで完了報告しない**（テスト・curl・ログ・再現手順のいずれか）。
+- **HTML サイト（`*.html`）を更新したとき** — `html-doc-site.mdc` に従い、**許可なく** `vercel deploy --prod --yes` → **1c. 本番 HEAD 確認**まで行ってから完了報告（2026-05-31 プロジェクト方針）。
+- 該当時は main ブランチとの**動きの違い**を確認する。
+- 「シニアエンジニアなら承認するか」を自問する。
+- テスト実行・ログ確認・正しさの実演を行う。
+
+## 5. 簡潔さへのこだわり（バランス）
+
+- **複雑な変更**では一度止まり、「もっと簡単な方法はないか」を検討する。
+- 場当たり修正に感じたら、「今の知識で簡潔に実装し直す」。
+- **単純で明白な修正**には過剰設計しない。
+- 提出前に自分の成果物を疑う。
+
+## 6. 自律的なバグ修正
+
+- バグ報告を受けたら、**手取り足取りせず修正**する。
+- ログ・エラー・失敗テストを示し、そこから解決する。
+- ユーザーに**別画面や別作業への切替を求めない**。
+- 失敗 CI があれば、指示待ちせず調査・修正する（リポジトリの git 操作制限はユーザー指示に従う）。
+
+## タスク管理
+
+1. **まず Plan を書く** — チャット Plan モード可。チーム追跡は `tasks/todo.md` にチェック可能な項目で書く。
+2. **Plan を確認してもらう** — 実装前にユーザーと方針を合わせる（要確認操作は明示的許可を待つ）。
+3. **進捗を更新する** — 進めながら項目を完了にする。
+4. **変更内容を伝える** — 各ステップで変更の概要を伝える。**編集したファイルはディレクトリツリーで位置を示す**（下記「ファイル編集の説明」）。
+5. **結果を記録する** — `tasks/todo.md` にレビュー・結果セクションを残す。
+6. **lessons に残す** — 修正後に `tasks/lessons.md` を更新する。
+
+## 基本原則
+
+- **Simplicity First** — 変更は可能な限り単純に。影響するコードは最小限。
+- **No Laziness** — 根本原因を探る。暫定修正で済ませない。シニア開発者の基準で仕上げる。
+- **Minimal Impact** — 必要な箇所だけ触る。無関係なリファクタやついで修正を入れない。
+
+## ファイル編集の説明（必須）
+
+ファイルを編集・追加した報告では、**変更ファイルの位置が分かるディレクトリツリー**を必ず入れる。
+
+- ツリーは **今回触ったパスだけ** でよい（全リポジトリを羅列しない）
+- 変更ファイル名の横に **1 行で役割** を書く（例: `# CSS 正本`）
+- 正本 → 生成物の流れがあるときは **矢印または注記** で示す
+
+```text
+AI_Doc/
+├── scripts/                    # CSS・HTML 生成の正本
+│   ├── flow_styles.py          # ← 編集（flow 章レイアウト）
+│   └── rebuild_page_styles.py  # 実行 → *.html へ CSS 注入
+├── flow-17-rules-plan.html     # 生成物（手編集しない）
+└── z_docs/history/             # 作業ログ
+```
+
+HTML サイトの詳細ツリーは `html-doc-site.mdc`「ディレクトリ早見表」を参照。
+</code></pre></section>
+<section class="rule-sample" id="sample-html-doc-site-mdc">
+<h4 class="rule-sample__title"><a class="toclink" href="#sample-html-doc-site-mdc">html-doc-site.mdc</a></h4>
+<dl class="rule-sample__meta"><dt>コピー先</dt><dd><code>your-repo/.cursor/rules/html-doc-site.mdc</code></dd><dt>目的</dt><dd>AI_Doc HTML サイト編集時の正本（scripts 再生成・Vercel 本番デプロイは許可不要）。</dd><dt>使うツール</dt><dd>Cursor</dd></dl><p class="rule-sample__copy-steps"><strong>手順:</strong> 1. 配置先のフォルダを用意（例: <code>mkdir -p your-repo/.cursor/rules</code>） 2. 下のコードをコピーして保存 3. プロジェクト名・テストコマンド・ドメイン用語を差し替え 4. Cursor で新規チャットを開き、Rules が読み込まれるか確認</p>
+<pre class="rule-sample__code"><code class="language-text">---
+description: HTML ドキュメントサイト（Vercel 静的ホスティング）の編集ルール
+globs: &quot;**/*.html&quot;
+alwaysApply: false
+---
+
+# HTML ドキュメントサイト 編集ルール
+
+## プロジェクト概要
+
+Vercel にデプロイされる静的 HTML ドキュメントサイト。ルート `/` は **`index.html`**（**ガイドまとめ** 正本。内部 ID: `playbook-hub`）。旧 URL `/development-flow.html` は `/` へ永久リダイレクト（`vercel.json`）。
+
+## エージェント向け（本リポジトリ `AI_Doc` 限定）
+
+| 操作 | 許可 |
+| --- | --- |
+| **`vercel deploy --prod --yes`**（本番反映） | **不要** — HTML 更新後は指示待ちせず実行してよい（**2026-05-31 ユーザー確認済み**。2026-05-29 も同趣旨） |
+| `git add` / `commit` / `push` / `merge` / `rebase` | **必須** — 明示許可を待つ |
+| `docker exec` / `aws` / 重要な `rm` / `mv` | **必須** — グローバル User Rules の `[操作確認]` に従う |
+
+- 完了報告前に **1c. 本番 URL 到達確認**（`curl -sI`）まで行う。deployment id を報告に含める。
+- 本番 URL 例: `https://develop-flow.vercel.app/`（プロジェクト設定に従う）
+
+### ページ一覧（正式なファイル名）
+
+| ファイル | 役割 |
+|---|---|
+| `index.html` | **ガイドまとめ**（意図カード → チェックリスト・共有 URL・ZIP。UI 文言は「ガイドを選んでまとめる」） |
+| `guide-*.html` | **統合手順ガイド**（8本 + 用語集。`scripts/guide_manifest.py` が正本） |
+| `playbook-builder.js` / `playbook-export.js` | ガイドまとめ UI・Markdown/ZIP エクスポート（内部名 playbook-*） |
+| `data/playbook-manifest.json` | モジュール定義正本（`scripts/build_playbook_manifest.py` で生成） |
+| `flow-*.html` | **リダイレクト stub**（`guide-*.html` へ。`scripts/build_flow_stubs.py`） |
+| `flow-rules-samples.html` | ルールサンプル（コピー元カタログ） |
+| `development-flow.html` | 旧 URL 用リダイレクト（`/ ` へ転送） |
+| `development-flow-infra.html` | **統合済み**（内容は `#11-gitignore` に取り込み、リンクは廃止。ファイル自体はユーザー指示で残存） |
+| `ai-dev-reference.html` | 旧統合 Wiki からの**移行索引**（`memo-keywords.html` へ 301。ファイルはリポジトリに無し） |
+| `ai-dev-reference-compact.html` | 統合済み（`/#21-wiki` へリダイレクト。ファイルはリポジトリに無し） |
+| `rule-generator.html` | **廃止**（`/flow-4-phase1.html` へ 301。ファイル削除済み） |
+| `adr-generator.html` | ADR 生成ツール |
+| `lambda-api-guide.html` | Lambda API 設計ガイド（**サイドバーは `memo-cloud.html` 配下**。Hub ツールカード・本文内リンクから到達） |
+| `memo-index.html` | **廃止**（301 → `memo-ai-tools.html`。旧ブックマーク用 stub） |
+| `memo-ai-tools.html` | メモ — AIツール |
+| `memo-ai-reference-rag.html` | メモ — RAG・ベクトルDB |
+| `memo-ai-reference-tools.html` | メモ — Tool Use・MCP |
+| `memo-ai-reference.html` | 旧 URL リダイレクト（→ RAG ページ） |
+| `memo-dev-method.html` | メモ — 開発手法 |
+| `memo-stack.html` | メモ — 開発スタック（旧 flow-12-stack） |
+| `memo-cloud.html` | メモ — クラウド |
+| `memo-keywords.html` | メモ — キーワード |
+| `ai-news.html` | AI ニュースダッシュボード（公式サイト・changelog 等への導線） |
+
+### エージェント運用（Cursor ルール・tasks）
+
+| パス | 役割 |
+|---|---|
+| `.cursor/rules/agent-workflow-orchestration.mdc` | Plan・サブエージェント・検証・タスク記録（`alwaysApply: true`） |
+| `tasks/todo.md` | 計画・進捗テンプレ |
+| `tasks/lessons.md` | 指摘・修正パターンの蓄積 |
+| `guide-ops.html#18-orchestration` | エージェント運用（Web 正本） |
+| `index.html#memo-hub` | メモ hub（index 内アンカー → `memo-ai-tools.html`） |
+
+## ディレクトリ早見表
+
+ファイル編集の説明では、触ったパスをこのツリーから抜粋して示す（全体コピー不要）。
+
+```text
+AI_Doc/                          # リポジトリルート（Vercel 配信）
+├── index.html                   # ガイドまとめ（#playbook-hub）
+├── playbook-builder.js          # ガイドまとめ UI
+├── playbook-export.js           # エクスポート・共有 URL
+├── data/playbook-manifest.json  # モジュール定義（生成物）
+├── vercel.json                  # リダイレクト・配信設定
+├── .vercelignore                # 配信除外（scripts/ z_docs/ 等）
+│
+├── guides/                      # 物理配置（公開 URL は /guide-*.html のまま）
+│   ├── guide-*.html             # 統合手順ガイド
+│   └── flow-rules-samples.html  # 設定サンプル（現役ページ）
+├── memos/                       # 物理配置（公開 URL は /memo-*.html 等のまま）
+│   ├── memo-*.html              # メモページ（生成物）
+│   ├── lambda-api-guide.html
+│   └── vercel-beginner-guide.html
+├── tools/                       # 物理配置（Vercel rewrite で root URL 維持）
+│   ├── ai-news.html             # AI ニュース（生成物）
+│   └── adr-generator.html       # ADR ツール（個別 HTML）
+├── legacy/                      # 旧 URL stub（原則 vercel.json の 301 が優先）
+│   ├── flow-*.html              # 旧章リダイレクト stub
+│   └── development-flow-infra.html
+│
+├── scripts/                     # ★ 正本（編集はここ → 再生成）
+│   ├── playbook_catalog.py      # Playbook Intent/Module SSOT
+│   ├── build_playbook_manifest.py
+│   ├── build_playbook_hub.py
+│   ├── guide_manifest.py        # サイドバー IA・リダイレクト map
+│   ├── site_paths.py            # 公開ファイル名 → 物理パス
+│   ├── consolidate_guides.py    # flow → guide 統合
+│   ├── build_flow_stubs.py
+│   ├── build_vercel_redirects.py
+│   ├── flow_chapters.py         # 旧章メタ（stub 生成用）
+│   ├── site_shell.py            # シェル CSS（sidebar / main-area）
+│   ├── cursor_blog_theme.py     # Cursor blog 風トークン（背景・プロース）
+│   ├── github_primer_css.py     # プロース（theme へ委譲）
+│   ├── flow_styles.py           # flow 章 CSS
+│   ├── content_design.py        # info-panel / cite-example 等
+│   ├── memo_styles.py
+│   ├── ai_news_styles.py
+│   ├── github_primer_css.py     # markdown-body トークン
+│   ├── rebuild_page_styles.py   # *.html の &lt;style&gt; 再生成
+│   ├── build_sidebar_toc.py     # サイドバー TOC 注入
+│   ├── inject_site_shell.py     # page-shell ラップ
+│   └── inject_related_links.py  # 関連ページリンク
+│
+├── .cursor/
+│   ├── rules/
+│   │   ├── html-doc-site.mdc        # 本ルール
+│   │   ├── site-style-guide.mdc     # スタイルガイド（色・字・余白・IA）
+│   │   ├── memo-pages-design.mdc    # 開発メモ UI 指針
+│   │   └── agent-workflow-orchestration.mdc
+│   └── commands/                    # /plan, /review 等（16 件。flow-17 参照）
+├── tasks/
+│   ├── todo.md
+│   └── lessons.md
+└── z_docs/history/              # 作業ログ（yymmdd-hhMM.md）
+```
+
+**正本 → 生成** の典型フロー:
+
+1. `scripts/*.py` を編集
+2. `python3 scripts/rebuild_page_styles.py`（必要なら `build_sidebar_toc.py` / `inject_site_shell.py`）
+3. `vercel deploy --prod --yes`（HTML 更新時は許可待ち不要）
+
+**guide-rules.html / guide-ops.html** は `scripts/fragments/` + `patch_guide_*.py` が正本。`consolidate_guides.py` は flow stub から再統合しない（SSOT 保護）。`flow-*.html` リダイレクトは `build_flow_stubs.py` のみ更新。
+
+## スタイルガイド（タイポ・カラー・余白・情報設計）
+
+**正本ルール**: `.cursor/rules/site-style-guide.mdc`（CSS 編集・HTML 執筆時は必ず併読）。
+
+- トークン・見出しスケール: `scripts/cursor_blog_theme.py`
+- パネル・手順: `scripts/content_design.py`
+- シェル・サイドバー: `scripts/site_shell.py`
+- 変更後は `rebuild_page_styles.py` → `audit_site_layout.py`
+
+## サイドバー・ナビの現在地表示
+
+- 正本: `scripts/site_shell.py`（`.sidebar .toc a[aria-current=&quot;page&quot;]`）
+- **現在地はグレー背景（`#ebeae5`）+ 太字** のみ。`box-shadow: inset 2px 0 0 var(--link)` など**左のアクセント線（赤括弧風）は使わない**。
+
+## 開発メモ（memo-*）デザイン
+
+**詳細ルール**: `.cursor/rules/memo-pages-design.mdc`（memo 編集時は必ず併読）。
+
+- CSS 正本は **`scripts/memo_styles.py`**。HTML にスタイルを直書きしない。
+- 全 memo ページに **`.memo-nav` + `.memo-page-head` + `.memo-content`**（リファレンスは `.memo-body`）を維持する。
+- **`memo-index.html` ハブ UI は廃止**。サイドバーはカテゴリ直リンクのみ。旧 URL は `vercel.json` で `memo-ai-tools.html` へ 301。
+- 変更後は `build_memo_index.py`（hub のみ）→ `rebuild_page_styles.py` → 必要なら `build_sidebar_toc.py` → `audit_site_layout.py`。
+
+## 編集内容チェック
+- 更新を行った場合は **NEW マーク**を該当するメニュー項目に追加する。以前ついていたものは **必ず削除**する（同時に複数章へ付けない）。
+- コンテンツの並び替え、挿入を行った場合は、メニューとコンテンツの番号を振り直す。
+- コンテンツの追加編集を行った場合は、メニューとコンテンツのレイアウトが崩れないように調整する
+
+### NEW マーク運用（`index.html`）
+
+| 場所 | マークアップ | 管理方法 |
+|---|---|---|
+| サイドバー TOC（h2 / h3） | リンクテキスト直後に `&lt;span class=&quot;toc-badge-new&quot; aria-label=&quot;新規・更新&quot;&gt;NEW&lt;/span&gt;`（**`&lt;a&gt;` の内側**） | `scripts/build_sidebar_toc.py` の `TOC_NEW_IDS` に見出し `id` を列挙し、`python3 scripts/build_sidebar_toc.py` を実行 |
+| ヘッダー `page-header-tools` の外部 HTML リンク | `&lt;span class=&quot;badge badge-new&quot;&gt;NEW&lt;/span&gt;`（例: `AIニュース`） | `scripts/site_shell.py` の `render_header` を更新し `inject_site_shell.py` を実行 |
+
+手順（コンテンツ更新のたび）:
+
+1. 前回の `TOC_NEW_IDS` を空にするか、今回触った `id` だけに差し替える。
+2. 章の並べ替え・目次構造変更・大きな追記があった **h2 / h3 の `id`** を `TOC_NEW_IDS` に追加する。
+3. `python3 scripts/build_sidebar_toc.py` でサイドバーを再生成する。
+4. ヘッダー外部リンクを更新した場合は `page-header-tools` にも NEW を付ける。
+5. デプロイ後、本番 HTML に `toc-badge-new` が含まれることを確認する。
+
+**注意**: 本文 Wiki 内の `badge badge-new`（製品情報用）と混同しない。目次用は `toc-badge-new` のみ。
+
+## デプロイ対象（Vercel）
+
+- ルート `/` は **`index.html`** が配信される。**他の `*.html` も静的ファイルとしてそのまま配信される**。
+- **`.vercelignore` に載せた `*.html` は本番で 404 になる**。ローカルにファイルがあっても、配信除外されていればリンク切れになる。
+- ヘッダー・本文・相互リンクから参照する HTML は **必ず `.vercelignore` に含めない**。除外してよいのは `z_docs/`・`scripts/`・`.claude/` など配信不要なディレクトリのみ。
+- 新規 HTML を追加したら、**リンク元ページと `.vercelignore` の両方**を更新する。
+
+## 本番デプロイ
+
+- HTML を編集して本番反映が必要なときは、**ユーザーの明示許可を待たず** `vercel deploy --prod --yes` を実行する（上記「エージェント向け」表。**2026-05-31 ユーザー確認済み** — 本プロジェクトではデプロイ確認は不要）。
+- **git add / commit / push** は従来どおりユーザー許可が必要（本節の対象外）。
+- デプロイ後は下記 **1c. 本番 URL 到達確認** を必ず行い、完了報告に deployment id と HEAD 結果を含める。
+- ユーザーが「デプロイしないで」と明示したセッションのみ例外（その指示が優先）。
+
+## 更新後チェック（必須）
+
+HTML / CSS 正本を編集したら、**変更種別に応じた最小セット**を実行してから完了報告する。
+
+### 変更種別 → 最小チェック
+
+| 種別 | 例 | 必須コマンド / 確認 |
+| --- | --- | --- |
+| **A. CSS 正本のみ** | `cursor_blog_theme.py`, `flow_styles.py` 等 | `rebuild_page_styles.py` → `audit_site_layout.py` → `audit_ui.py` |
+| **B. HTML 本文のみ（1 章）** | `flow-*.html` 本文 | 当該ファイルの内部リンク `rg` → 代表 URL 本番 HEAD（デプロイ時） |
+| **C. シェル / サイドバー** | `site_shell.py`, `build_sidebar_toc.py` | A + `build_sidebar_toc.py`（inject 込み）→ 全 HTML リンク走査 |
+| **D. 新規 HTML 追加** | 新 `*.html` | C + `.vercelignore` 突合 → リンク元更新 → 本番 HEAD 全 URL |
+| **E. リダイレクト stub のみ** | `development-flow-infra.html` 等 | `vercel.json` に 301 あり → stub は §8 監査例外（shell 不要） |
+
+**共通（HTML を本番反映するとき）**: 下記 1c 本番 HEAD 確認。デプロイは `html-doc-site.mdc`「本番デプロイ」に従う。
+
+### 1. リンク切れチェック（リポジトリ内）
+
+```bash
+# 全 HTML の内部リンク（href=&quot;*.html&quot; / href=&quot;#...&quot;）を走査
+rg -n &#x27;href=&quot;[^&quot;]*&quot;&#x27; *.html
+```
+
+確認項目:
+- `href=&quot;&lt;file&gt;.html&quot;` の参照先ファイルが実在するか
+- `href=&quot;&lt;file&gt;.html#&lt;id&gt;&quot;` のアンカーが参照先 HTML 内に `id=&quot;&lt;id&gt;&quot;` として存在するか、または参照先が SPA なら `page-&lt;id&gt;` + `show()` の hash 名と一致するか
+- `href=&quot;#&lt;id&gt;&quot;` のページ内アンカーが同一ファイル内に `id=&quot;&lt;id&gt;&quot;` または `id=&quot;page-&lt;id&gt;&quot;`（hash routing）として存在するか
+- `ai-dev-reference-compact.html#&lt;hash&gt;` は `show()` が `page-&lt;hash&gt;` を表示する。外部からの直リンク用に `id=&quot;&lt;hash&gt;&quot;` も併設すること
+- **compact / reference のナビ・カードは `href=&quot;#&quot;` 禁止**。`href=&quot;#&lt;hash&gt;&quot;` と `onclick=&quot;show(&#x27;...&#x27;)&quot;` を併用する（JS 無効時・右クリック「リンクをコピー」・新規タブでも URL が有効になる）
+
+### 1b. 配信対象チェック（`.vercelignore`）
+
+```bash
+# 他ページから参照されている HTML が ignore されていないか
+rg -o &#x27;href=&quot;[a-zA-Z0-9_.-]+\.html&#x27; *.html | sort -u
+cat .vercelignore
+```
+
+- 上記で列挙された各 `*.html` が `.vercelignore` に**一行も無い**こと
+- 除外する意図がある場合は、**リンク元をすべて削除または差し替え**てから完了報告しない
+
+### 1c. 本番 URL 到達確認（デプロイ後・必須）
+
+デプロイ後、**リンクとして使っている全 HTML** に対して HTTP 200 を確認する（404 はリンク切れと同義）。
+
+```bash
+BASE=&quot;https://develop-flow.vercel.app&quot;
+for f in development-flow.html development-flow-infra.html \
+  ai-dev-reference-compact.html ai-dev-reference.html \
+  adr-generator.html ai-news.html; do
+  code=$(curl -sI &quot;$BASE/$f&quot; | awk &#x27;/^HTTP/{print $2; exit}&#x27;)
+  echo &quot;$f -&gt; $code&quot;
+done
+# 代表アンカー（compact PRD）
+curl -sI &quot;$BASE/ai-dev-reference-compact.html#prd&quot; | awk &#x27;/^HTTP/{print &quot;compact#prd page:&quot;, $2; exit}&#x27;
+```
+
+- いずれかが `404` なら **デプロイ設定（`.vercelignore`）を疑う**。id の有無を直す前に配信されているか切り分ける。
+- 本番確認なしで「リンク修正済み」と報告しない。
+
+### 2. ヘッダー・ナビゲーション整合性
+
+各ページのヘッダー/ナビ領域のリンクが**他のページと矛盾しない**ことを確認する。
+
+### 3. ヘッダー固定表示
+
+`development-flow.html` / `development-flow-infra.html` の `.page-header` は **`position: sticky; top: 0`** で固定表示する。サイドバーは `top: var(--page-header-h)` でヘッダー直下に揃える。アンカージャンプ用に `html { scroll-padding-top: var(--page-header-h); }` を維持する。
+
+### 4. 体裁レビュー
+
+- 見出しの階層が正しいか（h1 → h2 → h3 の順序）
+- テーブルの列数が揃っているか
+- 開きタグ・閉じタグの対応が取れているか
+- インデントが周囲のコードと統一されているか
+
+- ラベルは **18 文字以内**（`build_sidebar_toc.py` `MAX_TOP`）。超える場合は `flow_chapters.nav_label` を短くするか **`H2_SHORT`**（`eid` → 短縮ラベル）に登録。truncate（`…`）は最終手段（`site-style-guide.mdc` §4.3）
+
+## 監査例外・リダイレクト stub
+
+正本: `scripts/audit_constants.py` + `site-style-guide.mdc` §8。
+
+| ファイル | 扱い |
+| --- | --- |
+| `development-flow-infra.html` | 301 → `flow-11-repo.html#11-gitignore`（統合済み本文） |
+| `flow-12-stack.html` | 301 → `memo-stack.html` |
+| `memo-index.html` | 301 → `memo-ai-tools.html` |
+| `memo-ai-reference.html` | 301 → `memo-ai-reference-rag.html` |
+| `adr-generator.html`, `ai-dev-reference.html`, `ai-news.html` | 専用 UI（標準 layout 監査対象外） |
+
+## 編集時の禁止事項
+
+- **章番号をナビ/ヘッダーのリンクテキストに露出させない**（例: ✕「第11章」「17. ルール×Plan」→ ○「ルール×Plan」「リポジトリ構成」）。**サイドバー最上位**は数値プレフィックスを付けない。**本文 `h2` の表示番号**は読み順に合わせる（`2` の次は `3` ルール×Plan、`4` エージェント運用、`5` 全体フロー…）。**`id` は互換のため変更しない**（`#17-tdd-plan` 等）。`toc-sub` は `13.1` のように親章の新番号に合わせる
+- **メニュー名・リンク名は 18 文字以内**（全角・半角とも 1 文字として数える）
+- **フェーズ表記**: ナビ/リンクでは `フェーズN` ではなく **`PhaseN`**（例: `5. Phase1 Plan`）
+- **本フローの中心**: AI **ルール・ガイドライン・Skills・docs** を優先。TDD はチーム採用時の任意検証手段として Phase3〜4 に記載
+- **補助巻表記**: 旧ルール。現在は `development-flow-infra.html` を本体に統合済み。新しい「補助巻」を作る場合はこの表記方針（`〜メモ`）を踏襲する
+- **ページ間リンクの href を変更するときは、リンク元とリンク先の両方を確認する**。片方だけ変えない
+- **id 属性を変更・削除するときは、その id を参照している全ページを検索してから行う**
+- **id の永久固定（互換）**: 外部ブックマーク用に `id` は原則変更しない（例: `#17-tdd-plan`）。章番号の表示だけ変える。**リネームが必要なとき**は (1) 旧 id を残したまま新 id を追加、または (2) `vercel.json` / stub HTML で旧 URL を 301、(3) 本文に「旧アンカー `#foo` → `#bar`」を 1 行記載
+- **サイドバー TOC は 2 階層まで**（`h2` 最上位 + `h3` を `ul.toc-sub`）。例外: `3. 全体フロー` 配下 Phase0〜6 の 1 段サブ（`toc-sub`）
+
+## ヘッダーリンクのリンク切れ対応
+
+ヘッダー（`page-header-tools` / `topbar`）に配置されたリンクにリンク切れがある場合は、**リンク元を削除するのではなく、リンク先ページ側を修正する**（アンカー `id` の追加、ファイル名の修正など）。ヘッダーリンクはサイト全体のナビゲーション導線であり、リンク元を消すと導線が壊れる
+
+## 過去の指摘事項（再発防止）
+
+&gt; ユーザーから指摘された問題をここに追記し、同じミスを繰り返さない。
+
+| 日付 | 指摘内容 | 対処 |
+|---|---|---|
+| 2026-05-17 | ヘッダーに「第11章」が直接出ていて不自然 | ナビリンクから章番号を除去。章番号はナビに出さない |
+| 2026-05-17 | リンク切れ 3 件（`#値オブジェクト-value-object`, `#protocol--interface`, `#adr-architecture-decision-records`） | href を実際の id に修正。更新後は必ずリンク切れチェック |
+| 2026-05-18 | ヘッダーに「インフラ詳細」リンクが不要 | ヘッダーから削除、サイドバーのみに残す |
+| 2026-05-18 | サイドバー TOC のサブ階層が深すぎる | 原則トップレベルのみ。**例外**: `3. 全体フロー` 配下に Phase0〜6 の 1 段サブメニュー（`toc-sub`） |
+| 2026-05-18 | `compact.html#prd` に `id=&quot;prd&quot;` が無い | リンク先に `id=&quot;prd&quot;` を追加。ヘッダーリンク切れはリンク先側を修正する |
+| 2026-05-18 | `&lt;a&gt;` タグのネスト（HTML違反） | toclink 内の別 `&lt;a&gt;` を外側に分離 |
+| 2026-05-18 | `ClaudeCode`（スペースなし）表記の混在 | `Claude Code` に統一（12箇所） |
+| 2026-05-18 | 本番で `ai-dev-reference-compact.html` が 404（ヘッダー「Wiki」「PRDフロー」が全滅） | **原因**: `.vercelignore` で Wiki 2 ファイルを配信除外していた。ローカル id チェックだけでは検出不可。**対処**: ignore から Wiki HTML を削除。デプロイ後 `curl -sI` で全リンク先 HTML を 200 確認。ルールに 1b・1c を追加 |
+| 2026-05-18 | `development-flow-infra.html` 11.6 の本文が古い（z_docs ルール更新を反映していない） | `documentation-z-docs.mdc` 統合後の前提（`z_docs/history/` 必須・`docs/` 新規追加はユーザー明示時のみ）に書き換え |
+| 2026-05-18 | infra ページが分離されたままだと参照が分散する | `development-flow.html` の 11 章に infra 本文 11.1〜11.9 を統合。infra への外部リンク 21 件を内部アンカーに置換。infra ページ自体はユーザー指示で残存（リンク経路なし） |
+| 2026-05-18 | デプロイのたびに許可確認が不要と明示された | `vercel deploy --prod` は許可待ちせず実行可。git 操作のみ従来どおり許可必須。ルールに「本番デプロイ」節を追加 |
+| 2026-05-18 | ch2 直後に 17・18 を置くとサイドバーが `2→17→18→3` と番号が飛ぶ | 配置は読み順のまま、**リンクテキストから章番号を除去**（`ルール×Plan` / `エージェント運用`）。本文 h2 の章番号は維持 |
+| 2026-05-18 | 目次更新後も NEW マークが付かない | ルールに手順が無く `build_sidebar_toc.py` も未対応。**`TOC_NEW_IDS` + 再生成 + ヘッダー手更新**を必須化（上記「NEW マーク運用」） |
+
+## 自己レビュー（2026-05-18・compact 404）
+
+| 見落とし | なぜ起きたか |
+|---|---|
+| 本番 404 | 静的チェックは「ファイルがディスクにあるか」のみ。`.vercelignore` と本番 HEAD を見ていなかった |
+| 「アンカー不足」と誤診しうる | `compact.html#prd` は `page-prd` + JS で動くため、id だけのチェッカーが false positive になり、真因（未デプロイ）が隠れた |
+| ヘッダー導線の破壊 | `development-flow.html` は配信されているが、リンク先 Wiki だけ ignore されており、**リンク元は正常・リンク先だけ 404** というパターン |
+
+**再発防止**: 完了報告前に **(1) `.vercelignore` ↔ 全 `href=&quot;*.html&quot;` の突合** → **(2) `vercel deploy` 後の本番 HEAD** の順で必ず実行する。
+</code></pre></section>
+</div>
+
+    </div>
+    <nav class="flow-pager" aria-label="前後の章"><a href="guide-rules-compare.html#17-compare">← ルール / Skills</a><a href="guide-ops-orchestration.html#18-orchestration" class="flow-pager__next">エージェント運用 →</a></nav>
+  </article>
+  </article>
+  </article>
+  </article>
+  </article>
+  </article>
+  </article>
+  </article>
+  </article>
+  </article>
+  </article>
+  </article>
+</div>

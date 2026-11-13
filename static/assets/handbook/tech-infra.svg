@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500" role="img" aria-label="TECH &amp; INFRA">
+  <defs>
+    <linearGradient id="bg04" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1320"/><stop offset="1" stop-color="#10182b"/>
+    </linearGradient>
+    <radialGradient id="g04" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2fd6b8" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3fb6ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="t04" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2fd6b8"/><stop offset="1" stop-color="#3fb6ff"/>
+    </linearGradient>
+    <filter id="bl04"><feGaussianBlur stdDeviation="36"/></filter>
+  </defs>
+  <rect width="1200" height="500" fill="url(#bg04)"/>
+  <g filter="url(#bl04)"><circle cx="897" cy="85" r="132" fill="url(#g04)" opacity="0.3"/><circle cx="793" cy="117" r="283" fill="url(#g04)" opacity="0.4"/><circle cx="907" cy="158" r="139" fill="url(#g04)" opacity="0.5"/></g>
+  <g>
+      <rect x="650" y="288" width="320" height="46" rx="8" fill="url(#g04)" fill-opacity="0.3" stroke="#3fb6ff" stroke-width="2.5"/>
+      <circle cx="676" cy="311" r="6" fill="#3fb6ff"/>
+      <rect x="700" y="305" width="180" height="12" rx="6" fill="#2fd6b8" opacity="0.45"/>
+      <rect x="650" y="230" width="320" height="46" rx="8" fill="url(#g04)" fill-opacity="0.22" stroke="#3fb6ff" stroke-width="2.5"/>
+      <circle cx="676" cy="253" r="6" fill="#3fb6ff"/>
+      <rect x="700" y="247" width="180" height="12" rx="6" fill="#2fd6b8" opacity="0.45"/>
+      <rect x="650" y="172" width="320" height="46" rx="8" fill="url(#g04)" fill-opacity="0.15" stroke="#3fb6ff" stroke-width="2.5"/>
+      <circle cx="676" cy="195" r="6" fill="#3fb6ff"/>
+      <rect x="700" y="189" width="180" height="12" rx="6" fill="#2fd6b8" opacity="0.45"/></g>
+  <text x="64" y="80" font-family="ui-monospace,Menlo,monospace" font-size="22" letter-spacing="6" fill="#3fb6ff" opacity="0.95">TECH &amp; INFRA</text>
+  <text x="56" y="456" font-family="-apple-system,Helvetica,sans-serif" font-weight="800" font-size="170" fill="url(#t04)" opacity="0.95">04</text>
+  <rect x="0" y="0" width="1200" height="500" fill="none" stroke="#232b3d" stroke-width="1"/>
+</svg>

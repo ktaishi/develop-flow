@@ -1,0 +1,125 @@
+<!--meta {"title": "Vercel 初心者ガイド", "desc": "", "kind": "flow", "scripts": []} -->
+<div class="flow-page">
+<header class="memo-page-head">
+  <h1>Vercel 初心者ガイド</h1>
+  <p>ゴールは「自分のホームページを URL で公開できる」こと。下の手順はそのための準備と操作。</p>
+</header>
+<div class="memo-content">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>Vercel アカウントと Access Token を先に用意する</li>
+<li>CLI を設定し、手元からデプロイできる状態にする</li>
+<li>番号順に進め、各ステップの完了を確認してから次へ</li>
+</ul>
+<p class="page-brief__nav"><a href="memo-ai-tools.html">↑ メモ目次</a> <a href="memo-cloud.html">← クラウド</a> <a href="lambda-api-guide.html">Lambda API →</a></p>
+</aside>
+
+<section id="goal">
+  <h2 id="s-1">できるようになること</h2>
+  <p>このガイドを終えると、次の<strong>成果</strong>が手に入る（アカウント作成や CLI インストール自体がゴールではない）。</p>
+  <ul>
+    <li>自分で作った <code>index.html</code> を <strong><code>https://〜.vercel.app</code> の URL</strong>で誰でも見られる状態にできる</li>
+    <li><strong>Claude Code</strong> または <strong>Codex</strong> にページを書かせ、ローカル確認のあと<strong>そのまま公開</strong>まで進められる</li>
+    <li>修正したら <code>vercel</code> をもう一度打つだけで<strong>サイトを更新</strong>できる（再アップロードの手作業が不要）</li>
+    <li>試し用 URL で確認してから <code>vercel --prod</code> で<strong>本番 URL</strong>に切り替えられる</li>
+  </ul>
+
+  <h3 id="goal-cli">CLI を使えると何が変わるか</h3>
+  <p>ブラウザの Vercel ダッシュボードだけでも公開はできる。CLI は<strong>ターミナルから同じことをコマンドでやる</strong>ための道具。</p>
+  <table>
+    <thead>
+      <tr><th>やりたいこと</th><th>CLI でできること</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>初めて公開する</td><td><code>vercel</code> → プレビュー URL がターミナルに表示される</td></tr>
+      <tr><td>本番に載せる</td><td><code>vercel --prod</code> → 固定の本番 URL に反映</td></tr>
+      <tr><td>HTML を直したあと更新</td><td>同じフォルダで再度 <code>vercel</code>（ダッシュボードを開かなくてよい）</td></tr>
+      <tr><td>AI に任せる</td><td>Claude Code / Codex がターミナルで <code>vercel</code> を実行できる（人間が画面操作しなくてよい）</td></tr>
+    </tbody>
+  </table>
+  <p>手順の「アカウント」「キー」「CLI インストール」は、この CLI を使えるようにする<strong>準備</strong>。成果は上の URL 公開・更新。</p>
+</section>
+
+<section id="steps">
+  <h2 id="s-2">手順</h2>
+  <p>上の成果を得るまでの<strong>作業順</strong>。1 から順に進める。</p>
+
+  <h3 id="step-1">1. Vercel アカウントを作る</h3>
+  <ol>
+    <li><a href="https://vercel.com/signup" target="_blank" rel="noopener">vercel.com/signup</a> を開く</li>
+    <li><strong>Continue with GitHub</strong> を選ぶ（あとで連携が楽）</li>
+    <li>GitHub で許可 → Vercel のダッシュボードが開けば OK</li>
+  </ol>
+  <figure class="memo-ref-figure guide-figure">
+    <img src="/images/vercel-beginner/01-signup.png" alt="Vercel サインアップ画面。GitHub 等で登録する" width="1280" height="800" loading="lazy">
+    <figcaption>サインアップ画面。「Continue with GitHub」がおすすめ</figcaption>
+  </figure>
+
+  <h3 id="step-2">2. キー（Access Token）を取る</h3>
+  <p>ターミナルから Vercel を操作するときの<strong>パスワード代わり</strong>。ブラウザだけで <code>vercel login</code> するなら、あと回しでもよい。</p>
+  <ol>
+    <li>ダッシュボード右上 → <strong>Settings</strong> → <strong>Tokens</strong>（<a href="https://vercel.com/account/settings/tokens" target="_blank" rel="noopener">直リンク</a>）</li>
+    <li>未ログインならログイン画面になる</li>
+    <li><strong>Create Token</strong> → 名前を付けて表示された文字列をコピー（再表示不可）</li>
+    <li>メモ帳などに保存（Git にコミットしない）</li>
+  </ol>
+  <figure class="memo-ref-figure guide-figure">
+    <img src="/images/vercel-beginner/02-login-tokens.png" alt="トークン画面へ行く前のログイン画面" width="1280" height="800" loading="lazy">
+    <figcaption>トークン設定の前にログインが必要</figcaption>
+  </figure>
+
+  <h3 id="step-3">3. Vercel CLI を設定する</h3>
+  <p>ここまでで「ターミナルから <code>vercel</code> を打てる」状態になる。Node.js が入っている Mac のターミナルで実行。</p>
+  <ol>
+    <li>インストール — <code>npm install -g vercel</code></li>
+    <li>ログイン — <code>vercel login</code>（表示 URL をブラウザで開く）</li>
+    <li>確認 — <code>vercel whoami</code> で自分の名前が出る</li>
+    <li>作業フォルダで紐付け — <code>mkdir -p ~/projects/my-homepage &amp;&amp; cd ~/projects/my-homepage &amp;&amp; vercel link</code>（新規 Project 名はそのまま Enter で可）</li>
+  </ol>
+  <figure class="memo-ref-figure guide-figure">
+    <img src="/images/vercel-beginner/04-cli-terminal.png" alt="vercel login と whoami、デプロイ完了のターミナル出力イメージ" width="900" height="520" loading="lazy">
+    <figcaption>CLI の流れ（表示例）。実際の URL・ユーザー名は環境ごとに異なる</figcaption>
+  </figure>
+
+  <h3 id="step-4">4. Claude Code または Codex でホームページを作る</h3>
+  <ol>
+    <li><code>~/projects/my-homepage</code> で AI を開く（Claude Code: <code>claude</code> / Codex: Cursor 内など）</li>
+    <li>次を貼って依頼する:<br>
+      <code>index.html だけの静的ホームページを作って。タイトルは「私のポートフォリオ」、自己紹介1段落、連絡先リンク1つ。CSSは同ファイル内。画像なし。スマホでも読めるように。</code></li>
+    <li><code>open index.html</code> でローカル表示を確認してから次へ</li>
+  </ol>
+  <figure class="memo-ref-figure guide-figure">
+    <img src="/images/vercel-beginner/05-homepage-preview.png" alt="index.html をブラウザで開いたプレビュー例" width="720" height="480" loading="lazy">
+    <figcaption>できあがりイメージ（AI が生成した例）</figcaption>
+  </figure>
+  <p>設定の詳細: <a href="guide-rules-claude.html#17-claude">Claude Code</a> · <a href="guide-rules-codex.html#17-codex">Codex</a></p>
+
+  <h3 id="step-5">5. Vercel に公開する</h3>
+  <p>ここで初めて「できるようになること」の<strong>URL 公開</strong>が達成される。</p>
+  <ol>
+    <li>フォルダで <code>vercel</code> → ターミナルに出た <code>https://….vercel.app</code> をブラウザで開く</li>
+    <li>問題なければ本番 — <code>vercel --prod</code></li>
+    <li>（任意）GitHub に push して Dashboard から Import すると、以降は push だけで更新できる</li>
+  </ol>
+  <figure class="memo-ref-figure guide-figure">
+    <img src="/images/vercel-beginner/03-new-project.png" alt="Vercel で新規プロジェクトを作る画面" width="1280" height="900" loading="lazy">
+    <figcaption>GitHub 連携する場合の「New Project」画面（ログイン後）</figcaption>
+  </figure>
+</section>
+
+<section id="caution">
+  <h2 id="s-3">注意点</h2>
+  <ul>
+    <li><strong>トークンと API キーは別物</strong> — <code>VERCEL_TOKEN</code> はデプロイ用。OpenAI 等のアプリ用キーは Project の Environment Variables に入れる</li>
+    <li><strong>秘密情報を HTML に書かない</strong> — キーをページ本文や Git に入れない</li>
+    <li><strong>ルートに <code>index.html</code></strong> — これがないと 404 になりやすい</li>
+    <li><strong>別アカウントに上がったとき</strong> — <code>vercel whoami</code> と <code>vercel switch</code> で Team を確認</li>
+    <li><strong>本番デプロイ</strong> — 個人練習なら <code>vercel --prod</code> でよい。チーム運用では確認フローを決める</li>
+    <li><strong>最初は HTML 1 枚で十分</strong> — Next.js は慣れてからで OK</li>
+  </ul>
+  <p>もう少し詳しく: <a href="memo-cloud.html#21-vercel">クラウド比較（Vercel）</a> · <a href="guide-repo-docker-2.html#11-3-host-clis-vercel">CLI 詳細</a></p>
+</section>
+
+</div>
+</div>

@@ -1,0 +1,353 @@
+<!--meta {"title": "メモ — AIツール", "desc": "製品 changelog・モデル ID の参照メモ（検証 2026-06-08 · Fable 5 system prompt 反映）。開発向け選定は セットアップ — AIツール · 3ツール早見。一般業務は下の 一般業務ツール早見 と 安全運用。", "kind": "flow", "scripts": [], "reviewed": "2026-11-13"} -->
+<div class="flow-page">
+<header class="memo-page-head">
+    <h1>AI製品・ツール</h1>
+    
+<aside class="update-note"><b>2026-11 追記:</b> このメモのモデル名・料金は記録時点のもの。OpenAI は GPT-6 系へ移行し、<code>o4-mini</code> は停止済み、GPT-4o / GPT-4.1 系は 2027-01-14 に API 終了。現況は <a href="trends-2026.html#models">2026年11月のトレンド</a> を参照。</aside>
+<p>Claude / OpenAI / コーディングツール / 一般業務ツールの参照メモ。開発向け選定は <a href="guide-setup.html#2-ai-selection">セットアップ — AIツール</a>、一般業務は <a href="#21-general-work-tools">一般業務ツール早見</a>。</p>
+  </header>
+  <div class="memo-content">
+<aside class="page-brief" role="complementary" aria-label="このページのポイント">
+<p class="page-brief__label">このページで押さえること</p>
+<ul class="page-brief__points">
+<li>開発向けの選定はセットアップ章、ここは参照として引く</li>
+<li>ツールごとの強み・最新動向を必要なときだけ確認する</li>
+<li>一般業務ツールは早見表から目的別に当たる</li>
+</ul>
+<p class="page-brief__nav"><a href="memo-ai-tools.html">↑ メモ目次</a> <a href="memo-cloud.html">← クラウド</a> <a href="memo-stack.html">開発スタック →</a></p>
+</aside>
+<p class="wiki-lead">製品 changelog・モデル ID の参照メモ（検証 2026-06-08 · Fable 5 system prompt 反映）。<strong>開発向け選定</strong>は <a href="guide-setup.html#2-ai-selection">セットアップ — AIツール</a> · <a href="guide-rules-tools-intro.html#17-three-tools">3ツール早見</a>。<strong>一般業務</strong>は下の <a href="#21-general-work-tools">一般業務ツール早見</a> と <a href="guide-setup.html#1-general-ai-safety">安全運用</a>。</p>
+
+<h3 id="21-general-work-tools"><a class="toclink" href="#21-general-work-tools">一般業務ツール早見</a></h3>
+<p>用途で1本選ぶ。詳細機能より<strong>入れていい情報・検証方法</strong>を先に決める。機密・個人情報・未公開数値は原則アップロードしない。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>作業</th><th>向くツール</th><th>AIに任せる</th><th>人間が必ずやる</th></tr></thead>
+<tbody>
+<tr><td>調査・情報収集</td><td>Perplexity · Claude Web Search · Gemini</td><td>候補収集・論点整理</td><td>一次情報確認・出典 URL 記録</td></tr>
+<tr><td>長文要約</td><td>Claude.ai · ChatGPT · Gemini</td><td>要点・未確認点の抽出</td><td>数値・固有名詞の照合</td></tr>
+<tr><td>議事録・すり合わせ</td><td>Claude.ai · ChatGPT · Cowork</td><td>決定事項・宿題の整形</td><td>個人情報の匿名化・最終承認</td></tr>
+<tr><td>資料・企画下書き</td><td>Claude.ai · ChatGPT · Cowork</td><td>構成案・下書き</td><td>Must/Won't の確定・承認</td></tr>
+<tr><td>社内資料の読み込み</td><td>NotebookLM · Gemini（Drive連携）</td><td>資料内 Q&amp;A・要約</td><td>アップロード範囲の権限確認</td></tr>
+<tr><td>ナレッジ整理</td><td>Obsidian · NotebookLM · <a href="#21-claude-obsidian">claude-obsidian</a></td><td>テンプレ・リンク・ingest</td><td>正本の置き場・機密の除外 · <a href="#21-obsidian-knowledge">運用の型</a></td></tr>
+<tr><td>定型作業の半自動化</td><td>Cowork · MCP 連携</td><td>ファイル整理・下書き生成</td><td>送信・公開前の人間確認</td></tr>
+</tbody>
+</table>
+</div>
+<h4 id="21-obsidian-knowledge"><a class="toclink" href="#21-obsidian-knowledge">Obsidian ナレッジ（運用の型）</a></h4>
+<p>作業ログ正本は <a href="guide-repo-docs-1.html#11-6-docs-z-docs">03_Operations/history/</a>（MCP）。調査・インプット用は<strong>別 Vault</strong>でも可。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>型</th><th>要点</th><th>出典</th></tr></thead>
+<tbody>
+<tr><td>低摩擦 PKM</td><td>深いフォルダより <strong>frontmatter・テンプレ・内部リンク</strong>。先に書き、構造は後から</td><td><a href="https://x.com/AYi_AInotes/status/2055298488733216887">@AYi / Steph Ango</a></td></tr>
+<tr><td>自動 Wiki 化</td><td><code>.raw/</code> → ingest · <code>/wiki</code> · <code>index.md</code> / <code>hot.md</code></td><td><a href="#21-claude-obsidian">claude-obsidian</a></td></tr>
+<tr><td>MCP 追記</td><td>運用履歴は既存 Vault の <code>NN_*/</code> 階層を維持</td><td><a href="guide-setup.html#2-ai-mcp">MCP セットアップ</a></td></tr>
+</tbody>
+</table>
+</div>
+<h4 id="21-claude-obsidian"><a class="toclink" href="#21-claude-obsidian">claude-obsidian（サンドボックス推奨）</a></h4>
+<p>GitHub: <a href="https://github.com/AgriciDaniel/claude-obsidian">AgriciDaniel/claude-obsidian</a>（MIT）。<code>/save</code> · <code>/autoresearch</code> · ingest で相互リンク付き Wiki を生成。</p>
+<p class="wiki-lead"><strong>注意</strong>: 本番 Vault（<code>00_System/</code>〜<code>99_Archive/</code>）にそのまま入れない。専用 Vault で試す。参考: <a href="https://x.com/obsidianstudio9/status/2045856830191243473">@obsidianstudio9</a>（2026-06）。</p>
+<details class="section-fold">
+<summary>最短セットアップ（サンドボックス Vault）</summary>
+<pre><code class="language-bash">git clone https://github.com/AgriciDaniel/claude-obsidian.git
+cd claude-obsidian &amp;&amp; bash bin/setup-vault.sh
+# Obsidian で開く → Claude Code で /wiki → .raw/ に記事を入れて ingest</code></pre>
+</details>
+<h4 id="21-chat-vs-workflow"><a class="toclink" href="#21-chat-vs-workflow">チャットとワークフロー（4要素）</a></h4>
+<p>チャットは都度の Q&amp;A。ワークフローはトリガーで起動し、ツールで動いて<strong>成果物</strong>を渡す。週2回以上の同じ手順だけ候補にする。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>要素</th><th>意味</th><th>例（一般業務）</th></tr></thead>
+<tbody>
+<tr><td>ROLE</td><td>役割・禁止事項</td><td>「調査メモ担当。出典なしの断定禁止」</td></tr>
+<tr><td>TOOLS</td><td>触っていいもの</td><td>Web · カレンダー（読み取り）· Obsidian MCP</td></tr>
+<tr><td>TRIGGER</td><td>いつ走るか</td><td>平日 7:00 · 新規メール着信</td></tr>
+<tr><td>OUTPUT</td><td>渡す成果物</td><td>1メッセージ · 整形済み下書きファイル</td></tr>
+</tbody>
+</table>
+</div>
+<p>最初の1本: <strong>朝ブリーフィング</strong>（カレンダー + 要返信メール + 業界の1トレンド）。送信・返信は人間。<a href="guide-setup.html#1-general-ai-safety">安全運用</a> · <a href="#21-cowork">Cowork / スケジュール</a>。</p>
+<details class="section-fold">
+<summary>朝ブリーフィング — プロンプト例</summary>
+<pre><code class="language-text">ROLE: 朝ブリーフィング。前置き・雑談なし。
+OUTPUT: 1メッセージ（TODAY / INBOX要返信 / SIGNAL 各2行以内）
+TOOLS: カレンダー・メール読み取り · 公開 Web のみ
+制約: 機密は件数のみ。送信は人間。</code></pre>
+</details>
+<p class="wiki-lead">開発の定期実行（CI digest 等）→ <a href="guide-ops-orchestration.html#18-dev-workflows">開発ワークフロー</a>。参考: <a href="https://x.com/0xchromium/status/2062515355306631467">@0xchromium — Claude workflows</a>（2026-06）。</p>
+<p>開発業務（実装・PR・ルール整備）へ進むときは <a href="guide-workflow.html#dev-lifecycle-ai">開発ライフサイクル × AI</a> · <a href="guide-rules-compare.html#17-compare">Rules / Skills</a> へ。</p>
+
+<!-- patch-loop-trend-2026 -->
+<h4 id="21-loop-engineering"><a class="toclink" href="#21-loop-engineering">Loop engineering（2026-06 トレンド）</a></h4>
+<span id="21-loop-engineering-verify" class="redirect-anchor" aria-hidden="true"></span>
+<p>2026-06、X 上で「都度プロンプト」から「<strong>ループを設計する</strong>」へレバレッジが移った、という整理が広がった。ハーネス（1エージェントの環境）の上に、スケジュール・検証・状態管理を載せる層。以下は要約 — 論旨の正本は各リンク。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>出典（X / 公式）</th><th>要点</th></tr></thead>
+<tbody>
+<tr><td><a href="https://x.com/steipete/status/2063697162748260627">@steipete</a>（2026-06）</td><td>「プロンプトするな。エージェントにプロンプトさせる<strong>ループを設計しろ</strong>」— 拡散の起点の一つ</td></tr>
+<tr><td><a href="https://addyosmani.com/blog/loop-engineering/">Addy Osmani — Loop Engineering</a></td><td>Boris Cherny（Claude Code）も同趣旨。「仕事はループを書くこと」— 5+1 部品は Codex / Claude Code で形が揃った</td></tr>
+<tr><td><a href="https://x.com/reach_vb/status/2063713960495558940">@reach_vb</a></td><td>5 部品 + markdown/Linear の状態管理で足りる、という Codex App 向けチェックリスト</td></tr>
+<tr><td><a href="https://x.com/weswinder/status/2063700289710964906">@weswinder</a></td><td>反論: トークン無制限でない限り、テスト・確認に人間はループ内に要る</td></tr>
+<tr><td><a href="https://x.com/samueljmcd/status/2066524627585634765">@samueljmcd</a></td><td>補正: ループの本体は <strong>verifier</strong>。generator は元から安い — <em>Design the verifier, not the prompt</em></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>よくある時系列整理: <strong>2024</strong> 良いプロンプト → <strong>2025</strong> 並列エージェント → <strong>2026</strong> 発見・実行・検証・反復を回すループ設計。チャットの都度依頼は <a href="#21-chat-vs-workflow">4要素ワークフロー</a> と併用し、週2回以上の手順だけループ候補にする。</p>
+
+<h5>ループの 5+1 部品（ツール横断）</h5>
+<div class="table-wrap">
+<table>
+<thead><tr><th>部品</th><th>役割</th><th>Claude Code</th><th>Codex</th><th>Cursor</th></tr></thead>
+<tbody>
+<tr><td>Automations</td><td>スケジュールで発見・トリアージ</td><td><code>/loop</code> · cron · Hooks · GH Actions</td><td>Automations タブ · <code>/goal</code></td><td>Automations · <code>/loop</code></td></tr>
+<tr><td>Worktrees</td><td>並列エージェントの衝突回避</td><td><code>git worktree</code> · <code>claude -w</code></td><td>スレッドごと worktree</td><td>worktree 並列（<a href="guide-ops-harness.html#18-worktree-parallel">運用</a>）</td></tr>
+<tr><td>Skills</td><td>毎回説明しないプロジェクト知</td><td><code>.claude/skills/</code></td><td><code>.agents/skills/</code></td><td><code>.cursor/skills/</code></td></tr>
+<tr><td>Connectors</td><td>Issue / CI / Slack 等</td><td>MCP · Plugins</td><td>MCP · Connectors</td><td>MCP · Marketplace</td></tr>
+<tr><td>Sub-agents</td><td>実装と検証の分離</td><td>Task · <code>.claude/agents/</code></td><td><code>.codex/agents/</code></td><td>サブエージェント委譲</td></tr>
+<tr><td>State（+1）</td><td>セッション外の進捗</td><td><code>tasks/todo.md</code> · <code>AGENTS.md</code></td><td>markdown · Linear</td><td>Plan · <code>tasks/</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>セッション内の完了条件: Claude Code / Codex の <code>/goal</code>（別モデルが完了判定 — maker–verifier）。大規模は Claude Code <code>ultracode</code> / dynamic workflows（research preview）。</p>
+
+<details class="section-fold">
+<summary>検証ゲート（@samueljmcd 要約）</summary>
+<ul>
+<li><strong>Closed loop</strong> — 手順・評価・停止条件が固定。今日の実用向き</li>
+<li><strong>Inner loop</strong> — 1タスク内のテスト→修正（ReAct）</li>
+<li><strong>Outer loop</strong> — <code>tasks/lessons.md</code> 等に教訓を残す（Reflexion）</li>
+<li>Bun port 事例 — 既存テスト 99.8% でも<strong>本番未投入</strong>。verifier の質が上限</li>
+</ul>
+</details>
+
+<p>実装パック例: <a href="memo-ai-tools.html#21-addy-agent-skills">addyosmani/agent-skills</a>（Define→Ship）· <a href="memo-ai-tools.html#21-gstack">gstack</a>。手順正本: <a href="guide-ops-orchestration.html#18-dev-workflows">開発ワークフロー</a> · <a href="guide-ops-orchestration.html#18-4-verify">完了前検証</a> · <a href="guide-rules-skills-3.html#17-hooks-cursor">Hooks</a>。</p>
+
+<!-- patch-memo-claude-fable5 -->
+<h3 id="21-claude"><a class="toclink" href="#21-claude">Claude 概要</a></h3>
+<p>一次情報: <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Models overview</a> · <a href="https://platform.claude.com/docs/en/release-notes/system-prompts">System prompts（claude.ai）</a> · <a href="https://www.anthropic.com/news">Anthropic News</a></p>
+
+<h4>モデル一覧</h4>
+<p>claude.ai の最上位は <strong>Claude Fable 5</strong>（Claude 5 初・Mythos 級）。API・Claude Code は Opus / Sonnet / Haiku を用途で選ぶ。<code>claude-fable-5</code> と <code>claude-mythos-5</code> は同一基盤 — Mythos は承認組織のみ（<a href="https://www.anthropic.com/news/claude-fable-5-mythos-5">Fable 5 / Mythos 5</a>）。</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>モデル</th><th>API ID（代表）</th><th>特徴</th></tr>
+</thead>
+<tbody>
+<tr><td>Claude Fable 5 <span class="badge badge-new">NEW</span></td><td><code>claude-fable-5</code></td><td>GA 最上位。dual-use 向け追加安全策。知識 cutoff <strong>2026-01</strong>（<a href="https://platform.claude.com/docs/en/release-notes/system-prompts#claude-fable-5">system prompt</a>）</td></tr>
+<tr><td>Claude Opus 4.8</td><td><code>claude-opus-4-8</code></td><td>API・長時間エージェント向け（2026-05-28 GA）。<code>speed: "fast"</code> は research preview</td></tr>
+<tr><td>Claude Sonnet 4.6</td><td><code>claude-sonnet-4-6</code></td><td>バランス型・日常実装・RAG 生成の既定候補</td></tr>
+<tr><td>Claude Haiku 4.5</td><td><code>claude-haiku-4-5-20251001</code></td><td>高速・分類・要約・HyDE など軽量タスク</td></tr>
+</tbody>
+</table>
+</div>
+<details class="section-fold">
+<summary>旧モデル（移行推奨）</summary>
+<div class="table-wrap">
+<table>
+<thead><tr><th>モデル</th><th>API ID</th><th>状態</th></tr></thead>
+<tbody>
+<tr><td>Claude Opus 4.7</td><td><code>claude-opus-4-7</code></td><td>Opus 4.8 / Fable 5 へ移行推奨</td></tr>
+</tbody>
+</table>
+</div>
+</details>
+
+<h4 id="21-claude-web"><a class="toclink" href="#21-claude-web">Web / モバイル / デスクトップ</a></h4>
+<ul>
+<li><a href="https://claude.ai">claude.ai</a> — ブラウザ・iOS・Android（会話中にモデル切替可）</li>
+<li><strong>Cowork</strong> — 非開発者向けデスクトップエージェント。モバイルからリモート操作可</li>
+<li><strong>Claude Code</strong> — CLI・デスクトップ・モバイル（開発向け。<a href="#21-claudecode">補足</a>）</li>
+<li><strong>Claude in Chrome</strong> · <strong>Excel</strong> · <strong>PowerPoint</strong> — ブラウジング / 表計算 / スライド（beta）。Cowork からツールとして利用可</li>
+</ul>
+<p>設定で切替: Web Search · Deep Research · Code Execution / File Creation · Artifacts · 過去チャット参照 · チャット履歴からのメモリ · user preferences（文体・機能）。</p>
+
+<h4 id="21-claude-prompt-style"><a class="toclink" href="#21-claude-prompt-style">claude.ai system prompt から読み取れること</a></h4>
+<p>API の system には載らないが、<a href="https://platform.claude.com/docs/en/release-notes/system-prompts#claude-fable-5">claude.ai 向け system prompt</a> は Rules・依頼文の書き方の参考になる。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>領域</th><th>公式の傾向</th><th>開発・運用への示唆</th></tr></thead>
+<tbody>
+<tr><td>プロンプト</td><td>明確・詳細、正負例、段階推論、XML タグ、長さ・形式の指定</td><td>Plan・Skills に具体例と Done when を書く（<a href="guide-rules-prompt.html#17-prompt">プロンプト設計</a>）</td></tr>
+<tr><td>書式</td><td>太字・見出し・箇条書きは最小限。単純な質問は散文。リストは複雑なときだけ</td><td>Rules は短い散文＋コード引用。章頭の要点ブロック二重掲載は避ける</td></tr>
+<tr><td>コード</td><td>スニペットは Markdown で提示</td><td>Skills / 依頼は <code>```lang</code> を使う</td></tr>
+<tr><td>知識 cutoff</td><td>Fable 5: 2026年1月末までを信頼。以降は Web Search を促す</td><td>最新 changelog・社内仕様は <code>docs/</code> か検索ツールで渡す</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>API 基本</h4>
+<pre><code>curl https://api.anthropic.com/v1/messages   -H "x-api-key: $ANTHROPIC_API_KEY"   -H "anthropic-version: 2023-06-01"   -H "content-type: application/json"   -d '{
+    "model": "claude-sonnet-4-6",
+    "max_tokens": 1024,
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'</code></pre>
+<p>Opus 4.8 / Fable 5 系は <code>effort</code>（既定 <code>high</code>）と adaptive thinking が中心。extended thinking の <code>budget_tokens</code> は Opus 4.7 系で非推奨 — <a href="https://platform.claude.com/docs/en/about-claude/models/migration-guide">Migration guide</a>。</p>
+
+<h4>2026年 注目機能</h4>
+<ul>
+<li><strong>Fable 5 / Mythos 5</strong> — Claude 5 ファミリー。claude.ai 最上位は Fable 5</li>
+<li><strong>Opus 4.8</strong> — 1M コンテキスト（API 既定）、キャッシュ最小 1,024 tokens、Claude Code の dynamic workflows</li>
+<li><strong>Managed Agents</strong>（Beta）— outcomes・multi-agent・Dreaming（research preview）。<a href="https://platform.claude.com/docs/en/managed-agents/overview">概要</a></li>
+<li><strong>Web Search</strong>（GA）— ツール呼び出しと併用</li>
+<li><strong>Message Batches</strong> — 大量オフライン処理向け</li>
+</ul>
+<h4 id="21-claude-advisor"><a class="toclink" href="#21-claude-advisor">Advisor Tool <span class="badge badge-beta">Beta</span></a></h4>
+<p>高速 Executor + Advisor のペア。長時間生成中の方針ガイダンス。</p>
+<h4 id="21-claude-managed-agents"><a class="toclink" href="#21-claude-managed-agents">Claude Managed Agents <span class="badge badge-beta">Beta</span></a></h4>
+<p>マネージドハーネス・サンドボックス・SSE。マルチエージェント上限・outcomes の詳細は公式 docs を正とする。</p>
+<h4 id="21-claude-web-search"><a class="toclink" href="#21-claude-web-search">Web Search <span class="badge badge-new">GA</span></a></h4>
+<p>プログラマティック tool use と併用。Dynamic Filtering でノイズ削減。</p>
+<h4 id="21-claude-batches"><a class="toclink" href="#21-claude-batches">Message Batches API</a></h4>
+<p>非同期バッチ。コスト削減に batch 料金を検討。</p>
+
+<h3 id="21-claudecode"><a class="toclink" href="#21-claudecode">Claude Code（補足）</a></h3>
+<p>手順の正本: <a href="guide-setup.html#2-ai-selection">セットアップ — Claude Code</a> · <a href="guide-rules-phase1.html#42-claude-code">Phase 1 テンプレ</a> · <a href="guide-rules-phase1.html#claude-setup-12">セットアップ 12 項</a> · <a href="guide-rules-phase1.html#claude-large-codebase">大規模コードベース</a></p>
+<ul>
+<li><strong>Hooks</strong> — 破壊的操作・コミット前のガード（<a href="https://code.claude.com/docs/en/hooks">公式</a>）</li>
+<li><strong>Skills</strong> — <code>.claude/skills/</code>（長手順は SKILL.md）</li>
+<li><strong>Subagents / Task</strong> — 調査分担（<a href="guide-ops-harness.html#18-2-subagents">運用 — 委譲</a>）</li>
+<li><strong>MCP</strong> — 連携例は <a href="memo-ai-reference-tools.html">MCP・連携参考</a> と下表</li>
+</ul>
+<h4 id="21-gstack"><a class="toclink" href="#21-gstack">gstack（外部 Skills 例）</a></h4>
+<p><a href="https://github.com/garrytan/gstack">garrytan/gstack</a> — Think→Plan→Build→Review→Test→Ship の Phase 型 Skills（<code>/office-hours</code> <code>/plan-eng-review</code> <code>/qa</code> <code>/ship</code> 等）。本サイトの <a href="guide-workflow.html#dev-lifecycle-ai">開発ライフサイクル</a> と同型。</p>
+<details class="section-fold">
+<summary>install（個人 <code>~/.claude/skills</code>）</summary>
+<pre><code class="language-bash">git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+cd ~/.claude/skills/gstack &amp;&amp; ./setup</code></pre>
+</details>
+<p class="wiki-lead">参考: <a href="https://x.com/noisyb0y1/status/2063295755104747553">@noisyb0y1</a> · 数値・効果の断定は <a href="https://github.com/garrytan/gstack">公式 README</a> を正とする。</p>
+
+<!-- patch-addy-agent-skills -->
+<h4 id="21-addy-agent-skills"><a class="toclink" href="#21-addy-agent-skills">addyosmani/agent-skills（外部 Skills 例）</a></h4>
+<p><a href="https://github.com/addyosmani/agent-skills">addyosmani/agent-skills</a> — 本番向け <strong>24 Skills</strong> + <strong>7 slash commands</strong>（Define→Plan→Build→Verify→Review→Ship）。各 Skill に手順・検証ゲート・anti-rationalization 表。<a href="memo-ai-tools.html#21-gstack">gstack</a> と同型のライフサイクルだが、TDD・セキュリティ・ADR・観測可能性など横断スキルが厚い。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>フェーズ</th><th>コマンド</th><th>代表スキル</th></tr></thead>
+<tbody>
+<tr><td>Define</td><td><code>/spec</code></td><td>spec-driven-development · idea-refine · interview-me</td></tr>
+<tr><td>Plan</td><td><code>/plan</code></td><td>planning-and-task-breakdown</td></tr>
+<tr><td>Build</td><td><code>/build</code> · <code>/build auto</code></td><td>incremental-implementation · test-driven-development · api-and-interface-design</td></tr>
+<tr><td>Verify</td><td><code>/test</code></td><td>debugging-and-error-recovery · browser-testing-with-devtools</td></tr>
+<tr><td>Review</td><td><code>/review</code> · <code>/code-simplify</code></td><td>code-review-and-quality · security-and-hardening</td></tr>
+<tr><td>Ship</td><td><code>/ship</code></td><td>shipping-and-launch · ci-cd-and-automation · documentation-and-adrs</td></tr>
+</tbody>
+</table>
+</div>
+<details class="section-fold">
+<summary>install（Claude Code Marketplace）</summary>
+<pre><code class="language-text">/plugin marketplace add https://github.com/addyosmani/agent-skills.git
+/plugin install agent-skills@addy-agent-skills</code></pre>
+</details>
+<details class="section-fold">
+<summary>install（Cursor）</summary>
+<p><code>skills/</code> から必要な <code>SKILL.md</code> を <code>.cursor/skills/</code> へ。手順はリポの <a href="https://github.com/addyosmani/agent-skills/blob/main/docs/cursor-setup.md">docs/cursor-setup.md</a>。</p>
+</details>
+<p class="wiki-lead">Skill 一覧・agent persona・Codex/Gemini 手順は <a href="https://github.com/addyosmani/agent-skills">公式 README</a> を正とする。コピー後はテストコマンドと git 方針を自分のリポ用に差し替える（<a href="flow-rules-samples.html#sample-skill-pr-review">pr-review サンプル</a> 参照）。</p>
+
+<h3 id="21-cowork"><a class="toclink" href="#21-cowork">Cowork</a></h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th></th><th>Claude Code</th><th>Cowork</th></tr></thead>
+<tbody>
+<tr><td>形態</td><td>CLI</td><td>デスクトアプリ</td></tr>
+<tr><td>対象</td><td>開発者</td><td>非開発者中心</td></tr>
+<tr><td>主用途</td><td>実装・CI・リポ操作</td><td>ファイル整理・Office 系ドキュメント</td></tr>
+<tr><td>スキル</td><td><code>/skill名</code></td><td><code>/docx</code> 等（製品同梱）</td></tr>
+<tr><td>MCP</td><td>対応</td><td>対応（製品設定から接続）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>MCP 連携例（Claude Code / Cursor 共通）</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>サービス</th><th>できること</th></tr></thead>
+<tbody>
+<tr><td>Obsidian</td><td>Vault 読み書き・検索</td></tr>
+<tr><td>GitHub</td><td>PR・Issue・コード</td></tr>
+<tr><td>Chrome DevTools</td><td>ブラウザ検証</td></tr>
+<tr><td>Slack / Notion / Drive</td><td>チーム連携・ドキュメント</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="21-openai"><a class="toclink" href="#21-openai">OpenAI / LLM</a></h3>
+<p>一次情報: <a href="https://developers.openai.com/api/docs/models">OpenAI Models</a> · <a href="https://openai.com/index/introducing-gpt-5-5/">GPT-5.5 発表</a></p>
+
+<h4>OpenAI モデル（2026年5月時点）</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>モデル</th><th>API ID（代表）</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>GPT-5.5</td><td><code>gpt-5.5</code></td><td>フラッグシップ。Codex・複雑な知識作業・エージェント（1M コンテキスト）</td></tr>
+<tr><td>GPT-5.5 pro</td><td><code>gpt-5.5-pro</code></td><td>最高精度・長時間推論（Responses API 中心）</td></tr>
+<tr><td>GPT-5.4</td><td><code>gpt-5.4</code></td><td>汎用・コストと性能のバランス</td></tr>
+<tr><td>GPT-5.4 mini / nano</td><td><code>gpt-5.4-mini</code> 等</td><td>大量処理・ルーティング</td></tr>
+<tr><td>o4-mini</td><td><code>o4-mini</code></td><td>推論特化・コスト効率（数学・コード）</td></tr>
+<tr><td>o3-pro</td><td><code>o3-pro</code></td><td>最長思考の推論タスク</td></tr>
+</tbody>
+</table>
+</div>
+<p>旧 GPT-5 / GPT-4 系は新規開発では 5.4 / 5.5 へ寄せる。料金・スナップショットは <a href="https://developers.openai.com/api/docs/pricing">Pricing</a> を都度確認。</p>
+
+<h4 id="21-openai-features"><a class="toclink" href="#21-openai-features">Codex（OpenAI コーディングエージェント）</a></h4>
+<p>CLI / IDE / クラウド。既定モデルは <strong>GPT-5.5</strong> 系。手順正本: <a href="guide-setup.html#2-ai-selection">セットアップ — Codex</a> · <a href="guide-rules-codex.html#17-codex-workflows">ルール/Plan — Codex</a></p>
+<ul>
+<li><strong>Computer use</strong> — デスクトップ・ブラウザ操作</li>
+<li><strong>GitHub 連携</strong> — PR・Issue からの自律修正</li>
+<li><strong>モバイル連携</strong> — Mac 上 Codex へのリモート（2026-05 頃の製品更新）</li>
+<li><strong>Windows ネイティブ</strong> — PowerShell・サンドボックス</li>
+<li><strong>AGENTS.md</strong> + <code>.agents/skills/</code> — Cursor と共有可能</li>
+</ul>
+
+<h4>LLM 選択の目安（本リポジトリ運用）</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>用途</th><th>推奨</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td>複雑な設計・ADR</td><td>Claude Fable 5 / Opus 4.8 / GPT-5.5 pro</td><td>推論・長文の安定性</td></tr>
+<tr><td>日常実装・RAG 回答</td><td>Claude Sonnet 4.6 / GPT-5.5</td><td>コストと品質のバランス</td></tr>
+<tr><td>大量要約・分類</td><td>Haiku 4.5 / GPT-5.4 mini / o4-mini</td><td>速度・単価</td></tr>
+<tr><td>GitHub 中心の PR 自動化</td><td>Codex（GPT-5.5）</td><td>PR フローとの統合</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="21-aitools"><a class="toclink" href="#21-aitools">AI コーディングツール</a></h3>
+<ul>
+<li><strong>Cursor</strong> — Plan / Agent / Ask / Debug。Rules: <code>.cursor/rules/</code> · Skills: <code>.cursor/skills/</code> または <code>.agents/skills/</code></li>
+<li><strong>Claude Code</strong> — CLI 長時間自律。上記 <a href="#21-claudecode">補足</a></li>
+<li><strong>Codex</strong> — クラウドサンドボックス・PR 連携。上記 <a href="#21-openai-features">Codex</a></li>
+<li><strong>GitHub Copilot</strong> — IDE 内補完 + Workspace。メインは 1 本に絞り補助に回す（2章参照）</li>
+</ul>
+<h4 id="21-cursor-2026"><a class="toclink" href="#21-cursor-2026">Cursor 2026 注目（changelog 追従）</a></h4>
+<ul>
+<li><strong>Agent Review</strong> — 完了後 Review → Find Issues（<a href="guide-ship.html#14-agent-review">提出 — AI レビュー</a>）</li>
+<li><strong>Bugbot</strong> — PR 自動レビュー（GitHub 連携）</li>
+<li><strong>Plugins / Marketplace</strong> — Rules · Skills · MCP をパッケージ導入（<a href="guide-rules-skills-2.html#17-plugins-marketplace">ルール/Plan</a>）</li>
+<li><strong>Hooks</strong> — <code>.cursor/hooks.json</code> で stop 時検証ループ（<a href="guide-rules-skills-3.html#17-hooks-cursor">Hooks 節</a>）</li>
+<li><strong>worktree 並列</strong> · <strong>複数モデル比較</strong> — <a href="guide-ops-harness.html#18-worktree-parallel">運用 — 並列</a></li>
+<li><strong>Cloud Agent</strong> — <a href="https://cursor.com/agents">cursor.com/agents</a> · Background PR</li>
+</ul>
+<h4>ノリだけのコーディング（Vibe Coding）</h4>
+<p>仕様・テスト・レビューなしで AI に任せ続けるやり方。プロトタイプ以外では <a href="guide-setup.html#1-policy">方針</a> の品質ゲート（Plan・テスト・PR）と併用しない。</p>
+<h4>MCP・Tool Use の実装</h4>
+<p>プロトコル詳細・実装タブは <a href="memo-ai-reference-tools.html">MCP・連携参考</a>。運用は <a href="guide-setup.html#2-ai-mcp">セットアップ — MCP</a> · <a href="guide-ops-orchestration.html#18-orchestration">運用</a>。</p>
+
+<h3 id="21-rag"><a class="toclink" href="#21-rag">RAG（検索拡張生成）</a></h3>
+<p class="wiki-lead">RAG は「LLM が学習していない社内文書などを検索してから回答する」方式。パイプライン・Hybrid Search・pgvector・評価コードの<strong>正本は別ページ</strong>に移した。</p>
+<ul>
+<li><a href="memo-ai-reference-rag.html">RAG・ベクトルDB 実装参考</a> — Indexing / Hybrid / pgvector / RAGAS</li>
+<li><a href="memo-cloud.html#21-infra-vector-db">クラウド比較 — Vector DB</a> — Pinecone / Qdrant / pgvector 選定</li>
+<li><a href="guide-setup.html#2-ai-selection">セットアップ — AIツール</a> — RAG が必要かどうかの判断は要件・データ鮮度から</li>
+</ul>
+
+<p class="wiki-lead">最終更新: 2026-06-03（モデル ID は各社 changelog で再確認すること）</p>
+  </div>
+</div>
